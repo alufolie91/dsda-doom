@@ -28,6 +28,7 @@
 #include "dsda/mapinfo/hexen.h"
 #include "dsda/mapinfo/u.h"
 #include "dsda/mapinfo/legacy.h"
+#include "hexen/p_acs.h"
 
 #include "mapinfo.h"
 
@@ -520,6 +521,8 @@ void dsda_PrepareInitNew(void) {
 
   if (dsda_HexenPrepareInitNew())
     return;
+
+  P_ACSFlagNewGame();
 
   if (dsda_UPrepareInitNew())
     return;
