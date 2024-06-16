@@ -189,7 +189,7 @@ PUREFUNC int R_CompatiblePointOnSide(fixed_t x, fixed_t y, const node_t *node)
 
   // Try to quickly decide by looking at sign bits.
   // also use a mask to avoid branch prediction
-  INT32 mask = (node->dy ^ node->dx ^ x ^ y) >> 31;
+  int32_t mask = (node->dy ^ node->dx ^ x ^ y) >> 31;
   return (mask & ((node->dy ^ x) < 0)) |  // (left is negative)
   (~mask & (FixedMul(y, node->dx>>FRACBITS) >= FixedMul(node->dy>>FRACBITS, x)));
 }
@@ -210,7 +210,7 @@ PUREFUNC int R_ZDoomPointOnSide(fixed_t x, fixed_t y, const node_t *node)
   y -= node->y;
 
   // also use a mask to avoid branch prediction
-  INT32 mask = (node->dy ^ node->dx ^ x ^ y) >> 31;
+  int32_t mask = (node->dy ^ node->dx ^ x ^ y) >> 31;
   return (mask & ((node->dy ^ x) < 0)) |  // (left is negative)
   (~mask & ((long long) y * node->dx >= (long long) x * node->dy));
 }
@@ -343,7 +343,7 @@ angle_t R_PointToPseudoAngle (fixed_t x, fixed_t y)
   double vecx = (double)x - viewx;
   double vecy = (double)y - viewy;
 
-  if (fabs(vecx) < epsilon && fabs(vecy) < epsilon)
+  if (fabs(vecx) < EPSILON && fabs(vecy) < EPSILON)
   {
     return 0;
   }
