@@ -368,6 +368,8 @@ set(COMMON_SRC
     p_tick.h
     p_user.c
     p_user.h
+    qs22j.c
+    qs22j.h
     r_bsp.c
     r_bsp.h
     r_data.c
