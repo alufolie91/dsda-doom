@@ -188,9 +188,10 @@ PUREFUNC int R_CompatiblePointOnSide(fixed_t x, fixed_t y, const node_t *node)
   y -= node->y;
 
   // Try to quickly decide by looking at sign bits.
-  if ((node->dy ^ node->dx ^ x ^ y) < 0)
-    return (node->dy ^ x) < 0;  // (left is negative)
-  return FixedMul(y, node->dx>>FRACBITS) >= FixedMul(node->dy>>FRACBITS, x);
+  // also use a mask to avoid branch prediction
+  INT32 mask = (node->dy ^ node->dx ^ x ^ y) >> 31;
+  return (mask & ((node->dy ^ x) < 0)) |  // (left is negative)
+  (~mask & (FixedMul(y, node->dx>>FRACBITS) >= FixedMul(node->dy>>FRACBITS, x)));
 }
 
 #if defined(__clang__)
