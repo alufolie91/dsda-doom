@@ -57,6 +57,7 @@
 #include "g_overflow.h"
 #include "am_map.h"
 #include "e6y.h"//e6y
+#include "qs22j.h"
 
 #include "dsda.h"
 #include "dsda/args.h"
@@ -1564,7 +1565,7 @@ static void P_PostProcessThings(int mobjcount, mobj_t **mobjlist)
   if (V_IsOpenGLMode())
   {
     no_overlapped_sprites = true;
-    qsort(mobjlist, mobjcount, sizeof(mobjlist[0]), dicmp_sprite_by_pos);
+    qs22j(mobjlist, mobjcount, sizeof(mobjlist[0]), dicmp_sprite_by_pos);
     if (!no_overlapped_sprites)
     {
       i = 1;

@@ -70,6 +70,7 @@
 #include "st_stuff.h"
 #include "hu_stuff.h"
 #include "e6y.h"//e6y
+#include "qs22j.h"
 
 #include "dsda/configuration.h"
 #include "dsda/map_format.h"
@@ -323,7 +324,7 @@ void gld_MapDrawSubsectors(player_t *plr, int fx, int fy, fixed_t mx, fixed_t my
     }
 
     // sort subsectors by texture
-    qsort(visible_subsectors, visible_subsectors_count,
+    qs22j(visible_subsectors, visible_subsectors_count,
       sizeof(visible_subsectors[0]), dicmp_visible_subsectors_by_pic);
   }
 
@@ -2450,7 +2451,7 @@ static void gld_DrawItemsSortByTexture(GLDrawItemType itemtype)
 
   if (itemfuncs[itemtype] && gld_drawinfo.num_items[itemtype] > 1)
   {
-    qsort(gld_drawinfo.items[itemtype], gld_drawinfo.num_items[itemtype],
+    qs22j(gld_drawinfo.items[itemtype], gld_drawinfo.num_items[itemtype],
       sizeof(gld_drawinfo.items[itemtype][0]), itemfuncs[itemtype]);
   }
 }
