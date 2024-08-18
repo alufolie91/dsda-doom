@@ -73,7 +73,7 @@ typedef struct {
 #define CONF_COLOR(x) dsda_config_int, 0, 255, { x }
 #define CONF_BYTE(x) dsda_config_int, 0, 255, { x }
 #define CONF_STRING(x) dsda_config_string, 0, 0, { .v_string = x }
-#define CONF_CR(x) dsda_config_int, 0, CR_LIMIT - 1, { x }
+#define CONF_CR(x) dsda_config_int, 0, CR_HUD_LIMIT - 1, { x }
 #define CONF_WEAPON(x) dsda_config_int, 0, 9, { x }
 
 #define NOT_STRICT 0, 0
@@ -131,6 +131,7 @@ void dsda_InitGameControllerParameters(void);
 void dsda_InitExHud(void);
 void dsda_UpdateFreeText(void);
 void dsda_ResetAirControl(void);
+void dsda_AlterGameFlags(void);
 
 void dsda_TrackConfigFeatures(void) {
   if (!demorecording)
@@ -958,6 +959,26 @@ dsda_config_t dsda_config[dsda_config_count] = {
   [dsda_config_allow_jumping] = {
     "dsda_allow_jumping", dsda_config_allow_jumping,
     CONF_BOOL(0), NULL, NOT_STRICT, dsda_ResetAirControl
+  },
+  [dsda_config_pistol_start] = {
+    "dsda_pistol_start", dsda_config_pistol_start,
+    CONF_BOOL(0)
+  },
+  [dsda_config_respawn_monsters] = {
+    "dsda_respawn_monsters", dsda_config_respawn_monsters,
+    CONF_BOOL(0), NULL, NOT_STRICT, dsda_AlterGameFlags
+  },
+  [dsda_config_fast_monsters] = {
+    "dsda_fast_monsters", dsda_config_fast_monsters,
+    CONF_BOOL(0), NULL, NOT_STRICT, dsda_AlterGameFlags
+  },
+  [dsda_config_no_monsters] = {
+    "dsda_no_monsters", dsda_config_no_monsters,
+    CONF_BOOL(0), NULL, NOT_STRICT, dsda_AlterGameFlags
+  },
+  [dsda_config_coop_spawns] = {
+    "dsda_coop_spawns", dsda_config_coop_spawns,
+    CONF_BOOL(0), NULL, NOT_STRICT, dsda_AlterGameFlags
   },
   [dsda_config_parallel_sfx_limit] = {
     "dsda_parallel_sfx_limit", dsda_config_parallel_sfx_limit,
