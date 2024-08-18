@@ -366,6 +366,10 @@ dsda_config_t dsda_config[dsda_config_count] = {
     "dsda_mute_music", dsda_config_mute_music,
     CONF_BOOL(0), NULL, NOT_STRICT, I_ResetMusicVolume
   },
+  [dsda_config_mute_unfocused_window] = {
+    "dsda_mute_unfocused_window", dsda_config_mute_unfocused_window,
+    CONF_BOOL(0), NULL, NOT_STRICT, S_ResetVolume
+  },
   [dsda_config_cheat_codes] = {
     "dsda_cheat_codes", dsda_config_cheat_codes,
     CONF_BOOL(1)
@@ -891,6 +895,10 @@ dsda_config_t dsda_config[dsda_config_count] = {
     "dsda_auto_key_frame_timeout", dsda_config_auto_key_frame_timeout,
     dsda_config_int, 0, 25, { 10 }, NULL, NOT_STRICT, dsda_InitKeyFrame
   },
+  [dsda_config_auto_save] = {
+    "dsda_config_auto_save", dsda_config_auto_save,
+    CONF_BOOL(0)
+  },
   [dsda_config_ex_text_scale_x] = {
     "ex_text_scale_x", dsda_config_ex_text_scale_x,
     dsda_config_int, 0, 4000, { 0 }, NULL, NOT_STRICT, dsda_SetupStretchParams
@@ -1225,6 +1233,10 @@ dsda_config_t dsda_config[dsda_config_count] = {
   [dsda_config_ansi_endoom] = {
     "ansi_endoom", dsda_config_ansi_endoom,
     dsda_config_int, 0, 2, { 0 }
+  },
+  [dsda_config_quit_sounds] = {
+    "quit_sounds", dsda_config_quit_sounds,
+    CONF_BOOL(0),
   },
   [dsda_config_announce_map] = {
     "announce_map", dsda_config_announce_map,

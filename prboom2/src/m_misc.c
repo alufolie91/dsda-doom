@@ -91,6 +91,7 @@ cfg_def_t cfg_defs[] =
   MIGRATED_SETTING(dsda_config_screenshot_dir),
   MIGRATED_SETTING(dsda_config_startup_delay_ms),
   MIGRATED_SETTING(dsda_config_ansi_endoom),
+  MIGRATED_SETTING(dsda_config_quit_sounds),
   MIGRATED_SETTING(dsda_config_announce_map),
 
   SETTING_HEADING("Game settings"),
@@ -274,6 +275,7 @@ cfg_def_t cfg_defs[] =
   MIGRATED_SETTING(dsda_config_auto_key_frame_interval),
   MIGRATED_SETTING(dsda_config_auto_key_frame_depth),
   MIGRATED_SETTING(dsda_config_auto_key_frame_timeout),
+  MIGRATED_SETTING(dsda_config_auto_save),
   MIGRATED_SETTING(dsda_config_exhud),
   MIGRATED_SETTING(dsda_config_ex_text_scale_x),
   MIGRATED_SETTING(dsda_config_ex_text_ratio_y),
@@ -297,6 +299,7 @@ cfg_def_t cfg_defs[] =
   MIGRATED_SETTING(dsda_config_death_use_action),
   MIGRATED_SETTING(dsda_config_mute_sfx),
   MIGRATED_SETTING(dsda_config_mute_music),
+  MIGRATED_SETTING(dsda_config_mute_unfocused_window),
   MIGRATED_SETTING(dsda_config_cheat_codes),
   MIGRATED_SETTING(dsda_config_allow_jumping),
   MIGRATED_SETTING(dsda_config_parallel_sfx_limit),
@@ -429,6 +432,7 @@ cfg_input_def_t input_defs[] = {
   INPUT_SETTING("input_map_rotate", dsda_input_map_rotate, 'r', -1, -1),
   INPUT_SETTING("input_map_overlay", dsda_input_map_overlay, 'o', -1, -1),
   INPUT_SETTING("input_map_textured", dsda_input_map_textured, 0, -1, -1),
+  INPUT_SETTING("input_map_highlight_by_tag", dsda_input_map_highlight_by_tag, 'h', -1, -1),
 
   INPUT_SETTING("input_repeat_message", dsda_input_repeat_message, 0, -1, -1),
 

@@ -62,6 +62,7 @@ typedef enum {
   dsda_config_free_text,
   dsda_config_mute_sfx,
   dsda_config_mute_music,
+  dsda_config_mute_unfocused_window,
   dsda_config_cheat_codes,
   dsda_config_organize_failed_demos,
   dsda_config_script_0,
@@ -194,6 +195,7 @@ typedef enum {
   dsda_config_auto_key_frame_interval,
   dsda_config_auto_key_frame_depth,
   dsda_config_auto_key_frame_timeout,
+  dsda_config_auto_save,
   dsda_config_ex_text_scale_x,
   dsda_config_ex_text_ratio_y,
   dsda_config_wipe_at_full_speed,
@@ -276,6 +278,7 @@ typedef enum {
   dsda_config_swap_analogs,
   dsda_config_invert_analog_look,
   dsda_config_ansi_endoom,
+  dsda_config_quit_sounds,
   dsda_config_announce_map,
   dsda_config_count,
 } dsda_config_identifier_t;
