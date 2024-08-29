@@ -130,14 +130,17 @@ PUREFUNC int R_CompatiblePointOnSegSide(fixed_t x, fixed_t y, const seg_t *line)
 PUREFUNC int R_ZDoomPointOnSegSide(fixed_t x, fixed_t y, const seg_t *line);
 extern int (*R_PointOnSegSide)(fixed_t x, fixed_t y, const seg_t *line);
 
-angle_t R_PointToAngle2(fixed_t x1, fixed_t y1, fixed_t x, fixed_t y);
+#define R_PointToAngle2(x1, y1, x, y) R_PointToAngleSlope(x1, y1, x, y, SlopeDiv)
+#define R_PointToAngleEx(x, y) R_PointToAngleEx2(viewx, viewy, x, y)
+
 subsector_t *R_PointInSubsector(fixed_t x, fixed_t y);
 sector_t *R_PointInSector(fixed_t x, fixed_t y);
 void R_SectorCenter(fixed_t *x, fixed_t *y, sector_t *sec);
 void R_LineCenter(fixed_t *x, fixed_t *y, line_t *line);
 
+angle_t R_PointToAngleSlope(fixed_t x1, fixed_t y1, fixed_t x, fixed_t y, slope_div_fn slope_div);
+
 //e6y: made more precise
-angle_t R_PointToAngleEx(fixed_t x, fixed_t y);
 angle_t R_PointToAngleEx2(fixed_t x1, fixed_t y1, fixed_t x, fixed_t y);
 angle_t R_PointToPseudoAngle(fixed_t x, fixed_t y);
 
