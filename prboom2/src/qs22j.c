@@ -92,6 +92,8 @@ void qs22j(void *base, size_t nmemb, size_t size,
     int ki = 0, kj = 0;
     int swap_type = 1;
     swapf_typ swapf, vecswapf;
+    ptrdiff_t lessthan, morethan;
+    size_t k;
 
     vecswapf = swapf = swapbytes;
     if ((ptr_to_int(left) | size) % sizeof(WORD))
@@ -213,13 +215,13 @@ void qs22j(void *base, size_t nmemb, size_t size,
                 SWAP(p, i);
 			}
 
-            ptrdiff_t lessthan = i - ii;
-            size_t k = min(lessthan, ii - left);
+            lessthan = i - ii;
+            k = min(lessthan, ii - left);
 
             if (k)
                 vecswapf(left, i - k, k);
 
-            ptrdiff_t morethan = jj - i;
+            morethan = jj - i;
             k = min(morethan, right - jj);
 
             if (k)

@@ -425,10 +425,10 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
   // draw the columns
   for (dcvars.x = x1 ; dcvars.x <= x2 ; dcvars.x++, spryscale += rw_scalestep)
   {
+    fixed_t texturecolumn;
+
     if (maskedtexturecol[dcvars.x] == INT_MAX) // dropoff overflow
       continue;
-
-    fixed_t texturecolumn;
 
     R_ApplyLightColormap(&dcvars, spryscale);
 
