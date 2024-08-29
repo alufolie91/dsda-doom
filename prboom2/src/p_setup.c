@@ -58,7 +58,7 @@
 #include "am_map.h"
 #include "e6y.h"//e6y
 #include "qs22j.h"
-
+#include "z_zone.h"
 #include "dsda.h"
 #include "dsda/args.h"
 #include "dsda/compatibility.h"
@@ -164,6 +164,8 @@ int       *blockmap;              // was short -- killough
 int       *blockmaplump;          // was short -- killough
 
 fixed_t   bmaporgx, bmaporgy;     // origin of block map
+
+int       *bmapwidthmuls;         // LUT bmapwidth muls
 
 mobj_t    **blocklinks;           // for thing chains
 int       blocklinks_count;
@@ -3027,6 +3029,14 @@ static void P_LoadBlockMap (int lump)
   blocklinks_count = bmapwidth * bmapheight;
   blocklinks = calloc_IfSameLevel(blocklinks, blocklinks_count, sizeof(*blocklinks));
   blockmap = blockmaplump+4;
+
+  // LUT bmapwidth muls
+  count = sizeof(int) * bmapheight;
+  bmapwidthmuls = Z_MallocLevel(count);
+
+  for (int f = 0; f < bmapheight; f++){
+    bmapwidthmuls[f] = f * bmapwidth;
+  }
 
   // MAES: set blockmapxneg and blockmapyneg
   // E.g. for a full 512x512 map, they should be both

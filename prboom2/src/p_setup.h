@@ -48,6 +48,7 @@ extern int      bmapwidth;
 extern int      bmapheight;      /* in mapblocks */
 extern fixed_t  bmaporgx;
 extern fixed_t  bmaporgy;        /* origin of block map */
+extern int      *bmapwidthmuls;  /* LUT bmapwidth muls */
 extern mobj_t   **blocklinks;    /* for thing chains */
 
 extern dboolean skipblstart; // MaxW: Skip initial blocklist short
