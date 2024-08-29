@@ -294,15 +294,8 @@ angle_t R_PointToAngleSlope(fixed_t x1, fixed_t y1, fixed_t x, fixed_t y, slope_
     0;
 }
 
-angle_t R_PointToAngle2(fixed_t x1, fixed_t y1, fixed_t x, fixed_t y)
-{
-  return R_PointToAngleSlope(x1, y1, x, y, SlopeDiv);
-}
-
-angle_t R_PointToAngleEx(fixed_t x, fixed_t y)
-{
-  return R_PointToAngleEx2(viewx, viewy, x, y);
-}
+#define R_PointToAngle2(x1, y1, x, y) R_PointToAngleSlope(x1, y1, x, y, SlopeDiv)
+#define R_PointToAngleEx(x, y) R_PointToAngleEx2(viewx, viewy, x, y)
 
 angle_t R_PointToAngleEx2(fixed_t x1, fixed_t y1, fixed_t x, fixed_t y)
 {
