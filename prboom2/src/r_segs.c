@@ -424,56 +424,58 @@ void R_RenderMaskedSegRange(drawseg_t *ds, int x1, int x2)
 
   // draw the columns
   for (dcvars.x = x1 ; dcvars.x <= x2 ; dcvars.x++, spryscale += rw_scalestep)
-    if (maskedtexturecol[dcvars.x] != INT_MAX) // dropoff overflow
-      {
-        fixed_t texturecolumn;
+  {
+    if (maskedtexturecol[dcvars.x] == INT_MAX) // dropoff overflow
+      continue;
 
-        R_ApplyLightColormap(&dcvars, spryscale);
+    fixed_t texturecolumn;
 
-        // killough 3/2/98:
-        //
-        // This calculation used to overflow and cause crashes in Doom:
-        //
-        // sprtopscreen = centeryfrac - FixedMul(dcvars.texturemid, spryscale);
-        //
-        // This code fixes it, by using double-precision intermediate
-        // arithmetic and by skipping the drawing of 2s normals whose
-        // mapping to screen coordinates is totally out of range:
+    R_ApplyLightColormap(&dcvars, spryscale);
 
-        {
-          int64_t t = ((int64_t) centeryfrac << FRACBITS) -
-            (int64_t) dcvars.texturemid * spryscale;
-          if (t + (int64_t) textureheight[texnum] * spryscale < 0 ||
-              t > (int64_t) SCREENHEIGHT << FRACBITS*2)
-            continue;        // skip if the texture is out of screen's range
-          sprtopscreen = (int64_t)(t >> FRACBITS); // R_WiggleFix
-        }
+    // killough 3/2/98:
+    //
+    // This calculation used to overflow and cause crashes in Doom:
+    //
+    // sprtopscreen = centeryfrac - FixedMul(dcvars.texturemid, spryscale);
+    //
+    // This code fixes it, by using double-precision intermediate
+    // arithmetic and by skipping the drawing of 2s normals whose
+    // mapping to screen coordinates is totally out of range:
 
-        dcvars.iscale = 0xffffffffu / (unsigned) spryscale;
+    {
+      int64_t t = ((int64_t) centeryfrac << FRACBITS) -
+        (int64_t) dcvars.texturemid * spryscale;
+      if (t + (int64_t) textureheight[texnum] * spryscale < 0 ||
+          t > (int64_t) SCREENHEIGHT << FRACBITS*2)
+        continue;        // skip if the texture is out of screen's range
+      sprtopscreen = (int64_t)(t >> FRACBITS); // R_WiggleFix
+    }
 
-        texturecolumn = maskedtexturecol[dcvars.x] +
-                        (curline->sidedef->textureoffset_mid >> FRACBITS);
+    dcvars.iscale = 0xffffffffu / (unsigned) spryscale;
 
-        // killough 1/25/98: here's where Medusa came in, because
-        // it implicitly assumed that the column was all one patch.
-        // Originally, Doom did not construct complete columns for
-        // multipatched textures, so there were no header or trailer
-        // bytes in the column referred to below, which explains
-        // the Medusa effect. The fix is to construct true columns
-        // when forming multipatched textures (see r_data.c).
+    texturecolumn = maskedtexturecol[dcvars.x] +
+                    (curline->sidedef->textureoffset_mid >> FRACBITS);
 
-        // draw the texture
-        R_DrawMaskedColumn(
-          patch,
-          colfunc,
-          &dcvars,
-          R_GetPatchColumnWrapped(patch, texturecolumn),
-          R_GetPatchColumnWrapped(patch, texturecolumn-1),
-          R_GetPatchColumnWrapped(patch, texturecolumn+1)
-        );
+    // killough 1/25/98: here's where Medusa came in, because
+    // it implicitly assumed that the column was all one patch.
+    // Originally, Doom did not construct complete columns for
+    // multipatched textures, so there were no header or trailer
+    // bytes in the column referred to below, which explains
+    // the Medusa effect. The fix is to construct true columns
+    // when forming multipatched textures (see r_data.c).
 
-        maskedtexturecol[dcvars.x] = INT_MAX; // dropoff overflow
-      }
+    // draw the texture
+    R_DrawMaskedColumn(
+      patch,
+      colfunc,
+      &dcvars,
+      R_GetPatchColumnWrapped(patch, texturecolumn),
+      R_GetPatchColumnWrapped(patch, texturecolumn-1),
+      R_GetPatchColumnWrapped(patch, texturecolumn+1)
+    );
+
+    maskedtexturecol[dcvars.x] = INT_MAX; // dropoff overflow
+  }
 
   curline = NULL; /* cph 2001/11/18 - must clear curline now we're done with it, so R_ColourMap doesn't try using it for other things */
 }

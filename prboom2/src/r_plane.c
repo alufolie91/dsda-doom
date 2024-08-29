@@ -605,13 +605,14 @@ static void R_DoDrawPlane(visplane_t *pl)
           dcvars.iscale = (200 << FRACBITS) / SCREENHEIGHT;
 
           for (x = pl->minx; (dcvars.x = x) <= pl->maxx; x++)
-            if ((dcvars.yl = pl->top[x]) != SHRT_MAX && dcvars.yl <= (dcvars.yh = pl->bottom[x])) // dropoff overflow
-            {
-              dcvars.source = R_GetPatchColumn(patch, (an + xtoviewangle[x]) >> ANGLETOSKYSHIFT)->pixels;
-              dcvars.prevsource = R_GetPatchColumn(patch, (an + xtoviewangle[x-1]) >> ANGLETOSKYSHIFT)->pixels;
-              dcvars.nextsource = R_GetPatchColumn(patch, (an + xtoviewangle[x+1]) >> ANGLETOSKYSHIFT)->pixels;
-              colfunc(&dcvars);
-            }
+          {
+            if (!((dcvars.yl = pl->top[x]) != SHRT_MAX && dcvars.yl <= (dcvars.yh = pl->bottom[x]))) // dropoff overflow
+              continue;
+            dcvars.source = R_GetPatchColumn(patch, (an + xtoviewangle[x]) >> ANGLETOSKYSHIFT)->pixels;
+            dcvars.prevsource = R_GetPatchColumn(patch, (an + xtoviewangle[x-1]) >> ANGLETOSKYSHIFT)->pixels;
+            dcvars.nextsource = R_GetPatchColumn(patch, (an + xtoviewangle[x+1]) >> ANGLETOSKYSHIFT)->pixels;
+            colfunc(&dcvars);
+          }
 
           return;
         }
@@ -621,13 +622,14 @@ static void R_DoDrawPlane(visplane_t *pl)
 
       // killough 10/98: Use sky scrolling offset, and possibly flip picture
       for (x = pl->minx; (dcvars.x = x) <= pl->maxx; x++)
-        if ((dcvars.yl = pl->top[x]) != SHRT_MAX && dcvars.yl <= (dcvars.yh = pl->bottom[x])) // dropoff overflow
-        {
-          dcvars.source = R_GetTextureColumn(tex_patch, ((an + xtoviewangle[x])^flip) >> ANGLETOSKYSHIFT);
-          dcvars.prevsource = R_GetTextureColumn(tex_patch, ((an + xtoviewangle[x-1])^flip) >> ANGLETOSKYSHIFT);
-          dcvars.nextsource = R_GetTextureColumn(tex_patch, ((an + xtoviewangle[x+1])^flip) >> ANGLETOSKYSHIFT);
-          colfunc(&dcvars);
-        }
+      {
+        if (!((dcvars.yl = pl->top[x]) != SHRT_MAX && dcvars.yl <= (dcvars.yh = pl->bottom[x]))) // dropoff overflow
+          continue;
+        dcvars.source = R_GetTextureColumn(tex_patch, ((an + xtoviewangle[x])^flip) >> ANGLETOSKYSHIFT);
+        dcvars.prevsource = R_GetTextureColumn(tex_patch, ((an + xtoviewangle[x-1])^flip) >> ANGLETOSKYSHIFT);
+        dcvars.nextsource = R_GetTextureColumn(tex_patch, ((an + xtoviewangle[x+1])^flip) >> ANGLETOSKYSHIFT);
+        colfunc(&dcvars);
+      }
     }
     else {     // regular flat
 
