@@ -3032,7 +3032,7 @@ static void P_LoadBlockMap (int lump)
 
   // LUT bmapwidth muls
   count = sizeof(int) * bmapheight;
-  bmapwidthmuls = Z_MallocLevel(count);
+  bmapwidthmuls = malloc_IfSameLevel(bmapwidthmuls, sizeof(*bmapwidthmuls) * count);
 
   for (int f = 0; f < bmapheight; f++){
     bmapwidthmuls[f] = f * bmapwidth;
