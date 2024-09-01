@@ -178,7 +178,7 @@ PUREFUNC int R_CompatiblePointOnSide(volatile fixed_t x, volatile fixed_t y, con
 PUREFUNC int R_CompatiblePointOnSide(fixed_t x, fixed_t y, const node_t *node)
 #endif
 {
-  int32_t mask;
+  int mask;
 
   if (!node->dx)
     return x <= node->x ? node->dy > 0 : node->dy < 0;
@@ -202,7 +202,7 @@ PUREFUNC int R_ZDoomPointOnSide(volatile fixed_t x, volatile fixed_t y, const no
 PUREFUNC int R_ZDoomPointOnSide(fixed_t x, fixed_t y, const node_t *node)
 #endif
 {
-  int32_t mask;
+  int mask;
 
   if (!node->dx)
     return x <= node->x ? node->dy > 0 : node->dy < 0;
