@@ -315,7 +315,7 @@ void gld_MapDrawChunks(player_t *plr, int fx, int fy, fixed_t mx, fixed_t my, in
     }
 
     // sort subsectors by texture
-    qsort(visible_chunks, visible_chunks_count,
+    qs22j(visible_chunks, visible_chunks_count,
       sizeof(visible_chunks[0]), dicmp_visible_subsectors_by_pic);
   }
 
