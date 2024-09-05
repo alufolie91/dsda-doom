@@ -34,6 +34,7 @@
 #ifndef __P_SETUP__
 #define __P_SETUP__
 
+#include "doomdef.h"
 #include "p_mobj.h"
 
 void P_SetupLevel(int episode, int map, int playermask, int skill);
@@ -83,5 +84,6 @@ typedef struct
 
 extern map_loader_t map_loader;
 
+extern char current_map_lump[9];
 
 #endif
