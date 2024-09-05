@@ -3189,7 +3189,6 @@ void M_ChangeFullScreen(void)
 void M_ChangeVideoMode(void)
 {
   V_ChangeScreenResolution();
-  M_ChangeMaxViewPitch();
   if (gamestate == GS_LEVEL)
   {
     PO_ChangeRenderMode();

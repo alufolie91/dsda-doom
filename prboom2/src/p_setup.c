@@ -3679,11 +3679,11 @@ void P_SetupLevel(int episode, int map, int playermask, int skill)
   }
 
   // find map name
-  snprintf(lumpname, sizeof(lumpname), "%s", dsda_MapLumpName(episode, map));
-  lumpnum = W_GetNumForName(lumpname);
+  snprintf(current_map_lump, sizeof(current_map_lump), "%s", dsda_MapLumpName(episode, map));
+  lumpnum = W_GetNumForName(current_map_lump);
 
   // Must process musinfo to get default track before calling S_Start
-  S_ParseMusInfo(lumpname);
+  S_ParseMusInfo(current_map_lump);
 
   // Make sure all sounds are stopped before Z_FreeTag.
   S_Start();
@@ -3691,24 +3691,6 @@ void P_SetupLevel(int episode, int map, int playermask, int skill)
   Z_FreeLevel();
 
   P_InitThinkers();
-
-  // if working with a devlopment map, reload it
-  //    W_Reload ();     killough 1/31/98: W_Reload obsolete
-
-  // find map name
-  strcpy(current_map_lump, MAPNAME(episode, map));
-  lumpnum = W_GetNumForName(current_map_lump);
-
-  if (strlen(current_map_lump) < 6)
-  {
-    snprintf(gl_lumpname, sizeof(gl_lumpname), "GL_%s", current_map_lump);
-    gl_lumpnum = W_CheckNumForName(gl_lumpname); // figgi
-  }
-  else
-  {
-    gl_lumpname[0] = '\0';
-    gl_lumpnum = LUMP_NOT_FOUND;
-  }
 
   // e6y
   // Refuse to load a map with incomplete pwad structure.

@@ -1282,21 +1282,15 @@ void gld_AddWall(gl_wall_t *wall)
 
     if (frontsector->ceilingpic==skyflatnum)
     {
-      wall.ytop=MAXCOORD*2; // Simply using MAXCOORD would result in HOM when the floor is at a height close to the limit
-      wall.ybottom=(float)frontsector->ceilingheight/MAP_SCALE;
-      gld_AddSkyTexture(&wall, frontsector->ceilingsky, frontsector->ceilingsky, SKY_CEILING);
-      item.ytop=MAXCOORD;
+      item.ytop=MAXCOORD*2; // Simply using MAXCOORD would result in HOM when the floor is at a height close to the limit
       item.ybottom=(float)frontsector->ceilingheight/MAP_SCALE;
-      gld_AddSkyTexture(&item, frontsector->sky, frontsector->sky, SKY_CEILING);
+      gld_AddSkyTexture(&item, frontsector->ceilingsky, frontsector->ceilingsky, SKY_CEILING);
     }
     if (frontsector->floorpic==skyflatnum)
     {
-      wall.ytop=(float)frontsector->floorheight/MAP_SCALE;
-      wall.ybottom=-MAXCOORD*2;  // Simply using MAXCOORD would result in HOM when the ceiling is at a height close to the limit
-      gld_AddSkyTexture(&wall, frontsector->floorsky, frontsector->floorsky, SKY_FLOOR);
       item.ytop=(float)frontsector->floorheight/MAP_SCALE;
-      item.ybottom=-MAXCOORD;
-      gld_AddSkyTexture(&item, frontsector->sky, frontsector->sky, SKY_FLOOR);
+      item.ybottom=-MAXCOORD*2;  // Simply using MAXCOORD would result in HOM when the ceiling is at a height close to the limit
+      gld_AddSkyTexture(&item, frontsector->floorsky, frontsector->floorsky, SKY_FLOOR);
     }
     temptex=gld_RegisterTexture(texturetranslation[sidedef->midtexture], true, false, true, false);
     if (temptex && frontsector->ceilingheight > frontsector->floorheight)
@@ -1368,8 +1362,7 @@ void gld_AddWall(gl_wall_t *wall)
     item.yscale = (float) sidedef->scaley_top / FRACUNIT;
     if (frontsector->ceilingpic==skyflatnum)// || backsector->ceilingpic==skyflatnum)
     {
-      wall.ytop= MAXCOORD*2;
-      item.ytop= MAXCOORD;
+      item.ytop= MAXCOORD*2;
       if (
           // e6y
           // There is no more HOM in the starting area on Memento Mori map29 and on map30.
@@ -1389,7 +1382,7 @@ void gld_AddWall(gl_wall_t *wall)
         // Old code: wall.ybottom=(float)backsector->floorheight/MAP_SCALE;
         item.ybottom=((float)(backsector->floorheight +
           (specific_rowoffset > 0 ? specific_rowoffset : 0)))/MAP_SCALE;
-        gld_AddSkyTexture(&item, frontsector->sky, backsector->sky, SKY_CEILING);
+        gld_AddSkyTexture(&item, frontsector->ceilingsky, backsector->ceilingsky, SKY_CEILING);
       }
       else
       {
@@ -1401,7 +1394,7 @@ void gld_AddWall(gl_wall_t *wall)
           {
             fix_sky_bleed = true;
           }
-          gld_AddSkyTexture(&item, frontsector->sky, backsector->sky, SKY_CEILING);
+          gld_AddSkyTexture(&item, frontsector->ceilingsky, backsector->ceilingsky, SKY_CEILING);
         }
         else
         {
@@ -1418,7 +1411,7 @@ void gld_AddWall(gl_wall_t *wall)
             {
               item.ybottom=(float)max_ceiling/MAP_SCALE;
             }
-            gld_AddSkyTexture(&item, frontsector->sky, backsector->sky, SKY_CEILING);
+            gld_AddSkyTexture(&item, frontsector->ceilingsky, backsector->ceilingsky, SKY_CEILING);
           }
         }
       }
@@ -1434,8 +1427,8 @@ void gld_AddWall(gl_wall_t *wall)
             !(wall->flags & GL_WALLF_NOBLEED) &&
             backsector->floorheight < backsector->ceilingheight)
         {
-          item.ytop=((float)(ceiling_height)/(float)MAP_SCALE)+SMALLDELTA;
-          item.ybottom=((float)(floor_height)/(float)MAP_SCALE)-SMALLDELTA;
+          item.ytop=((float)(ceiling_height)/(float)MAP_SCALE);
+          item.ybottom=((float)(floor_height)/(float)MAP_SCALE);
           if (item.ybottom >= zCamera)
           {
             item.flag=GLDWF_TOPFLUD;
@@ -1604,8 +1597,7 @@ bottomtexture:
     item.yscale = (float) sidedef->scaley_bottom / FRACUNIT;
     if (frontsector->floorpic==skyflatnum)
     {
-      wall.ybottom=-MAXCOORD*2;
-      item.ybottom=-MAXCOORD;
+      item.ybottom=-MAXCOORD*2;
       if (
           (backsector->ceilingheight==backsector->floorheight) &&
           (backsector->floorpic==skyflatnum) &&
@@ -1613,14 +1605,14 @@ bottomtexture:
          )
       {
         item.ytop=(float)backsector->floorheight/MAP_SCALE;
-        gld_AddSkyTexture(&item, frontsector->sky, backsector->sky, SKY_FLOOR);
+        gld_AddSkyTexture(&item, frontsector->floorsky, backsector->floorsky, SKY_FLOOR);
       }
       else
       {
         if (bottomtexture == NO_TEXTURE && midtexture == NO_TEXTURE)
         {
           item.ytop=(float)max_floor/MAP_SCALE;
-          gld_AddSkyTexture(&item, frontsector->sky, backsector->sky, SKY_CEILING);
+          gld_AddSkyTexture(&item, frontsector->ceilingsky, backsector->ceilingsky, SKY_CEILING);
         }
         else
         {
@@ -1629,7 +1621,7 @@ bottomtexture:
             backsector->floorheight >= frontsector->ceilingheight)
           {
             item.ytop=(float)min_floor/MAP_SCALE;
-            gld_AddSkyTexture(&item, frontsector->sky, backsector->sky, SKY_FLOOR);
+            gld_AddSkyTexture(&item, frontsector->floorsky, backsector->floorsky, SKY_FLOOR);
           }
         }
       }
@@ -1643,8 +1635,8 @@ bottomtexture:
           !(wall->flags & GL_WALLF_NOBLEED) &&
           backsector->floorheight < backsector->ceilingheight)
       {
-        item.ytop=((float)(ceiling_height)/(float)MAP_SCALE)+SMALLDELTA;
-        item.ybottom=((float)(floor_height)/(float)MAP_SCALE)-SMALLDELTA;
+        item.ytop=((float)(ceiling_height)/(float)MAP_SCALE);
+        item.ybottom=((float)(floor_height)/(float)MAP_SCALE);
         if (item.ytop <= zCamera)
         {
           item.flag = GLDWF_BOTFLUD;

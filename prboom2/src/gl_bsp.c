@@ -351,9 +351,8 @@ static void UpdatePlane(gl_chunk_t* chunk, gl_plane_t* source, dboolean ceiling)
       source->yscale = sector->ceiling_yscale;
       source->rotation = sector->ceiling_rotation;
       source->lightlevel = cll;
-      source->picnum =
-          sector->ceilingpic == skyflatnum && sector->sky & PL_SKYFLAT
-              ? sector->sky
+      source->picnum = sector->ceilingpic == skyflatnum && sector->ceilingsky & PL_SKYFLAT
+              ? sector->ceilingsky
               : sector->ceilingpic;
     } else
       source->picnum = -1;
@@ -374,9 +373,8 @@ static void UpdatePlane(gl_chunk_t* chunk, gl_plane_t* source, dboolean ceiling)
       source->yscale = sector->floor_yscale;
       source->rotation = sector->floor_rotation;
       source->lightlevel = fll;
-      source->picnum =
-          sector->floorpic == skyflatnum && sector->sky & PL_SKYFLAT
-              ? sector->sky
+      source->picnum = sector->floorpic == skyflatnum && sector->floorsky & PL_SKYFLAT
+              ? sector->floorsky
               : sector->floorpic;
     } else
       source->picnum = -1;
