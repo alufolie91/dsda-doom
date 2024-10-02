@@ -323,12 +323,16 @@ const char *I_ConfigDir(void)
 
       Z_Free(base);
 
+#ifdef __APPLE__
+      base = dsda_ConcatDir(home, "Library/Application Support/dsda-doom");
+#else
       xdg_data_home = M_getenv("XDG_DATA_HOME");
       if (xdg_data_home)
         base = dsda_ConcatDir(xdg_data_home, "dsda-doom");
       else
         // $XDG_DATA_HOME should be $HOME/.local/share if not defined.
         base = dsda_ConcatDir(home, ".local/share/dsda-doom");
+#endif
     }
 
     M_MakeDir(base, true); // Make sure it exists
@@ -431,6 +435,7 @@ char* I_FindFileInternal(const char* wfname, const char* ext, dboolean isStatic)
     {DOOMWADDIR}, // build-time configured DOOMWADDIR
     {DSDA_ABSOLUTE_PWAD_PATH}, // build-time configured absolute path to dsda-doom.wad
     {NULL, NULL, NULL, I_GetBasePath}, // search the base path provided by SDL
+    {NULL, "../share/games/doom", NULL, I_GetBasePath}, // AppImage
     {NULL, "doom", "HOME"}, // ~/doom
     {NULL, NULL, "HOME"}, // ~
     {"/usr/local/share/games/doom"},
