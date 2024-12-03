@@ -176,58 +176,58 @@ static void *Z_ReallocTag(void *ptr, size_t n, int tag)
   return p;
 }
 
-static inline void *Z_CallocTag(size_t n1, size_t n2, int tag)
+static void *Z_CallocTag(size_t n1, size_t n2, int tag)
 {
   return
     (n1*=n2) ? memset(Z_MallocTag(n1, tag), 0, n1) : NULL;
 }
 
-static inline char *Z_StrdupTag(const char *s, int tag)
+static char *Z_StrdupTag(const char *s, int tag)
 {
   return strcpy(Z_MallocTag(strlen(s)+1, tag), s);
 }
 
-inline void *Z_Malloc(size_t size)
+void *Z_Malloc(size_t size)
 {
   return Z_MallocTag(size, ZONE_STATIC);
 }
 
-inline void *Z_Calloc(size_t n, size_t n2)
+void *Z_Calloc(size_t n, size_t n2)
 {
   return Z_CallocTag(n, n2, ZONE_STATIC);
 }
 
-inline void *Z_Realloc(void *p, size_t n)
+void *Z_Realloc(void *p, size_t n)
 {
   return Z_ReallocTag(p, n, ZONE_STATIC);
 }
 
-inline char *Z_Strdup(const char *s)
+char *Z_Strdup(const char *s)
 {
   return Z_StrdupTag(s, ZONE_STATIC);
 }
 
-inline void Z_FreeLevel(void)
+void Z_FreeLevel(void)
 {
   return Z_FreeTag(ZONE_LEVEL);
 }
 
-inline void *Z_MallocLevel(size_t size)
+void *Z_MallocLevel(size_t size)
 {
   return Z_MallocTag(size, ZONE_LEVEL);
 }
 
-inline void *Z_CallocLevel(size_t n, size_t n2)
+void *Z_CallocLevel(size_t n, size_t n2)
 {
   return Z_CallocTag(n, n2, ZONE_LEVEL);
 }
 
-inline void *Z_ReallocLevel(void *p, size_t n)
+void *Z_ReallocLevel(void *p, size_t n)
 {
   return Z_ReallocTag(p, n, ZONE_LEVEL);
 }
 
-inline char *Z_StrdupLevel(const char *s)
+char *Z_StrdupLevel(const char *s)
 {
   return Z_StrdupTag(s, ZONE_LEVEL);
 }
