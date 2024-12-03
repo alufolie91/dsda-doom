@@ -460,7 +460,7 @@ dboolean P_BlockLinesIterator(int x, int y, dboolean func(line_t*))
 
   if (x<0 || y<0 || x>=bmapwidth || y>=bmapheight)
     return true;
-  offset = bmapwidthmuls[y]+x;
+  offset = y*bmapwidth+x;
 
   if (map_format.polyobjs)
   {
@@ -537,7 +537,7 @@ dboolean P_BlockLinesIterator2(int x, int y, dboolean func(line_t*))
 
   if (x<0 || y<0 || x>=bmapwidth || y>=bmapheight)
     return true;
-  offset = bmapwidthmuls[y]+x;
+  offset = y*bmapwidth+x;
 
   if (map_format.polyobjs)
   {
@@ -611,7 +611,7 @@ dboolean P_BlockThingsIterator(int x, int y, dboolean func(mobj_t*))
 {
   mobj_t *mobj;
   if (!(x<0 || y<0 || x>=bmapwidth || y>=bmapheight))
-    for (mobj = blocklinks[bmapwidthmuls[y]+x]; mobj; mobj = mobj->bnext)
+    for (mobj = blocklinks[y*bmapwidth+x]; mobj; mobj = mobj->bnext)
       if (!func(mobj))
         return false;
   return true;
@@ -1022,7 +1022,7 @@ mobj_t *P_RoughTargetSearch(mobj_t *mo, angle_t fov, int distance)
 
   if (startX >= 0 && startX < bmapwidth && startY >= 0 && startY < bmapheight)
   {
-    if ((target = RoughBlockCheck(mo, bmapwidthmuls[startY] + startX, fov)))
+    if ((target = RoughBlockCheck(mo, startY*bmapwidth + startX, fov)))
     { // found a target right away
       return target;
     }
@@ -1048,7 +1048,7 @@ mobj_t *P_RoughTargetSearch(mobj_t *mo, angle_t fov, int distance)
     {
       blockX = bmapwidth - 1;
     }
-    blockIndex = bmapwidthmuls[blockY] + blockX;
+    blockIndex = blockY * bmapwidth + blockX;
     firstStop = startX + count;
     if (firstStop < 0)
     {
@@ -1067,9 +1067,9 @@ mobj_t *P_RoughTargetSearch(mobj_t *mo, angle_t fov, int distance)
     {
       secondStop = bmapheight - 1;
     }
-    thirdStop =  bmapwidthmuls[secondStop] + blockX;
-    secondStop =  bmapwidthmuls[secondStop] + firstStop;
-    firstStop += bmapwidthmuls[blockY];
+    thirdStop = secondStop * bmapwidth + blockX;
+    secondStop = secondStop * bmapwidth + firstStop;
+    firstStop += blockY * bmapwidth;
     finalStop = blockIndex;
 
     // Trace the first block section (along the top)
