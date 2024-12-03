@@ -777,29 +777,6 @@ void R_Init (void)
   R_InitPatches();
 }
 
-//
-// R_PointInSubsector
-//
-// killough 5/2/98: reformatted, cleaned up
-
-subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
-{
-  int nodenum = numnodes-1;
-
-  // special case for trivial maps (single subsector, no nodes)
-  if (numnodes == 0)
-    return subsectors;
-
-  while (!(nodenum & NF_SUBSECTOR))
-    nodenum = nodes[nodenum].children[R_PointOnSide(x, y, nodes+nodenum)];
-  return &subsectors[nodenum & ~NF_SUBSECTOR];
-}
-
-sector_t *R_PointInSector(fixed_t x, fixed_t y)
-{
-  return R_PointInSubsector(x, y)->sector;
-}
-
 void R_SectorCenter(fixed_t *x, fixed_t *y, sector_t *sec)
 {
   int i;

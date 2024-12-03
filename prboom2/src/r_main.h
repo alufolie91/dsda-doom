@@ -133,8 +133,21 @@ extern int (*R_PointOnSegSide)(fixed_t x, fixed_t y, const seg_t *line);
 #define R_PointToAngle2(x1, y1, x, y) R_PointToAngleSlope(x1, y1, x, y, SlopeDiv)
 #define R_PointToAngleEx(x, y) R_PointToAngleEx2(viewx, viewy, x, y)
 
-subsector_t *R_PointInSubsector(fixed_t x, fixed_t y);
-sector_t *R_PointInSector(fixed_t x, fixed_t y);
+static inline subsector_t *R_PointInSubsector(fixed_t x, fixed_t y)
+{
+  int nodenum = numnodes-1;
+
+  // special case for trivial maps (single subsector, no nodes)
+  if (numnodes == 0)
+    return subsectors;
+
+  while (!(nodenum & NF_SUBSECTOR))
+    nodenum = nodes[nodenum].children[R_PointOnSide(x, y, nodes+nodenum)];
+  return &subsectors[nodenum & ~NF_SUBSECTOR];
+}
+
+#define R_PointInSector(x, y) R_PointInSubsector(x, y)->sector
+
 void R_SectorCenter(fixed_t *x, fixed_t *y, sector_t *sec);
 void R_LineCenter(fixed_t *x, fixed_t *y, line_t *line);
 
