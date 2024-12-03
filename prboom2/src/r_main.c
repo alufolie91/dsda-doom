@@ -178,8 +178,6 @@ PUREFUNC int R_CompatiblePointOnSide(volatile fixed_t x, volatile fixed_t y, con
 PUREFUNC int R_CompatiblePointOnSide(fixed_t x, fixed_t y, const node_t *node)
 #endif
 {
-  int mask;
-
   if (!node->dx)
     return x <= node->x ? node->dy > 0 : node->dy < 0;
 
@@ -190,10 +188,9 @@ PUREFUNC int R_CompatiblePointOnSide(fixed_t x, fixed_t y, const node_t *node)
   y -= node->y;
 
   // Try to quickly decide by looking at sign bits.
-  // also use a mask to avoid branch prediction
-  mask = (node->dy ^ node->dx ^ x ^ y) >> 31;
-  return (mask & ((node->dy ^ x) < 0)) |  // (left is negative)
-  (~mask & (FixedMul(y, node->dx>>FRACBITS) >= FixedMul(node->dy>>FRACBITS, x)));
+  if ((node->dy ^ node->dx ^ x ^ y) < 0)
+    return (node->dy ^ x) < 0;  // (left is negative)
+  return FixedMul(y, node->dx>>FRACBITS) >= FixedMul(node->dy>>FRACBITS, x);
 }
 
 #if defined(__clang__)
