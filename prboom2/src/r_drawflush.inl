@@ -30,6 +30,8 @@
 
 #if (R_DRAWCOLUMN_PIPELINE & RDC_TRANSLUCENT)
 #define GETDESTCOLOR(col1, col2) (temptranmap[((col1)<<8)+(col2)])
+#elif (R_DRAWCOLUMN_PIPELINE & RDC_FUZZ)
+#define GETDESTCOLOR(col) (tempfuzzmap[6*256+(col)])
 #else
 #define GETDESTCOLOR(col) (col)
 #endif
@@ -43,57 +45,6 @@
 //
 static void R_FLUSHWHOLE_FUNCNAME(void)
 {
-    // Scaled software fuzz algorithm
-#if (R_DRAWCOLUMN_PIPELINE & RDC_FUZZ)
-    int x;
-    byte* dest, * topleft, * fuzztable;
-    int yl;
-    int count, count2, cmask;
-    int tableoffset;
-    int fp, cs;
-
-    x = temp_x;
-    topleft = drawvars.topleft + startx;
-    cs = fuzzcellsize;
-    fuzztable = fuzzintensitytables + 5 * 256 * boom_cm;
-
-    while (--x >= 0)
-    {
-        yl = tempyl[x];
-        dest = topleft + yl * drawvars.pitch + x;
-        count = tempyh[x] - yl + 1;
-
-        // Draw fuzz stripe independently from vertical screen position
-        fp = fuzzpos + (yl / cs);
-
-        // Draw column, cell stripe by cell stripe
-        count2 = cs - (yl % cs);
-        do
-        {
-            tableoffset = fuzzintensity[fp % FUZZTABLE] * 256;
-
-            count -= count2;
-
-            // if (count < 0) {
-            //    count2 += count;
-            //    count = 0;
-            // }
-            cmask = count >> (sizeof(int) * 8 - 1);
-            count2 += count & cmask;
-            count &= ~cmask;
-
-            // Draw cell stripe, pixel by pixel
-            do
-            {
-                *dest = fuzztable[tableoffset + *dest];
-                dest += drawvars.pitch;
-            } while (--count2);
-
-            ++fp;
-            count2 = cs;
-        } while (count);
-    }
-#else  /* if (R_DRAWCOLUMN_PIPELINE & RDC_FUZZ) */
    byte *source;
    byte *dest;
    int  count, yl;
@@ -109,6 +60,13 @@ static void R_FLUSHWHOLE_FUNCNAME(void)
       {
 #if (R_DRAWCOLUMN_PIPELINE & RDC_TRANSLUCENT)
          *dest = GETDESTCOLOR(*dest, *source);
+#elif (R_DRAWCOLUMN_PIPELINE & RDC_FUZZ)
+         // SoM 7-28-04: Fix the fuzz problem.
+         *dest = GETDESTCOLOR(dest[fuzzoffset[fuzzpos]]);
+
+         // Clamp table lookup index.
+         if(++fuzzpos == FUZZTABLE)
+            fuzzpos = 0;
 #else
          *dest = *source;
 #endif
@@ -117,7 +75,6 @@ static void R_FLUSHWHOLE_FUNCNAME(void)
          dest += drawvars.pitch;
       }
    }
-#endif  /* if (R_DRAWCOLUMN_PIPELINE & RDC_FUZZ) */
 }
 
 //
@@ -133,12 +90,6 @@ static void R_FLUSHHEADTAIL_FUNCNAME(void)
    byte *dest;
    int count, colnum = 0;
    int yl, yh;
-
-#if (R_DRAWCOLUMN_PIPELINE & RDC_FUZZ)
-   // Only whole flushes are supported for fuzz
-   R_FLUSHWHOLE_FUNCNAME();
-   return;
-#endif
 
    while(colnum < 4)
    {
@@ -157,6 +108,13 @@ static void R_FLUSHHEADTAIL_FUNCNAME(void)
 #if (R_DRAWCOLUMN_PIPELINE & RDC_TRANSLUCENT)
             // haleyjd 09/11/04: use temptranmap here
             *dest = GETDESTCOLOR(*dest, *source);
+#elif (R_DRAWCOLUMN_PIPELINE & RDC_FUZZ)
+            // SoM 7-28-04: Fix the fuzz problem.
+            *dest = GETDESTCOLOR(dest[fuzzoffset[fuzzpos]]);
+
+            // Clamp table lookup index.
+            if(++fuzzpos == FUZZTABLE)
+               fuzzpos = 0;
 #else
             *dest = *source;
 #endif
@@ -178,6 +136,13 @@ static void R_FLUSHHEADTAIL_FUNCNAME(void)
 #if (R_DRAWCOLUMN_PIPELINE & RDC_TRANSLUCENT)
             // haleyjd 09/11/04: use temptranmap here
             *dest = GETDESTCOLOR(*dest, *source);
+#elif (R_DRAWCOLUMN_PIPELINE & RDC_FUZZ)
+            // SoM 7-28-04: Fix the fuzz problem.
+            *dest = GETDESTCOLOR(dest[fuzzoffset[fuzzpos]]);
+
+            // Clamp table lookup index.
+            if(++fuzzpos == FUZZTABLE)
+               fuzzpos = 0;
 #else
             *dest = *source;
 #endif
@@ -196,8 +161,12 @@ static void R_FLUSHQUAD_FUNCNAME(void)
    byte *dest = drawvars.topleft + commontop*drawvars.pitch + startx;
    int count;
 #if (R_DRAWCOLUMN_PIPELINE & RDC_FUZZ)
-   // Only whole flushes are supported for fuzz
-   return;
+   int fuzz1, fuzz2, fuzz3, fuzz4;
+
+   fuzz1 = fuzzpos;
+   fuzz2 = (fuzz1 + tempyl[1]) % FUZZTABLE;
+   fuzz3 = (fuzz2 + tempyl[2]) % FUZZTABLE;
+   fuzz4 = (fuzz3 + tempyl[3]) % FUZZTABLE;
 #endif
 
    count = commonbot - commontop + 1;
@@ -209,6 +178,20 @@ static void R_FLUSHQUAD_FUNCNAME(void)
       dest[1] = GETDESTCOLOR(dest[1], source[1]);
       dest[2] = GETDESTCOLOR(dest[2], source[2]);
       dest[3] = GETDESTCOLOR(dest[3], source[3]);
+      source += 4 * sizeof(byte);
+      dest += drawvars.pitch * sizeof(byte);
+   }
+#elif (R_DRAWCOLUMN_PIPELINE & RDC_FUZZ)
+   while(--count >= 0)
+   {
+      dest[0] = GETDESTCOLOR(dest[0 + fuzzoffset[fuzz1]]);
+      dest[1] = GETDESTCOLOR(dest[1 + fuzzoffset[fuzz2]]);
+      dest[2] = GETDESTCOLOR(dest[2 + fuzzoffset[fuzz3]]);
+      dest[3] = GETDESTCOLOR(dest[3 + fuzzoffset[fuzz4]]);
+      fuzz1 = (fuzz1 + 1) % FUZZTABLE;
+      fuzz2 = (fuzz2 + 1) % FUZZTABLE;
+      fuzz3 = (fuzz3 + 1) % FUZZTABLE;
+      fuzz4 = (fuzz4 + 1) % FUZZTABLE;
       source += 4 * sizeof(byte);
       dest += drawvars.pitch * sizeof(byte);
    }
