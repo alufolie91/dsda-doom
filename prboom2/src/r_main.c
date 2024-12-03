@@ -210,9 +210,10 @@ PUREFUNC int R_ZDoomPointOnSide(fixed_t x, fixed_t y, const node_t *node)
   x -= node->x;
   y -= node->y;
 
+  // Try to quickly decide by looking at sign bits.
   // also use a mask to avoid branch prediction
   mask = (node->dy ^ node->dx ^ x ^ y) >> 31;
-  return (mask & ((node->dy ^ x) < 0)) |  // (left is negative)
+    return (mask & ((node->dy ^ x) < 0)) |  // (left is negative)
   (~mask & ((long long) y * node->dx >= (long long) x * node->dy));
 }
 
