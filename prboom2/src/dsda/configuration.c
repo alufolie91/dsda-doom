@@ -231,7 +231,7 @@ dsda_config_t dsda_config[dsda_config_count] = {
   },
   [dsda_config_menu_background] = {
     "menu_background", dsda_config_menu_background,
-    CONF_BOOL(1)
+    dsda_config_int, 0, 2, { 1 }
   },
   [dsda_config_process_priority] = {
     "process_priority", dsda_config_process_priority,
@@ -996,6 +996,10 @@ dsda_config_t dsda_config[dsda_config_count] = {
     "dsda_switch_when_ammo_runs_out", dsda_config_switch_when_ammo_runs_out,
     CONF_BOOL(1)
   },
+  [dsda_config_switch_weapon_on_pickup] = {
+    "dsda_switch_weapon_on_pickup", dsda_config_switch_weapon_on_pickup,
+    CONF_BOOL(1), NULL, STRICT_INT(1)
+  },
   [dsda_config_viewbob] = {
     "dsda_viewbob", dsda_config_viewbob,
     CONF_BOOL(1)
@@ -1042,7 +1046,7 @@ dsda_config_t dsda_config[dsda_config_count] = {
   },
   [dsda_config_automap_overlay] = {
     "automap_overlay", dsda_config_automap_overlay,
-    CONF_BOOL(0), &automap_overlay
+    dsda_config_int, 0, 2, { 0 }, &automap_overlay
   },
   [dsda_config_automap_rotate] = {
     "automap_rotate", dsda_config_automap_rotate,

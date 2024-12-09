@@ -160,6 +160,25 @@
 
 extern dboolean  message_dontfuckwithme;
 
+/////////////////////////////
+//
+// booleans for setup screens
+// these tell you what state the setup screens are in, and whether any of
+// the overlay screens (automap colors, reset button message) should be
+// displayed
+
+dboolean setup_active      = false; // in one of the setup screens
+dboolean set_keybnd_active = false; // in key binding setup screens
+dboolean set_weapon_active = false; // in weapons setup screen
+dboolean set_status_active = false; // in status bar/hud setup screen
+dboolean set_auto_active   = false; // in automap setup screen
+dboolean setup_select      = false; // changing an item
+dboolean setup_gather      = false; // gathering keys for value
+dboolean colorbox_active   = false; // color palette being shown
+dboolean set_general_active = false;
+dboolean level_table_active = false;
+
+
 extern const char* g_menu_flat;
 extern int g_menu_save_page_size;
 extern int g_menu_font_spacing;
@@ -188,7 +207,7 @@ void (*messageRoutine)(int response);
 
 static void M_DrawBackground(const char *flat, int scrn)
 {
-  if (dsda_IntConfig(dsda_config_menu_background))
+  if (dsda_IntConfig(dsda_config_menu_background) == 2)
     V_DrawBackground(flat, scrn);
 }
 
@@ -1250,6 +1269,8 @@ static void M_QuitResponse(dboolean affirmative)
 void M_QuitDOOM(int choice)
 {
   static char endstring[160];
+  setup_active = false;
+  currentMenu = NULL;
 
   // We pick index 0 which is language sensitive,
   // or one at random, between 1 and maximum number.
@@ -1507,24 +1528,6 @@ void M_SizeDisplay(int choice)
 //
 // killough 10/98: added Compatibility and General menus
 //
-
-/////////////////////////////
-//
-// booleans for setup screens
-// these tell you what state the setup screens are in, and whether any of
-// the overlay screens (automap colors, reset button message) should be
-// displayed
-
-dboolean setup_active      = false; // in one of the setup screens
-dboolean set_keybnd_active = false; // in key binding setup screens
-dboolean set_weapon_active = false; // in weapons setup screen
-dboolean set_status_active = false; // in status bar/hud setup screen
-dboolean set_auto_active   = false; // in automap setup screen
-dboolean setup_select      = false; // changing an item
-dboolean setup_gather      = false; // gathering keys for value
-dboolean colorbox_active   = false; // color palette being shown
-dboolean set_general_active = false;
-dboolean level_table_active = false;
 
 /////////////////////////////
 //
@@ -3088,6 +3091,7 @@ setup_menu_t misc_settings[] = {
   { "Skip Quit Prompt", S_YESNO, m_conf, G_X, dsda_config_skip_quit_prompt },
   { "Death Use Action", S_CHOICE, m_conf, G_X, dsda_config_death_use_action, 0, death_use_strings },
   { "Boom Weapon Auto Switch", S_YESNO, m_conf, G_X, dsda_config_switch_when_ammo_runs_out },
+  { "Auto Switch Weapon on Pickup", S_YESNO, m_conf, G_X, dsda_config_switch_weapon_on_pickup },
   { "Parallel Same-Sound Limit", S_NUM, m_conf, G_X, dsda_config_parallel_sfx_limit },
   { "Parallel Same-Sound Window", S_NUM, m_conf, G_X, dsda_config_parallel_sfx_window },
   { "Play SFX For Movement Toggles", S_YESNO, m_conf, G_X, dsda_config_movement_toggle_sfx },
@@ -3096,6 +3100,8 @@ setup_menu_t misc_settings[] = {
   NEXT_PAGE(display_settings),
   FINAL_ENTRY
 };
+
+static const char* menu_background_list[] = { "Off", "Dark", "Texture", NULL };
 
 setup_menu_t display_settings[] = {
   { "Display Options", S_SKIP | S_TITLE, m_null, G_X},
@@ -3116,7 +3122,7 @@ setup_menu_t display_settings[] = {
   { "Change Palette On Powers", S_YESNO, m_conf, G_X, dsda_config_palette_onpowers },
   EMPTY_LINE,
   { "Status Bar and Menu Appearance", S_CHOICE, m_conf, G_X, dsda_config_render_stretch_hud, 0, render_stretch_list },
-  { "Fullscreen Menu Background", S_YESNO, m_conf, G_X, dsda_config_menu_background },
+  { "Fullscreen Menu Background", S_CHOICE, m_conf, G_X, dsda_config_menu_background, 0, menu_background_list },
 
   PREV_PAGE(misc_settings),
   NEXT_PAGE(mapping_settings),
@@ -5087,32 +5093,6 @@ static dboolean M_InactiveMenuResponder(int ch, int action, event_t* ev)
     return true;
   }
 
-  // Pop-up Main menu?
-  if ((!in_game && ch > -1) || ch == KEYD_ESCAPE || action == MENU_ESCAPE) // phares
-  {
-    M_StartControlPanel();
-    S_StartVoidSound(g_sfx_swtchn);
-    return true;
-  }
-
-  if (dsda_InputActivated(dsda_input_console))
-  {
-    if (dsda_OpenConsole())
-      S_StartVoidSound(g_sfx_swtchn);
-    return true;
-  }
-
-  {
-    int i;
-
-    for (i = 0; i < CONSOLE_SCRIPT_COUNT; ++i)
-      if (dsda_InputActivated(dsda_input_script_0 + i)) {
-        dsda_ExecuteConsoleScript(i);
-
-        return true;
-      }
-  }
-
   // Toggle gamma
   if (dsda_InputActivated(dsda_input_gamma))
   {
@@ -5126,22 +5106,20 @@ static dboolean M_InactiveMenuResponder(int ch, int action, event_t* ev)
     return true;
   }
 
-  if (dsda_InputActivated(dsda_input_zoomout))
+  if (dsda_InputActivated(dsda_input_cycle_profile))
   {
-    if (automap_active)
-      return false;
-    M_SizeDisplay(0);
-    S_StartVoidSound(g_sfx_stnmov);
+    int value = dsda_CycleConfig(dsda_config_input_profile, true);
+    doom_printf("Input Profile %d", value);
+    S_StartVoidSound(g_sfx_swtchn);
     return true;
   }
 
-  if (dsda_InputActivated(dsda_input_zoomin))
-  {                                   // jff 2/23/98
-    if (automap_active)               // allow
-      return false;                   // key_hud==key_zoomin
-    M_SizeDisplay(1);                                             //  ^
-    S_StartVoidSound(g_sfx_stnmov);                              //  |
-    return true;                                                  // phares
+  if (dsda_InputActivated(dsda_input_cycle_palette))
+  {
+    dsda_CyclePlayPal();
+    doom_printf("Palette %s", dsda_PlayPalData()->lump_name);
+    S_StartVoidSound(g_sfx_swtchn);
+    return true;
   }
 
   //e6y
@@ -5170,6 +5148,52 @@ static dboolean M_InactiveMenuResponder(int ch, int action, event_t* ev)
     doom_printf("Game Speed %d", value);
     // Don't eat the keypress in this case.
     // return true;
+  }
+
+  // Pop-up Main menu?
+  if (ch == KEYD_ESCAPE || action == MENU_ESCAPE ||
+      (!in_game && (ch == KEYD_ENTER || ch == KEYD_SPACEBAR ||
+       dsda_InputActivated(dsda_input_fire) || dsda_InputActivated(dsda_input_use) || dsda_InputActivated(dsda_input_menu_enter)))) // phares
+  {
+    M_StartControlPanel();
+    S_StartVoidSound(g_sfx_swtchn);
+    return true;
+  }
+
+  if (dsda_InputActivated(dsda_input_console))
+  {
+    if (dsda_OpenConsole())
+      S_StartVoidSound(g_sfx_swtchn);
+    return true;
+  }
+
+  {
+    int i;
+
+    for (i = 0; i < CONSOLE_SCRIPT_COUNT; ++i)
+      if (dsda_InputActivated(dsda_input_script_0 + i)) {
+        dsda_ExecuteConsoleScript(i);
+
+        return true;
+      }
+  }
+
+  if (dsda_InputActivated(dsda_input_zoomout))
+  {
+    if (automap_active)
+      return false;
+    M_SizeDisplay(0);
+    S_StartVoidSound(g_sfx_stnmov);
+    return true;
+  }
+
+  if (dsda_InputActivated(dsda_input_zoomin))
+  {                                   // jff 2/23/98
+    if (automap_active)               // allow
+      return false;                   // key_hud==key_zoomin
+    M_SizeDisplay(1);                                             //  ^
+    S_StartVoidSound(g_sfx_stnmov);                              //  |
+    return true;                                                  // phares
   }
 
   if (dsda_InputActivated(dsda_input_nextlevel))
@@ -5235,22 +5259,6 @@ static dboolean M_InactiveMenuResponder(int ch, int action, event_t* ev)
   if (dsda_InputActivated(dsda_input_rewind))
   {
     if (!dsda_StrictMode()) dsda_RewindAutoKeyFrame();
-    return true;
-  }
-
-  if (dsda_InputActivated(dsda_input_cycle_profile))
-  {
-    int value = dsda_CycleConfig(dsda_config_input_profile, true);
-    doom_printf("Input Profile %d", value);
-    S_StartVoidSound(g_sfx_swtchn);
-    return true;
-  }
-
-  if (dsda_InputActivated(dsda_input_cycle_palette))
-  {
-    dsda_CyclePlayPal();
-    doom_printf("Palette %s", dsda_PlayPalData()->lump_name);
-    S_StartVoidSound(g_sfx_swtchn);
     return true;
   }
 
@@ -5824,6 +5832,29 @@ void M_StartControlPanel (void)
   itemOn = currentMenu->lastOn;   // JDC
 }
 
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu Shaded Overlay Stuff
+//
+// This displays a dark overlay under certain screens of the menus
+
+dboolean fadeBG(void)
+{
+  return dsda_IntConfig(dsda_config_menu_background) == 1;
+}
+
+dboolean M_MenuIsShaded(void)
+{
+  int Options = (setup_active || currentMenu == &OptionsDef || currentMenu == &SoundDef);
+  return fadeBG() && Options;
+}
+
+static void M_ShadedScreen(int scrn)
+{
+  V_DrawShaded(scrn, 0, 0, SCREENWIDTH, SCREENHEIGHT, FULLSHADE);
+}
+
 //
 // M_Drawer
 // Called after the view has been rendered,
@@ -5835,6 +5866,9 @@ void M_StartControlPanel (void)
 void M_Drawer (void)
 {
   V_BeginUIDraw();
+
+  if (M_MenuIsShaded())
+    M_ShadedScreen(0);
 
   inhelpscreens = false;
 
