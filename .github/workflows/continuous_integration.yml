@@ -112,6 +112,9 @@ jobs:
             pkg-config \
             libdumb1-dev \
             libfluidsynth-dev \
+            fluidsynth \
+            libgl-dev \
+            libglu1-mesa-dev \
             libmad0-dev \
             libportmidi-dev \
             libsdl2-dev \
@@ -173,4 +176,5 @@ jobs:
         with:
           name: ${{ github.ref_name }}
           allowUpdates: true
+          omitBodyDuringUpdate: true
           artifacts: ${{ matrix.config.artifact-path }}
