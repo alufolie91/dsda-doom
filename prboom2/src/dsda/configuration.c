@@ -1037,9 +1037,13 @@ dsda_config_t dsda_config[dsda_config_count] = {
     "map_title", dsda_config_map_title,
     CONF_BOOL(1), NULL, NOT_STRICT, dsda_RefreshMapTitle
   },
-  [dsda_config_map_trail_mode] = {
-    "map_trail_mode", dsda_config_map_trail_mode,
-    dsda_config_int, 0, map_trail_mode_max - 1, { 0 }, NULL, NOT_STRICT, AM_initPlayerTrail
+  [dsda_config_map_trail] = {
+    "map_trail", dsda_config_map_trail,
+    CONF_BOOL(0), NULL, NOT_STRICT, AM_initPlayerTrail
+  },
+  [dsda_config_map_trail_collisions] = {
+    "map_trail_collisions", dsda_config_map_trail_collisions,
+    CONF_BOOL(0), NULL, NOT_STRICT, AM_initPlayerTrail
   },
   [dsda_config_map_trail_size] = {
     "map_trail_size", dsda_config_map_trail_size,
@@ -1148,7 +1152,11 @@ dsda_config_t dsda_config[dsda_config_count] = {
   },
   [dsda_config_sdl_video_window_pos] = {
     "sdl_video_window_pos", dsda_config_sdl_video_window_pos,
-    CONF_STRING("center")
+    CONF_STRING("")
+  },
+  [dsda_config_sdl_video_display_index] = {
+    "sdl_video_display_index", dsda_config_sdl_video_display_index,
+    dsda_config_int, 0, 10, { 0 }, NULL, NOT_STRICT
   },
   [dsda_config_palette_ondamage] = {
     "palette_ondamage", dsda_config_palette_ondamage,
@@ -1207,6 +1215,10 @@ dsda_config_t dsda_config[dsda_config_count] = {
   [dsda_config_render_linearsky] = {
     "render_linearsky", dsda_config_render_linearsky,
     CONF_BOOL(0), NULL, NOT_STRICT, dsda_RefreshLinearSky
+  },
+  [dsda_config_aspect_ratio_correction] = {
+    "aspect_ratio_correction", dsda_config_aspect_ratio_correction,
+    CONF_BOOL(1), NULL, NOT_STRICT
   },
   [dsda_config_gl_fade_mode] = {
     "gl_fade_mode", dsda_config_gl_fade_mode,

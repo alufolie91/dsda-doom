@@ -157,6 +157,8 @@ const lighttable_t *(*zlight)[MAXLIGHTZ];
 const lighttable_t *fullcolormap;
 const lighttable_t **colormaps;
 
+const byte* colormap_lump;
+
 // killough 3/20/98, 4/4/98: end dynamic colormaps
 
 //e6y: for Boom colormaps in OpenGL mode
@@ -497,11 +499,13 @@ static void R_InitLightTables (void)
 // The change will take effect next refresh.
 //
 
+extern dboolean BorderNeedRefresh;
 dboolean setsizeneeded;
 static int setblocks;
 
 void R_SetViewSize(void)
 {
+  BorderNeedRefresh = true;
   setsizeneeded = true;
   setblocks = dsda_IntConfig(dsda_config_screenblocks);
 }
