@@ -31,7 +31,6 @@
  *  Sliders and icons. Kinda widget stuff.
  *  Setup Menus.
  *  Extended HELP screens.
- *  Dynamic HELP screen.
  *
  *-----------------------------------------------------------------------------*/
 
@@ -1152,6 +1151,15 @@ void M_SaveGame (int choice)
   if (gamestate != GS_LEVEL)
     return;
 
+  if (!dsda_AllowAnyMenuSave())
+  {
+    M_StartMessage(
+      "you can't save the game\n"
+      "under these conditions!\n\n"PRESSKEY,
+      NULL, false); // killough 5/26/98: not externalized
+    return;
+  }
+
   M_SetupNextMenu(&SaveDef);
   M_ReadSaveStrings();
 }
@@ -1409,6 +1417,15 @@ static void M_QuickSave(void)
 {
   if (gamestate != GS_LEVEL)
     return;
+
+  if (!dsda_AllowAnyMenuSave())
+  {
+    M_StartMessage(
+      "you can't save the game\n"
+      "under these conditions!\n\n"PRESSKEY,
+      NULL, false); // killough 5/26/98: not externalized
+    return;
+  }
 
   G_SaveGame(QUICKSAVESLOT, "quicksave");
   doom_printf("quicksave");
@@ -1749,6 +1766,7 @@ static void M_DrawItem(const setup_menu_t* s, int y)
   char *p, *t;
   int w = 0;
   int color =
+    dsda_StrictMode() && dsda_IsStrictConfig(s->config_id) ? cr_label + CR_DARKEN :
     flags & (S_SELECT|S_TC_SEL) ? cr_label_edit :
     flags & S_HILITE ? cr_label_highlight :
     flags & (S_TITLE|S_NEXT|S_PREV) ? cr_title :
@@ -1761,12 +1779,11 @@ static void M_DrawItem(const setup_menu_t* s, int y)
 
   for (p = t = Z_Strdup(s->m_text); (p = strtok(p,"\n")); y += 8, p = NULL)
   {      /* killough 10/98: support left-justification: */
-    strcpy(menu_buffer,p);
     if (flags & S_CENTER)
-      w = M_GetPixelWidth(menu_buffer) / 2;
+      w = M_GetPixelWidth(p) / 2;
     else if (!(flags & S_LEFTJUST))
-      w = M_GetPixelWidth(menu_buffer) + 4;
-    M_DrawMenuString(x - w, y ,color);
+      w = M_GetPixelWidth(p) + 4;
+    M_DrawString(x - w, y ,color, p);
     // print a blinking "arrow" next to the currently highlighted menu item
     if (s == current_setup_menu + set_menu_itemon && whichSkull && !(flags & S_NOSELECT))
       M_DrawString(x - w - 8, y, color, ">");
@@ -1801,6 +1818,7 @@ static void M_DrawSetting(const setup_menu_t* s, int y)
   // depending on whether the item is a text string or not.
 
   color =
+    dsda_StrictMode() && dsda_IsStrictConfig(s->config_id) ? cr_value + CR_DARKEN :
     flags & S_SELECT ? cr_value_edit :
     flags & S_HILITE ? cr_value_highlight :
     cr_value;
@@ -1808,7 +1826,7 @@ static void M_DrawSetting(const setup_menu_t* s, int y)
   // Is the item a YES/NO item?
 
   if (flags & S_YESNO) {
-    strcpy(menu_buffer, dsda_PersistentIntConfig(s->config_id) ? "YES" : "NO");
+    strcpy(menu_buffer, dsda_IntConfig(s->config_id) ? "YES" : "NO");
 
     if (s == current_setup_menu + set_menu_itemon && whichSkull && !setup_select)
       strcat(menu_buffer, " <");
@@ -1827,12 +1845,16 @@ static void M_DrawSetting(const setup_menu_t* s, int y)
     else {
       int value;
 
-      value = dsda_PersistentIntConfig(s->config_id);
+      value = dsda_IntConfig(s->config_id);
 
       sprintf(menu_buffer, "%d", value);
 
       if (flags & S_CRITEM)
+      {
         color = value;
+        if (dsda_StrictMode() && dsda_IsStrictConfig(s->config_id))
+          color += CR_DARKEN;
+      }
     }
     if (s == current_setup_menu + set_menu_itemon && whichSkull && !setup_select)
       strcat(menu_buffer, " <");
@@ -1906,7 +1928,7 @@ static void M_DrawSetting(const setup_menu_t* s, int y)
   {
     int ch;
 
-    ch = dsda_PersistentIntConfig(s->config_id);
+    ch = dsda_IntConfig(s->config_id);
     // proff 12/6/98: Drawing of colorchips completly changed for hi-res, it now uses a patch
     // draw the paint chip
     // e6y: wide-res
@@ -1973,7 +1995,7 @@ static void M_DrawSetting(const setup_menu_t* s, int y)
       }
     }
     else {
-      strncpy(text, dsda_PersistentStringConfig(s->config_id), ENTRY_STRING_BFR_SIZE - 1);
+      strncpy(text, dsda_StringConfig(s->config_id), ENTRY_STRING_BFR_SIZE - 1);
     }
 
     // Draw the setting for the item
@@ -1993,7 +2015,7 @@ static void M_DrawSetting(const setup_menu_t* s, int y)
       if (setup_select && (s->m_flags & (S_HILITE | S_SELECT)))
         sprintf(menu_buffer, "%s", entry_string_index);
       else
-        sprintf(menu_buffer, "%s", dsda_PersistentStringConfig(s->config_id));
+        sprintf(menu_buffer, "%s", dsda_StringConfig(s->config_id));
     }
     else
     {
@@ -2002,7 +2024,7 @@ static void M_DrawSetting(const setup_menu_t* s, int y)
       if (setup_select && (s->m_flags & (S_HILITE | S_SELECT)))
         value = choice_value;
       else
-        value = dsda_PersistentIntConfig(s->config_id);
+        value = dsda_IntConfig(s->config_id);
 
       if (s->selectstrings == NULL) {
         sprintf(menu_buffer, "%d", value);
@@ -2079,15 +2101,16 @@ static void M_DrawScreenItems(const setup_menu_t* base_src, int base_y)
   limit_i = max_i - excess_i;
   buffer_i = (max_i - current_i > 3 ? 3 : max_i - current_i);
 
-  if (excess_i)
+  if (excess_i && !inhelpscreens)
   {
+    int xx, yy, ww, hh;
     while (current_i - scroll_i > limit_i - buffer_i)
       ++scroll_i;
 
     // Draw scrollbar if needed
     scrollbar_scale = (185 - DEFAULT_LIST_Y) / (float)max_i;
 
-    int xx = 310, yy = base_y + scroll_i * scrollbar_scale, ww = 2, hh = limit_i * scrollbar_scale;
+    xx = 310, yy = base_y + scroll_i * scrollbar_scale, ww = 2, hh = limit_i * scrollbar_scale;
     V_GetWideRect(&xx, &yy, &ww, &hh, VPT_STRETCH);
     V_FillRect(0, xx, yy, ww, hh, colrngs[cr_scrollbar][playpal_lightest]);
   }
@@ -2455,17 +2478,11 @@ setup_menu_t keys_game_settings[] =  // Key Binding screen strings
   {"SCREEN"      ,S_SKIP|S_TITLE,m_null,KB_X},
 
   // phares 4/13/98:
-  // key_help and key_escape can no longer be rebound. This keeps the
+  // key_escape can no longer be rebound. This keeps the
   // player from getting themselves in a bind where they can't remember how
-  // to get to the menus, and can't remember how to get to the help screen
-  // to give them a clue as to how to get to the menus. :)
-
-  // Also, the keys assigned to these functions cannot be bound to other
-  // functions. Introduce an S_KEEP flag to show that you cannot swap this
-  // key with other keys in the same 'group'. (m_scrn, etc.)
-
-  // {"HELP"        ,S_SKIP|S_KEEP|S_INPUT ,m_scrn,0   ,0,dsda_input_help},
+  // to get to the menus
   // {"MENU"        ,S_SKIP|S_KEEP|S_INPUT ,m_scrn,0   ,0,dsda_input_escape},
+  {"HELP"        ,S_INPUT     ,m_scrn,KB_X,0,dsda_input_help},
   {"PAUSE"       ,S_INPUT     ,m_scrn,KB_X,0,dsda_input_pause},
   {"VOLUME"      ,S_INPUT     ,m_scrn,KB_X,0,dsda_input_soundvolume},
   {"HUD"         ,S_INPUT     ,m_scrn,KB_X,0,dsda_input_hud},
@@ -2800,8 +2817,6 @@ setup_menu_t* demos_settings[] =
 
 setup_menu_t demos_options_settings[] =  // Demos Settings screen
 {
-  { "Strict Mode", S_YESNO, m_conf, DM_X, dsda_config_strict_mode },
-  EMPTY_LINE,
   { "Show Demo Attempts", S_YESNO, m_conf, DM_X, dsda_config_show_demo_attempts },
   { "Show Split Data", S_YESNO, m_conf, DM_X, dsda_config_show_split_data },
   { "Precise Intermission Time", S_YESNO,  m_conf, DM_X, dsda_config_show_level_splits },
@@ -2820,6 +2835,8 @@ setup_menu_t demos_options_settings[] =  // Demos Settings screen
 
 setup_menu_t demos_tas_settings[] =
 {
+  { "Strict Mode", S_YESNO, m_conf, DM_X, dsda_config_strict_mode },
+  EMPTY_LINE,
   { "Wipe At Full Speed", S_YESNO, m_conf, DM_X, dsda_config_wipe_at_full_speed },
   { "Show Command Display", S_YESNO, m_conf, DM_X, dsda_config_command_display },
   { "Command History", S_NUM, m_conf, DM_X, dsda_config_command_history_size },
@@ -2902,7 +2919,7 @@ setup_menu_t auto_options_settings[] =
   { "Show Secrets only after entering", S_YESNO, m_conf, AU_X, dsda_config_map_secret_after },
   { "Grid cell size 8..256, -1 for auto", S_NUM, m_conf, AU_X, dsda_config_map_grid_size },
   { "Pan speed (1..32)", S_NUM, m_conf, AU_X, dsda_config_map_pan_speed },
-  { "Zoom speed (1..32)", S_NUM, m_conf, AU_X, dsda_config_map_scroll_speed },  
+  { "Zoom speed (1..32)", S_NUM, m_conf, AU_X, dsda_config_map_scroll_speed },
   { "Use mouse wheel for zooming", S_YESNO, m_conf, AU_X, dsda_config_map_wheel_zoom },
   { "Show Minimap", S_YESNO, m_conf, AU_X, dsda_config_show_minimap },
   EMPTY_LINE,
@@ -2928,10 +2945,10 @@ setup_menu_t auto_appearance_settings[] =
   { "Textured automap on overlay", S_NUM, m_conf, AA_X, dsda_config_map_textured_overlay_trans },
   { "Lines on overlay", S_NUM, m_conf, AA_X, dsda_config_map_lines_overlay_trans },
   EMPTY_LINE,
-  { "Trail", S_SKIP | S_TITLE, m_null, T_X},
-  { "Player Trail", S_YESNO, m_conf, T_X, dsda_config_map_trail },
-  { "Include Collisions", S_YESNO, m_conf, T_X, dsda_config_map_trail_collisions },
-  { "Player Trail Size", S_NUM, m_conf, T_X, dsda_config_map_trail_size },
+  { "Trail", S_SKIP | S_TITLE, m_null, AA_X},
+  { "Player Trail", S_YESNO, m_conf, AA_X, dsda_config_map_trail },
+  { "Include Collisions", S_YESNO, m_conf, AA_X, dsda_config_map_trail_collisions },
+  { "Player Trail Size", S_NUM, m_conf, AA_X, dsda_config_map_trail_size },
 
   PREV_PAGE(auto_options_settings),
   NEXT_PAGE(auto_colors_settings),
@@ -2956,8 +2973,10 @@ setup_menu_t auto_colors_settings[] =  // 2st AutoMap Settings screen
   {"teleporter line"                ,S_COLOR ,m_conf,AU_X, dsda_config_mapcolor_tele},
   {"secret sector boundary"         ,S_COLOR ,m_conf,AU_X, dsda_config_mapcolor_secr},
   {"revealed secret sector boundary",S_COLOR ,m_conf,AU_X, dsda_config_mapcolor_revsecr},
+  {"tag finder line"                ,S_COLOR ,m_conf,AU_X, dsda_config_mapcolor_tagfinder},
   //jff 4/23/98 add exit line to automap
   {"exit line"                      ,S_COLOR ,m_conf,AU_X, dsda_config_mapcolor_exit},
+  {"alt secret exit line"           ,S_COLOR ,m_conf,AU_X, dsda_config_mapcolor_exitsecr},
   {"computer map unseen line"       ,S_COLOR ,m_conf,AU_X, dsda_config_mapcolor_unsn},
   {"line w/no floor/ceiling changes",S_COLOR ,m_conf,AU_X, dsda_config_mapcolor_flat},
   {"general sprite"                 ,S_COLOR ,m_conf,AU_X, dsda_config_mapcolor_sprt},
@@ -3305,6 +3324,7 @@ setup_menu_t* display_settings[] =
 #define D_X 226
 
 static const char* menu_background_list[] = { "Off", "Dark", "Texture", NULL };
+static const char* translucent_list[] = { "Off", "Default", "w/ Vanilla", NULL };
 
 setup_menu_t display_options_settings[] = {
   { "Hide Weapon", S_YESNO, m_conf, G_X, dsda_config_hide_weapon },
@@ -3315,6 +3335,8 @@ setup_menu_t display_options_settings[] = {
   { "Linear Sky Scrolling", S_YESNO, m_conf, G_X, dsda_config_render_linearsky },
   { "Quake Intensity", S_NUM, m_conf, G_X, dsda_config_quake_intensity },
   { "OpenGL Show Health Bars", S_YESNO, m_conf, G_X, dsda_config_gl_health_bar },
+  { "Translucent Sprites", S_CHOICE, m_conf, G_X, dsda_config_translucent_sprites, 0, translucent_list },
+  { "Translucent Ghosts", S_YESNO, m_conf, G_X, dsda_config_translucent_ghosts },
   EMPTY_LINE,
   { "Change Palette On Pain", S_YESNO, m_conf, G_X, dsda_config_palette_ondamage },
   { "Change Palette On Bonus", S_YESNO, m_conf, G_X, dsda_config_palette_onbonus },
@@ -3330,10 +3352,11 @@ setup_menu_t display_statbar_settings[] =  // Demos Settings screen
 {
   { "Hide Status Bar Horns", S_YESNO, m_conf, DM_X, dsda_config_hide_horns },
   { "Single Key Display", S_YESNO, m_conf, DM_X, dsda_config_sts_traditional_keys },
+  { "Solid Color Background", S_YESNO, m_conf, DM_X, dsda_config_sts_solid_bg_color },
   EMPTY_LINE,
   TITLE("Coloring", DM_X),
   { "Gray %",S_YESNO, m_conf, DM_X, dsda_config_sts_pct_always_gray },
-  { "Use Red Numbers", S_YESNO, m_conf, DM_X, dsda_config_sts_always_red },
+  { "Colored Numbers", S_YESNO, m_conf, DM_X, dsda_config_sts_colored_numbers },
   { "Health Low/Ok", S_NUM, m_conf, DM_X, dsda_config_hud_health_red },
   { "Health Ok/Good", S_NUM, m_conf, DM_X, dsda_config_hud_health_yellow },
   { "Health Good/Extra", S_NUM, m_conf, DM_X, dsda_config_hud_health_green },
@@ -3552,7 +3575,7 @@ typedef struct {
   int completed_count;
   int timed_count;
   int max_timed_count;
-  int sk5_timed_count;
+  int nm_timed_count;
   int best_skill;
   int best_kills;
   int best_items;
@@ -3562,7 +3585,7 @@ typedef struct {
   int max_secrets;
   int best_time;
   int best_max_time;
-  int best_sk5_time;
+  int best_nm_time;
 } wad_stats_summary_t;
 
 static wad_stats_summary_t wad_stats_summary;
@@ -3605,10 +3628,10 @@ static void M_CalculateWadStatsSummary(void)
       wad_stats_summary.best_max_time += map->best_max_time;
     }
 
-    if (map->best_sk5_time >= 0)
+    if (map->best_nm_time >= 0)
     {
-      ++wad_stats_summary.sk5_timed_count;
-      wad_stats_summary.best_sk5_time += map->best_sk5_time;
+      ++wad_stats_summary.nm_timed_count;
+      wad_stats_summary.best_nm_time += map->best_nm_time;
     }
   }
 }
@@ -3684,7 +3707,7 @@ static void M_BuildLevelTable(void)
     if (map->best_skill) {
       dsda_StringPrintF(&m_text, "%d", map->best_skill);
       entry->m_text = m_text.string;
-      if (map->best_skill == 5)
+      if (map->best_skill == num_skills)
         entry->m_flags |= S_TC_SEL;
     }
     else {
@@ -3702,7 +3725,7 @@ static void M_BuildLevelTable(void)
     if (map->best_skill) {
       dsda_StringPrintF(&m_text, "%d/%d", map->best_kills, map->max_kills);
       entry->m_text = m_text.string;
-      if (map->best_kills == map->max_kills)
+      if (map->best_kills >= map->max_kills)
         entry->m_flags |= S_TC_SEL;
     }
     else {
@@ -3720,7 +3743,7 @@ static void M_BuildLevelTable(void)
     if (map->best_skill) {
       dsda_StringPrintF(&m_text, "%d/%d", map->best_items, map->max_items);
       entry->m_text = m_text.string;
-      if (map->best_items == map->max_items)
+      if (map->best_items >= map->max_items)
         entry->m_flags |= S_TC_SEL;
     }
     else {
@@ -3738,7 +3761,7 @@ static void M_BuildLevelTable(void)
     if (map->best_skill) {
       dsda_StringPrintF(&m_text, "%d/%d", map->best_secrets, map->max_secrets);
       entry->m_text = m_text.string;
-      if (map->best_secrets == map->max_secrets)
+      if (map->best_secrets >= map->max_secrets)
         entry->m_flags |= S_TC_SEL;
     }
     else {
@@ -3795,14 +3818,14 @@ static void M_BuildLevelTable(void)
   END_LOOP_LEVEL_TABLE_COLUMN
 
   column_x += 80;
-  INSERT_LEVEL_TABLE_COLUMN("SK 5 TIME", column_x)
+  INSERT_LEVEL_TABLE_COLUMN("NM TIME", column_x)
 
   LOOP_LEVEL_TABLE_COLUMN
     entry->m_flags = S_LABEL | S_SKIP;
     entry->m_x = column_x;
 
-    if (map->best_sk5_time >= 0) {
-      M_PrintTime(&m_text, map->best_sk5_time);
+    if (map->best_nm_time >= 0) {
+      M_PrintTime(&m_text, map->best_nm_time);
       entry->m_text = m_text.string;
       entry->m_flags |= S_TC_SEL;
     }
@@ -3877,7 +3900,7 @@ static void M_BuildLevelTable(void)
 
   INSERT_LEVEL_TABLE_EMPTY_LINE
 
-  dsda_StringPrintF(&m_text, "Sk 5 Time");
+  dsda_StringPrintF(&m_text, "Nightmare Time");
   level_table_page[page][base_i].m_text = m_text.string;
   level_table_page[page][base_i].m_flags = S_TITLE | S_SKIP;
   level_table_page[page][base_i].m_x = 162;
@@ -3965,8 +3988,8 @@ static void M_BuildLevelTable(void)
 
   INSERT_LEVEL_TABLE_EMPTY_LINE
 
-  if (wad_stats_summary.sk5_timed_count)
-    M_PrintTime(&m_text, wad_stats_summary.best_sk5_time);
+  if (wad_stats_summary.nm_timed_count)
+    M_PrintTime(&m_text, wad_stats_summary.best_nm_time);
   else
     dsda_StringPrintF(&m_text, "- : --");
   level_table_page[page][base_i].m_text = m_text.string;
@@ -4148,20 +4171,6 @@ static void M_DrawExtHelp(void)
 //
 ////////////////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////////////////////
-//
-// Dynamic HELP screen                     // phares 3/2/98
-//
-// Rather than providing the static HELP screens from DOOM and its versions,
-// BOOM provides the player with a dynamic HELP screen that displays the
-// current settings of major key bindings.
-//
-// The Dynamic HELP screen is defined in a manner similar to that used for
-// the Setup Screens above.
-//
-// M_GetKeyString finds the correct string to represent the key binding
-// for the current item being drawn.
-
 static int M_GetKeyString(int c,int offset)
 {
   const char* s;
@@ -4246,77 +4255,6 @@ static int M_GetKeyString(int c,int offset)
   return offset;
 }
 
-//
-// The Dynamic HELP screen table.
-
-#define KT_X1 283
-#define KT_X2 172
-#define KT_X3  87
-
-setup_menu_t helpstrings[] =  // HELP screen strings
-{
-  {"SCREEN"      ,S_SKIP|S_TITLE,m_null,KT_X1},
-  {"HELP"        ,S_SKIP|S_INPUT,m_null,KT_X1,0,dsda_input_help},
-  {"MENU"        ,S_SKIP|S_INPUT,m_null,KT_X1,0,dsda_input_escape},
-  {"PAUSE"       ,S_SKIP|S_INPUT,m_null,KT_X1,0,dsda_input_pause},
-  {"AUTOMAP"     ,S_SKIP|S_INPUT,m_null,KT_X1,0,dsda_input_map},
-  {"SOUND VOLUME",S_SKIP|S_INPUT,m_null,KT_X1,0,dsda_input_soundvolume},
-  {"HUD"         ,S_SKIP|S_INPUT,m_null,KT_X1,0,dsda_input_hud},
-  {"MESSAGES"    ,S_SKIP|S_INPUT,m_null,KT_X1,0,dsda_input_messages},
-  {"GAMMA FIX"   ,S_SKIP|S_INPUT,m_null,KT_X1,0,dsda_input_gamma},
-  {"SPY"         ,S_SKIP|S_INPUT,m_null,KT_X1,0,dsda_input_spy},
-  {"LARGER VIEW" ,S_SKIP|S_INPUT,m_null,KT_X1,0,dsda_input_zoomin},
-  {"SMALLER VIEW",S_SKIP|S_INPUT,m_null,KT_X1,0,dsda_input_zoomout},
-  {"SCREENSHOT"  ,S_SKIP|S_INPUT,m_null,KT_X1,0,dsda_input_screenshot},
-  EMPTY_LINE,
-  {"AUTOMAP"     ,S_SKIP|S_TITLE,m_null,KT_X1},
-  {"FOLLOW MODE" ,S_SKIP|S_INPUT,m_null,KT_X1,0,dsda_input_map_follow},
-  {"ZOOM IN"     ,S_SKIP|S_INPUT,m_null,KT_X1,0,dsda_input_map_zoomin},
-  {"ZOOM OUT"    ,S_SKIP|S_INPUT,m_null,KT_X1,0,dsda_input_map_zoomout},
-  {"MARK PLACE"  ,S_SKIP|S_INPUT,m_null,KT_X1,0,dsda_input_map_mark},
-  {"CLEAR MARKS" ,S_SKIP|S_INPUT,m_null,KT_X1,0,dsda_input_map_clear},
-  {"FULL/ZOOM"   ,S_SKIP|S_INPUT,m_null,KT_X1,0,dsda_input_map_gobig},
-  {"GRID"        ,S_SKIP|S_INPUT,m_null,KT_X1,0,dsda_input_map_grid},
-  {"ROTATE"      ,S_SKIP|S_INPUT,m_null,KT_X1,0,dsda_input_map_rotate},
-  {"OVERLAY"     ,S_SKIP|S_INPUT,m_null,KT_X1,0,dsda_input_map_overlay},
-  NEW_COLUMN,
-  {"WEAPONS"     ,S_SKIP|S_TITLE,m_null,KT_X3},
-  {"FIST"        ,S_SKIP|S_INPUT,m_null,KT_X3,0,dsda_input_weapon1},
-  {"PISTOL"      ,S_SKIP|S_INPUT,m_null,KT_X3,0,dsda_input_weapon2},
-  {"SHOTGUN"     ,S_SKIP|S_INPUT,m_null,KT_X3,0,dsda_input_weapon3},
-  {"CHAINGUN"    ,S_SKIP|S_INPUT,m_null,KT_X3,0,dsda_input_weapon4},
-  {"ROCKET"      ,S_SKIP|S_INPUT,m_null,KT_X3,0,dsda_input_weapon5},
-  {"PLASMA"      ,S_SKIP|S_INPUT,m_null,KT_X3,0,dsda_input_weapon6},
-  {"BFG 9000"    ,S_SKIP|S_INPUT,m_null,KT_X3,0,dsda_input_weapon7},
-  {"CHAINSAW"    ,S_SKIP|S_INPUT,m_null,KT_X3,0,dsda_input_weapon8},
-  {"SSG"         ,S_SKIP|S_INPUT,m_null,KT_X3,0,dsda_input_weapon9},
-  {"BEST"        ,S_SKIP|S_INPUT,m_null,KT_X3,0,dsda_input_toggleweapon},
-  {"FIRE"        ,S_SKIP|S_INPUT,m_null,KT_X3,0,dsda_input_fire},
-  EMPTY_LINE,
-  {"MOVEMENT"    ,S_SKIP|S_TITLE,m_null,KT_X3},
-  {"FORWARD"     ,S_SKIP|S_INPUT,m_null,KT_X3,0,dsda_input_forward},
-  {"BACKWARD"    ,S_SKIP|S_INPUT,m_null,KT_X3,0,dsda_input_backward},
-  {"TURN LEFT"   ,S_SKIP|S_INPUT,m_null,KT_X3,0,dsda_input_turnleft},
-  {"TURN RIGHT"  ,S_SKIP|S_INPUT,m_null,KT_X3,0,dsda_input_turnright},
-  {"RUN"         ,S_SKIP|S_INPUT,m_null,KT_X3,0,dsda_input_speed},
-  {"STRAFE LEFT" ,S_SKIP|S_INPUT,m_null,KT_X3,0,dsda_input_strafeleft},
-  {"STRAFE RIGHT",S_SKIP|S_INPUT,m_null,KT_X3,0,dsda_input_straferight},
-  {"STRAFE"      ,S_SKIP|S_INPUT,m_null,KT_X3,0,dsda_input_strafe},
-  {"AUTORUN"     ,S_SKIP|S_INPUT,m_null,KT_X3,0,dsda_input_autorun},
-  {"180 TURN"    ,S_SKIP|S_INPUT,m_null,KT_X3,0,dsda_input_reverse},
-  {"USE"         ,S_SKIP|S_INPUT,m_null,KT_X3,0,dsda_input_use},
-  NEW_COLUMN,
-  {"GAME"        ,S_SKIP|S_TITLE,m_null,KT_X2},
-  {"SAVE"        ,S_SKIP|S_INPUT,m_null,KT_X2,0,dsda_input_savegame},
-  {"LOAD"        ,S_SKIP|S_INPUT,m_null,KT_X2,0,dsda_input_loadgame},
-  {"QUICKSAVE"   ,S_SKIP|S_INPUT,m_null,KT_X2,0,dsda_input_quicksave},
-  {"END GAME"    ,S_SKIP|S_INPUT,m_null,KT_X2,0,dsda_input_endgame},
-  {"QUICKLOAD"   ,S_SKIP|S_INPUT,m_null,KT_X2,0,dsda_input_quickload},
-  {"QUIT"        ,S_SKIP|S_INPUT,m_null,KT_X2,0,dsda_input_quit},
-
-  FINAL_ENTRY
-};
-
 /* cph 2006/08/06
  * M_DrawString() is the old M_DrawMenuString, except that it is not tied to
  * menu_buffer - no reason to force all the callers to write into one array! */
@@ -4395,16 +4333,8 @@ static void M_DrawHelp (void)
 
   M_ChangeMenu(NULL, mnact_full);
 
-  if (W_PWADLumpNameExists(helplump) || tc_game)
-  {
-    V_ClearBorder();
-    V_DrawNamePatch(0, 0, 0, helplump, CR_DEFAULT, VPT_STRETCH);
-  }
-  else
-  {
-    M_DrawBackground(g_menu_flat, 0);
-    M_DrawScreenItems(helpstrings, 2);
-  }
+  V_ClearBorder();
+  V_DrawNamePatch(0, 0, 0, helplump, CR_DEFAULT, VPT_STRETCH);
 }
 
 //
@@ -4420,15 +4350,10 @@ static void M_DrawAd (void)
 
   V_ClearBorder();
   if (pwad_help2_check || gamemode == shareware)
-      V_DrawNamePatch(0, 0, 0, help2, CR_DEFAULT, VPT_STRETCH);
+    V_DrawNamePatch(0, 0, 0, help2, CR_DEFAULT, VPT_STRETCH);
   else
     M_DrawCredits();
 }
-
-//
-// End of Dynamic HELP screen                // phares 3/2/98
-//
-////////////////////////////////////////////////////////////////////////////
 
 #define CR_X 20
 #define CR_X2 50
@@ -4468,7 +4393,7 @@ void M_DrawCredits(void)     // killough 10/98: credit screen
   {
     // Use V_DrawBackground here deliberately to force drawing a background
     V_DrawBackground(gamemode==shareware ? "CEIL5_1" : "MFLR8_4", 0);
-    M_DrawTitle(9, PACKAGE_NAME " v" PACKAGE_VERSION, cr_title); // PRBOOM
+    M_DrawTitle(9, PROJECT_NAME " v" PROJECT_VERSION, cr_title); // PRBOOM
     M_DrawScreenItems(cred_settings, 32);
   }
 }
@@ -4564,7 +4489,7 @@ dboolean M_ConsoleOpen(void)
   return menuactive && currentMenu == &dsda_ConsoleDef;
 }
 
-static void M_LeaveSetupMenu(void)
+void M_LeaveSetupMenu(void)
 {
   M_SetSetupMenuItemOn(set_menu_itemon);
   setup_active = false;
@@ -4730,10 +4655,10 @@ static dboolean M_WeaponResponder(int ch, int action, event_t* ev)
       // see if 'ch' is already assigned elsewhere. if so,
       // you have to swap assignments.
       ptr2 = weap_priority_settings;
-      old_value = dsda_PersistentIntConfig(ptr1->config_id);
+      old_value = dsda_IntConfig(ptr1->config_id);
       for (; !(ptr2->m_flags & S_END); ptr2++)
         if (ptr2->m_flags & S_WEAP && ptr1 != ptr2 &&
-            dsda_PersistentIntConfig(ptr2->config_id) == ch)
+            dsda_IntConfig(ptr2->config_id) == ch)
         {
           dsda_UpdateIntConfig(ptr2->config_id, old_value, true);
           break;
@@ -5126,6 +5051,9 @@ static dboolean M_SetupNavigationResponder(int ch, int action, event_t* ev)
   {
     int flags = ptr1->m_flags;
 
+    if (dsda_StrictMode() && dsda_IsStrictConfig(ptr1->config_id))
+      return true;
+
     // You've selected an item to change. Highlight it, post a new
     // message about what to do, and get ready to process the
     // change.
@@ -5139,7 +5067,7 @@ static dboolean M_SetupNavigationResponder(int ch, int action, event_t* ev)
     }
     else if (flags & S_COLOR)
     {
-      int color = dsda_PersistentIntConfig(ptr1->config_id);
+      int color = dsda_IntConfig(ptr1->config_id);
 
       if (color < 0 || color > 255) // range check the value
         color = 0;        // 'no show' if invalid
@@ -5150,7 +5078,7 @@ static dboolean M_SetupNavigationResponder(int ch, int action, event_t* ev)
     }
     else if (flags & S_STRING)
     {
-      strncpy(entry_string_index, dsda_PersistentStringConfig(ptr1->config_id),
+      strncpy(entry_string_index, dsda_StringConfig(ptr1->config_id),
               ENTRY_STRING_BFR_SIZE - 1);
 
       entry_index = 0; // current cursor position in entry_string_index
@@ -5159,12 +5087,12 @@ static dboolean M_SetupNavigationResponder(int ch, int action, event_t* ev)
     {
       if (flags & S_STR)
       {
-        strncpy(entry_string_index, dsda_PersistentStringConfig(ptr1->config_id),
+        strncpy(entry_string_index, dsda_StringConfig(ptr1->config_id),
                 ENTRY_STRING_BFR_SIZE - 1);
       }
       else
       {
-        choice_value = dsda_PersistentIntConfig(ptr1->config_id);
+        choice_value = dsda_IntConfig(ptr1->config_id);
       }
     }
 
@@ -5277,7 +5205,7 @@ static dboolean M_SetupResponder(int ch, int action, event_t* ev)
 
 static dboolean M_InactiveMenuResponder(int ch, int action, event_t* ev)
 {
-  if (ch == KEYD_F1)                                         // phares
+  if (dsda_InputActivated(dsda_input_help))                                         // phares
   {
     menu_t* F1_menu = raven ? &InfoDef1 : &ReadDef1;
     M_StartControlPanel ();
@@ -5409,7 +5337,7 @@ static dboolean M_InactiveMenuResponder(int ch, int action, event_t* ev)
 
   // Pop-up Main menu?
   if (ch == KEYD_ESCAPE || action == MENU_ESCAPE ||
-      (!in_game && (ch == KEYD_ENTER || ch == KEYD_SPACEBAR ||
+      (!in_game && (ch == KEYD_ENTER || ch == KEYD_SPACEBAR || ch == KEYD_KEYPADENTER ||
        dsda_InputActivated(dsda_input_fire) || dsda_InputActivated(dsda_input_use) || dsda_InputActivated(dsda_input_menu_enter)))) // phares
   {
     M_StartControlPanel();
@@ -5970,9 +5898,6 @@ dboolean M_Responder(event_t* ev) {
   if (dsda_InputActivated(dsda_input_screenshot))
     I_QueueScreenshot();
 
-  if (heretic && F_BlockingInput())
-    return false;
-
   if (!menuactive)
   {
     if (M_InactiveMenuResponder(ch, action, ev))
@@ -6460,27 +6385,6 @@ static void M_DrawTitle(int y, const char *text, int cm)
 // Initialization Routines to take care of one-time setup
 //
 
-// phares 4/08/98:
-// M_InitHelpScreen() clears the weapons from the HELP
-// screen that don't exist in this version of the game.
-
-static void M_InitHelpScreen(void)
-{
-  setup_menu_t* src;
-
-  for (src = helpstrings; !(src->m_flags & S_END); src++) {
-    if (!src->m_text)
-      continue;
-
-    if ((strncmp(src->m_text,"PLASMA",6) == 0) && (gamemode == shareware))
-      src->m_flags = S_SKIP; // Don't show setting or item
-    if ((strncmp(src->m_text,"BFG",3) == 0) && (gamemode == shareware))
-      src->m_flags = S_SKIP; // Don't show setting or item
-    if ((strncmp(src->m_text,"SSG",3) == 0) && (gamemode != commercial))
-      src->m_flags = S_SKIP; // Don't show setting or item
-  }
-}
-
 //
 // M_Init
 //
@@ -6499,7 +6403,6 @@ void M_Init(void)
   messageString = NULL;
   messageLastMenuActive = menuactive;
 
-  M_InitHelpScreen();   // init the help screen       // phares 4/08/98
   M_InitExtendedHelp(); // init extended help screens // phares 3/30/98
 
   // Here we could catch other version dependencies,

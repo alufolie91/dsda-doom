@@ -1163,7 +1163,7 @@ void I_InitScreenResolution(void)
 
 void I_SetWindowCaption(void)
 {
-  SDL_SetWindowTitle(NULL, PACKAGE_NAME " " PACKAGE_VERSION);
+  SDL_SetWindowTitle(NULL, PROJECT_NAME " " PROJECT_VERSION);
 }
 
 //
@@ -1294,6 +1294,14 @@ void I_UpdateVideoMode(void)
     }
   }
 
+  if (desired_fullscreen)
+  {
+    if (exclusive_fullscreen)
+      init_flags |= SDL_WINDOW_FULLSCREEN;
+    else
+      init_flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+  }
+
   if (V_IsOpenGLMode())
   {
     SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 0 );
@@ -1314,7 +1322,7 @@ void I_UpdateVideoMode(void)
     gld_MultisamplingInit();
 
     sdl_window = SDL_CreateWindow(
-      PACKAGE_NAME " " PACKAGE_VERSION,
+      PROJECT_NAME " " PROJECT_VERSION,
       x, y,
       SCREENWIDTH * screen_multiply, ACTUALHEIGHT * screen_multiply,
       init_flags);
@@ -1333,7 +1341,7 @@ void I_UpdateVideoMode(void)
 #endif
 
     sdl_window = SDL_CreateWindow(
-      PACKAGE_NAME " " PACKAGE_VERSION,
+      PROJECT_NAME " " PROJECT_VERSION,
       x, y,
       SCREENWIDTH * screen_multiply, ACTUALHEIGHT * screen_multiply,
       init_flags);

@@ -85,6 +85,7 @@
 #include "m_file.h"
 
 #include "dsda/args.h"
+#include "dsda/excmd.h"
 #include "dsda/map_format.h"
 #include "dsda/mapinfo.h"
 #include "dsda/playback.h"
@@ -281,7 +282,7 @@ void M_ChangeSkyMode(void)
   gl_skymode = dsda_IntConfig(dsda_config_gl_skymode);
 
   if (gl_skymode == skytype_auto)
-    gl_drawskys = (dsda_MouseLook() ? skytype_skydome : skytype_standard);
+    gl_drawskys = (dsda_FreeAim() ? skytype_skydome : skytype_standard);
   else
     gl_drawskys = gl_skymode;
 }
@@ -426,7 +427,7 @@ int I_MessageBox(const char* text, unsigned int type)
   {
     HWND current_hwnd = GetForegroundWindow();
     wchar_t *wtext = ConvertUtf8ToWide(text);
-    wchar_t *wpackage = ConvertUtf8ToWide(PACKAGE_NAME);
+    wchar_t *wpackage = ConvertUtf8ToWide(PROJECT_NAME);
     result = MessageBoxW(GetDesktopWindow(), wtext, wpackage, type|MB_TASKMODAL|MB_TOPMOST);
     Z_Free(wtext);
     Z_Free(wpackage);
@@ -663,7 +664,7 @@ void e6y_G_Compatibility(void)
       {
 #ifdef RANGECHECK
         if (b[i] >= 256)
-          I_Error("Wrong version number of package: %s", PACKAGE_VERSION);
+          I_Error("Wrong version number of package: %s", PROJECT_VERSION);
 #endif
         emulated_version += b[i] * k;
       }

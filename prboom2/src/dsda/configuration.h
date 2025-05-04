@@ -45,9 +45,10 @@ typedef enum {
   dsda_config_demo_smoothturns,
   dsda_config_demo_smoothturnsfactor,
   dsda_config_weapon_attack_alignment,
-  dsda_config_sts_always_red,
+  dsda_config_sts_colored_numbers,
   dsda_config_sts_pct_always_gray,
   dsda_config_sts_traditional_keys,
+  dsda_config_sts_solid_bg_color,
   dsda_config_strict_mode,
   dsda_config_vertmouse,
   dsda_config_freelook,
@@ -105,7 +106,9 @@ typedef enum {
   dsda_config_mapcolor_tele,
   dsda_config_mapcolor_secr,
   dsda_config_mapcolor_revsecr,
+  dsda_config_mapcolor_tagfinder,
   dsda_config_mapcolor_exit,
+  dsda_config_mapcolor_exitsecr,
   dsda_config_mapcolor_unsn,
   dsda_config_mapcolor_flat,
   dsda_config_mapcolor_sprt,
@@ -275,7 +278,8 @@ typedef enum {
   dsda_config_render_stretchsky,
   dsda_config_render_linearsky,
   dsda_config_aspect_ratio_correction,
-  dsda_config_boom_translucent_sprites,
+  dsda_config_translucent_sprites,
+  dsda_config_translucent_ghosts,
   dsda_config_show_alive_monsters,
   dsda_config_left_analog_deadzone,
   dsda_config_right_analog_deadzone,
@@ -300,6 +304,7 @@ typedef enum {
 } dsda_config_type_t;
 
 void dsda_UpdateStrictMode(void);
+dboolean dsda_IsStrictConfig(dsda_config_identifier_t id);
 void dsda_TrackConfigFeatures(void);
 void dsda_RevertIntConfig(dsda_config_identifier_t id);
 int dsda_MaxConfigLength(void);
@@ -314,10 +319,8 @@ int dsda_CycleConfig(dsda_config_identifier_t id, dboolean persist);
 int dsda_UpdateIntConfig(dsda_config_identifier_t id, int value, dboolean persist);
 const char* dsda_UpdateStringConfig(dsda_config_identifier_t id, const char* value, dboolean persist);
 int dsda_IntConfig(dsda_config_identifier_t id);
-int dsda_PersistentIntConfig(dsda_config_identifier_t id);
 int dsda_TransientIntConfig(dsda_config_identifier_t id);
 const char* dsda_StringConfig(dsda_config_identifier_t id);
-const char* dsda_PersistentStringConfig(dsda_config_identifier_t id);
 char* dsda_ConfigSummary(const char* name);
 int dsda_ConfigIDByName(const char* name);
 dsda_config_type_t dsda_ConfigType(dsda_config_identifier_t id);

@@ -734,6 +734,16 @@ void AM_clearMarks(void)
   markpointnum = 0;
 }
 
+// [Alaux] Clear just the last mark
+static void AM_clearLastMark(void)
+{
+  AM_initPlayerTrail();
+  AM_ResetTagHighlight();
+
+  if (markpointnum)
+    markpointnum--;
+}
+
 void AM_InitParams(void)
 {
   map_blinking_locks = dsda_IntConfig(dsda_config_map_blinking_locks);
@@ -1152,8 +1162,13 @@ dboolean AM_Responder
   }
   else if (dsda_InputActivated(dsda_input_map_clear))
   {
-    AM_clearMarks();  // Ty 03/27/98 - *not* externalized
-    dsda_AddMessage(s_AMSTR_MARKSCLEARED);
+    // [Alaux] Clear just the last mark
+    if (!markpointnum)
+      dsda_AddMessage(s_AMSTR_MARKSCLEARED);
+    else {
+      AM_clearLastMark();
+      doom_printf("Cleared spot %d", markpointnum);
+    }
 
     return true;
   }
@@ -1666,7 +1681,10 @@ static automap_style_t AM_wallStyle(int i)
     )
       return ams_locked;
 
-    if (mapcolor_p->exit && dsda_IsExitLine(i))
+    if (mapcolor_p->exitsecr && (dsda_IsSecretExitLine(i) && !dsda_IsExitLine(i)))
+      return ams_exit_secret;
+
+    if (mapcolor_p->exit && (dsda_IsExitLine(i) || dsda_IsSecretExitLine(i)))
       return ams_exit;
 
     if (!lines[i].backsector) // 1-sided
@@ -1815,6 +1833,10 @@ static void AM_drawWalls(void)
         AM_drawMline(&l, mapcolor_p->exit);
         continue;
 
+      case ams_exit_secret:
+        AM_drawMline(&l, mapcolor_p->exitsecr);
+        continue;
+
       case ams_one_sided:
         AM_drawMline(&l, mapcolor_p->wall);
         continue;
@@ -1878,7 +1900,7 @@ static void AM_DrawConnections(void)
       AM_SetMPointFloatValue(&l.b);
     }
 
-    AM_drawMline(&l, mapcolor_p->exit);
+    AM_drawMline(&l, mapcolor_p->tagfinder);
   }
 }
 

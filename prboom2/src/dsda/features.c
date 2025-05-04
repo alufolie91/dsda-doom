@@ -65,6 +65,8 @@ static const char* feature_names[FEATURE_SIZE] = {
   [uf_mouse_and_controller] = "Mouse and Controller",
   [uf_ghost] = "Ghost",
   [uf_advanced_map] = "Advanced Map",
+  [uf_vanillatrans] = "Vanilla Translucency",
+  [uf_ghosttrans] = "Ghost Translucency",
 };
 
 void dsda_TrackFeature(int feature) {
@@ -98,7 +100,7 @@ char* dsda_DescribeFeatures(void) {
 
   dsda_InitString(&description, NULL);
 
-  for (int i = 0; i < FEATURE_SIZE; i++) {
+  for (i = 0; i < FEATURE_SIZE; i++) {
     if (BITTEST(used_features, i) && feature_names[i]) {
       if (first)
         first = false;

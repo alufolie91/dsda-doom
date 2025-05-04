@@ -856,6 +856,7 @@ static dboolean P_LookForPlayers(mobj_t *actor, dboolean allaround)
 {
   player_t *player;
   int stop, stopc, c;
+  dboolean unseen[MAX_MAXPLAYERS] = {0};
 
   if (raven) return Raven_P_LookForPlayers(actor, allaround);
 
@@ -929,8 +930,11 @@ static dboolean P_LookForPlayers(mobj_t *actor, dboolean allaround)
       if (player->health <= 0)
   continue;               // dead
 
-      if (!P_IsVisible(actor, player->mo, allaround))
-  continue;
+      if (unseen[actor->lastlook] || !P_IsVisible(actor, player->mo, allaround))
+      {
+        unseen[actor->lastlook] = true;
+        continue;
+      }
 
       P_SetTarget(&actor->target, player->mo);
 
@@ -1910,6 +1914,11 @@ dboolean P_RaiseThing(mobj_t *corpse, mobj_t *raiser)
 
   dsda_WatchResurrection(corpse, raiser);
 
+  // Allow ghost monsters to be rendered translucent
+  if (corpse->height == 0 && corpse->radius == 0
+    && dsda_IntConfig(dsda_config_translucent_ghosts))
+      corpse->flags |= MF_TRANSLUCENT;  
+
   if (!((corpse->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)))
     totallive++;
 
@@ -1988,6 +1997,11 @@ static dboolean P_HealCorpse(mobj_t* actor, int radius, statenum_t healstate, sf
           corpsehit->flags = corpsehit->flags | MF_RESSURECTED;//e6y
 
           dsda_WatchResurrection(corpsehit, actor);
+
+          // Allow ghost monsters to be rendered translucent
+          if (corpsehit->height == 0 && corpsehit->radius == 0
+            && dsda_IntConfig(dsda_config_translucent_ghosts))
+              corpsehit->flags |= MF_TRANSLUCENT;  
 
           if (!((corpsehit->flags ^ MF_COUNTKILL) & (MF_FRIEND | MF_COUNTKILL)))
             totallive++;

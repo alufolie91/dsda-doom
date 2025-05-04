@@ -416,26 +416,31 @@ static void DemoEx_GetFeatures(const wadinfo_t* header) {
 
   if (sscanf(str, "%*[^\n]\n0x%n%[^-]%n-%32s", &ftext_start, ftext, &ftext_end, signature) == 2) {
     dsda_cksum_t cksum;
-    char padded_ftext[2 * FEATURE_SLOTS + 1];
+    int ftext_slots = (ftext_end - ftext_start) / 2;
+    byte *features;
     int i;
 
-    for (i = 0; i < (2 * FEATURE_SLOTS) - (ftext_end - ftext_start); i++)
-      strcat(padded_ftext, "0");
-    strcat(padded_ftext, ftext);
+    features = Z_Calloc(ftext_slots, sizeof(byte));
 
-    for (int f = 0; f < FEATURE_SLOTS; f++) {
+    for (i = 0; i < ftext_slots; i++) {
       char current_text[3];
-      strncpy(current_text, padded_ftext + f * 2, 2);
+      strncpy(current_text, ftext + i * 2, 2);
       current_text[2] = '\0';
-      exdemo.features[FEATURE_SLOTS - f - 1] = strtol(current_text, NULL, 16);
+      features[ftext_slots - i - 1] = strtol(current_text, NULL, 16);
+
+      // Add it to the padded features as well
+      if (i < FEATURE_SLOTS)
+        exdemo.features[FEATURE_SLOTS - i - 1] = features[ftext_slots - i - 1];
     }
 
-    dsda_GetDemoCheckSum(&cksum, exdemo.features, exdemo.demo, exdemo.demo_size);
+    dsda_GetDemoCheckSum(&cksum, features, ftext_slots, exdemo.demo, exdemo.demo_size);
 
     if (!strcmp(signature, cksum.string))
       exdemo.is_signed = 1;
     else
       exdemo.is_signed = -1;
+
+    Z_Free(features);
   }
   else
     exdemo.is_signed = -1;
@@ -464,7 +469,7 @@ static void DemoEx_AddFeatures(wadtbl_t* wadtbl) {
 
   for (int f = 0; f < FEATURE_SLOTS; f++) {
     snprintf(current_feature, 3, "%02" PRIx8, features[FEATURE_SLOTS - f - 1]);
-    strncat(buffer, current_feature, 2);
+    strcat(buffer, current_feature);
   }
 
   strcat(buffer, "-");
@@ -478,7 +483,7 @@ static void DemoEx_AddFeatures(wadtbl_t* wadtbl) {
 
 static void DemoEx_AddPort(wadtbl_t* wadtbl) {
   AddPWADTableLump(wadtbl, DEMOEX_PORTNAME_LUMPNAME,
-                   (const byte*) PACKAGE_STRING, strlen(PACKAGE_STRING));
+                   (const byte*) PROJECT_STRING, strlen(PROJECT_STRING));
 }
 
 static void PartitionDemo(const char* filename) {
