@@ -340,13 +340,8 @@ R_DrawColumn_f R_GetDrawColumnFunc(enum column_pipeline_e type, enum draw_filter
 }
 
 void R_SetDefaultDrawColumnVars(draw_column_vars_t *dcvars) {
-  dcvars->x = dcvars->yl = dcvars->yh = 0;
-  dcvars->iscale = dcvars->texturemid = dcvars->texheight = 0;
-  dcvars->source = dcvars->prevsource = dcvars->nextsource = NULL;
+  memset(dcvars, 0, sizeof(*dcvars));
   dcvars->colormap = colormaps[0];
-  dcvars->translation = NULL;
-  dcvars->edgeslope = dcvars->drawingmasked = 0;
-  dcvars->flags = 0;
 
   // heretic
   dcvars->baseclip = -1;
