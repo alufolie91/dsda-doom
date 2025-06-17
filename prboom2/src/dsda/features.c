@@ -67,6 +67,7 @@ static const char* feature_names[FEATURE_SIZE] = {
   [uf_advanced_map] = "Advanced Map",
   [uf_vanillatrans] = "Vanilla Translucency",
   [uf_ghosttrans] = "Ghost Translucency",
+  [uf_levelbrightness] = "Extra Lighting",
 };
 
 void dsda_TrackFeature(int feature) {

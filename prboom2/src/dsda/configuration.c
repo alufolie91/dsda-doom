@@ -1022,12 +1022,12 @@ dsda_config_t dsda_config[dsda_config_count] = {
     CONF_BOOL(1), NULL, STRICT_INT(1)
   },
   [dsda_config_viewbob] = {
-    "dsda_viewbob", dsda_config_viewbob,
-    CONF_BOOL(1)
+    "dsda_viewbob_pct", dsda_config_viewbob,
+    dsda_config_int, 0, 4, { 4 }
   },
   [dsda_config_weaponbob] = {
-    "dsda_weaponbob", dsda_config_weaponbob,
-    CONF_BOOL(1)
+    "dsda_weaponbob_pct", dsda_config_weaponbob,
+    dsda_config_int, 0, 4, { 4 }
   },
   [dsda_config_quake_intensity] = {
     "dsda_quake_intensity", dsda_config_quake_intensity,
@@ -1311,6 +1311,10 @@ dsda_config_t dsda_config[dsda_config_count] = {
   [dsda_config_announce_map] = {
     "announce_map", dsda_config_announce_map,
     CONF_BOOL(0),
+  },
+  [dsda_config_extra_level_brightness] = {
+    "extra_level_brightness", dsda_config_extra_level_brightness,
+    dsda_config_int, 0, 4, {0}, NULL, STRICT_INT(0)
   },
 };
 
