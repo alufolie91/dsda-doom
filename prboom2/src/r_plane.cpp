@@ -110,8 +110,6 @@ static int *spanstart = NULL;                // killough 2/8/98
 
 // killough 2/8/98: make variables static
 
-static fixed_t *cachedheight = NULL;
-
 // e6y: resolution limitation is removed
 fixed_t *yslope = NULL;
 fixed_t *distscale = NULL;
@@ -122,16 +120,12 @@ void R_InitPlanesRes(void)
   if (ceilingclip) Z_Free(ceilingclip);
   if (spanstart) Z_Free(spanstart);
 
-  if (cachedheight) Z_Free(cachedheight);
-
   if (yslope) Z_Free(yslope);
   if (distscale) Z_Free(distscale);
 
   floorclip    = static_cast<int*>(Z_Calloc(1, SCREENWIDTH * sizeof(*floorclip)));
   ceilingclip  = static_cast<int*>(Z_Calloc(1, SCREENWIDTH * sizeof(*ceilingclip)));
   spanstart    = static_cast<int*>(Z_Calloc(1, SCREENHEIGHT * sizeof(*spanstart)));
-
-  cachedheight = static_cast<int*>(Z_Calloc(1, SCREENHEIGHT * sizeof(*cachedheight)));
 
   yslope       = static_cast<int*>(Z_Calloc(1, SCREENHEIGHT * sizeof(*yslope)));
   distscale    = static_cast<int*>(Z_Calloc(1, SCREENWIDTH * sizeof(*distscale)));
@@ -247,9 +241,6 @@ void R_ClearPlanes(void)
       freehead = &(*freehead)->next;
 
   lastopening = openings;
-
-  // texture calculation
-  memset (cachedheight, 0, SCREENHEIGHT * sizeof(*cachedheight));
 }
 
 // New function, by Lee Killough
