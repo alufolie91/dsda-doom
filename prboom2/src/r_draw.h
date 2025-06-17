@@ -34,6 +34,10 @@
 #ifndef __R_DRAW__
 #define __R_DRAW__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "r_defs.h"
 
 enum column_pipeline_e {
@@ -148,5 +152,9 @@ void R_ResetFuzzCol(int height);
 
 // Calls R_ResetFuzzCol if x is aligned to the fuzz cell grid
 void R_CheckFuzzCol(int x, int height);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

@@ -385,7 +385,7 @@ set(COMMON_SRC
     r_main.h
     r_patch.c
     r_patch.h
-    r_plane.c
+    r_plane.cpp
     r_plane.h
     r_segs.c
     r_segs.h
@@ -483,6 +483,12 @@ set(EXTRA_FILES
     r_drawflush.inl
 )
 
+set(SPMC_FILES
+    core/thread_pool.cpp
+    core/thread_pool.h
+    core/memory.cpp
+)
+
 set(DSDA_SOURCES
     ${COMMON_SRC}
     ${NET_CLIENT_SRC}
@@ -491,6 +497,7 @@ set(DSDA_SOURCES
     ${SDLDOOM_SOURCES}
     ${DOOMMUSIC_SOURCES}
     ${EXTRA_FILES}
+    ${SPMC_FILES}
 )
 
 function(AddGameExecutable TARGET SOURCES)
@@ -536,6 +543,9 @@ function(AddGameExecutable TARGET SOURCES)
         ${SUPPORTED_WARNINGS}
         ${FAST_MATH_FLAG}
     )
+
+    #target_compile_options(${TARGET} PRIVATE -fsanitize=address)
+    #target_link_options(${TARGET} PRIVATE -fsanitize=address)
 
     target_compile_definitions(${TARGET} PRIVATE
         ${DEPRECATION_SILENCING_DEFINITIONS}

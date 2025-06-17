@@ -36,6 +36,10 @@
 #ifndef __R_DATA__
 #define __R_DATA__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "r_defs.h"
 #include "r_state.h"
 #include "r_patch.h"
@@ -104,5 +108,9 @@ int R_SetSpriteByIndex(patchnum_t *patchnum, spritenum_t item);
 int R_SetSpriteByName(patchnum_t *patchnum, const char *name);
 int R_SetPatchByName(patchnum_t *patchnum, const char *name);
 int R_NumPatchForSpriteIndex(spritenum_t item);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

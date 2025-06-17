@@ -34,6 +34,10 @@
 #ifndef __R_PLANE__
 #define __R_PLANE__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "r_data.h"
 
 #define PL_SKYFLAT_LINE (0x80000000)
@@ -71,5 +75,9 @@ visplane_t *R_FindPlane(
 
 visplane_t *R_CheckPlane(visplane_t *pl, int start, int stop);
 visplane_t *R_DupPlane(const visplane_t *pl, int start, int stop);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

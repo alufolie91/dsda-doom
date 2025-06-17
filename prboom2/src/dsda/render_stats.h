@@ -18,6 +18,10 @@
 #ifndef __RENDER_STATS__
 #define __RENDER_STATS__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
   int visplanes;
   int drawsegs;
@@ -32,5 +36,9 @@ void dsda_RecordVisPlanes(int n);
 void dsda_RecordDrawSeg(void);
 void dsda_RecordDrawSegs(int n);
 void dsda_UpdateRenderStats(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

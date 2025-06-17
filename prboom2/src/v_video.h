@@ -37,6 +37,10 @@
 #ifndef __V_VIDEO__
 #define __V_VIDEO__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "doomtype.h"
 #include "doomdef.h"
 // Needed because we are refering to patches.
@@ -314,5 +318,9 @@ void V_DrawShadowedNamePatch(int x, int y, const char* name);
 void V_DrawTLNumPatch(int x, int y, int lump);
 void V_DrawTLNamePatch(int x, int y, const char* name);
 void V_DrawAltTLNumPatch(int x, int y, int lump);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

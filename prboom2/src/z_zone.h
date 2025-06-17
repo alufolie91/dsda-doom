@@ -39,6 +39,10 @@
 #ifndef __Z_ZONE__
 #define __Z_ZONE__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if !defined(__GNUC__) && !defined(__clang__)
 #define __attribute__(x)
 #endif
@@ -61,5 +65,9 @@ void *Z_MallocLevel(size_t size);
 void *Z_CallocLevel(size_t n, size_t n2);
 void *Z_ReallocLevel(void *p, size_t n);
 char *Z_StrdupLevel(const char *s);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif
