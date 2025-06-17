@@ -1337,7 +1337,7 @@ void I_UpdateVideoMode(void)
       flags |= SDL_RENDERER_PRESENTVSYNC;
 
 #if defined (__unix__)
-    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl"); // SDL_Renderer in software is incredibly slow on nix for me, forcing it to use opengles2 was the fastest option gaining around 25 - 45 fps in most cases
+    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengles2"); // SDL_Renderer in software is incredibly slow on nix for me, forcing it to use opengles2 was the fastest option gaining around 25 - 45 fps in most cases
 #endif
 
     sdl_window = SDL_CreateWindow(
