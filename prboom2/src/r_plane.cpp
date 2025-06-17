@@ -391,7 +391,7 @@ visplane_t *R_CheckPlane(visplane_t *pl, int start, int stop)
 
 static void R_MakeSpans(int x, unsigned int t1, unsigned int b1,
                         unsigned int t2, unsigned int b2,
-                        draw_span_vars_t *dsvars)
+                        draw_span_vars_t *dsvars, dboolean allow_parallel)
 {
   draw_span_vars_t dsvars_copy = *dsvars;
 
@@ -420,7 +420,14 @@ static void R_MakeSpans(int x, unsigned int t1, unsigned int b1,
       }
     };
 
-    dsda::g_main_threadpool->schedule(std::move(task));
+    if (allow_parallel)
+    {
+      dsda::g_main_threadpool->schedule(std::move(task));
+    }
+    else
+    {
+      (task)();
+    }
 
     t1 += taskspans;
   }
@@ -444,7 +451,14 @@ static void R_MakeSpans(int x, unsigned int t1, unsigned int b1,
       }
     };
 
-    dsda::g_main_threadpool->schedule(std::move(task));
+    if (allow_parallel)
+    {
+      dsda::g_main_threadpool->schedule(std::move(task));
+    }
+    else
+    {
+      (task)();
+    }
 
     b1 -= taskspans;
   }
@@ -477,7 +491,7 @@ const rpatch_t *R_HackedSkyPatch(texture_t *texture)
 
 // New function, by Lee Killough
 
-static void R_DoDrawPlane(visplane_t *pl)
+static void R_DoDrawPlane(visplane_t *pl, dboolean allow_parallel)
 {
   int x;
   draw_column_vars_t dcvars;
@@ -827,7 +841,7 @@ static void R_DoDrawPlane(visplane_t *pl)
 
       for (x = pl->minx ; x <= stop ; x++)
          R_MakeSpans(x,pl->top[x-1],pl->bottom[x-1],
-                     pl->top[x],pl->bottom[x], &dsvars);
+                     pl->top[x],pl->bottom[x], &dsvars, allow_parallel);
     }
   }
 }
@@ -841,6 +855,11 @@ void R_DrawPlanes (void)
 {
   visplane_t *pl;
   int i;
+
+  int r_parallel;
+
+  r_parallel = dsda_IntConfig(dsda_config_render_parallel);
+
   dsda::ThreadPool::Sema tp_sema;
   dsda::g_main_threadpool->begin_sema();
   for (i=0;i<MAXVISPLANES;i++)
@@ -848,7 +867,7 @@ void R_DrawPlanes (void)
     {
       dsda_RecordVisPlane();
 
-      R_DoDrawPlane(pl);
+      R_DoDrawPlane(pl, r_parallel);
     }
   tp_sema = dsda::g_main_threadpool->end_sema();
   dsda::g_main_threadpool->notify_sema(tp_sema);
