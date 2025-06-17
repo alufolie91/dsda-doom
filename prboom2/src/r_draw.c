@@ -444,6 +444,19 @@ void R_DrawSpan(draw_span_vars_t *dsvars) {
   const byte *colormap = dsvars->colormap;
   byte *dest = drawvars.topleft + dsvars->y*drawvars.pitch + dsvars->x1;
 
+  while (count >= 8){
+    for (int i = 0; i < 8; i++){
+      const fixed_t xtemp = (xfrac >> 16) & 63;
+      const fixed_t ytemp = (yfrac >> 10) & 4032;
+      const fixed_t spot = xtemp | ytemp;
+      xfrac += xstep;
+      yfrac += ystep;
+      dest[i] = colormap[source[spot]];
+    }
+    dest += 8;
+    count -= 8;
+  }
+
   while (count) {
     const fixed_t xtemp = (xfrac >> 16) & 63;
     const fixed_t ytemp = (yfrac >> 10) & 4032;
@@ -485,7 +498,7 @@ void R_InitBuffer(int width, int height)
 
   for (i=0; i<FUZZTABLE; i++)
     fuzzoffset[i] = fuzzoffset_org[i]*screens[0].pitch;
-  
+
   if (!tallscreen)
     fuzzcellsize = (SCREENHEIGHT + 100) / 200;
   else
