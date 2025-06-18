@@ -1304,6 +1304,7 @@ void I_UpdateVideoMode(void)
 
   if (V_IsOpenGLMode())
   {
+    SDL_GL_ResetAttributes();
     SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 0 );
     SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 0 );
     SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 0 );
