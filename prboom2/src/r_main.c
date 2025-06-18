@@ -253,6 +253,7 @@ PUREFUNC int R_CompatiblePointOnSegSide(fixed_t x, fixed_t y, const seg_t *line)
 
 PUREFUNC int R_ZDoomPointOnSegSide(fixed_t x, fixed_t y, const seg_t *line)
 {
+  int mask;
   fixed_t lx = line->v1->x;
   fixed_t ly = line->v1->y;
   fixed_t ldx = line->v2->x - lx;
@@ -268,9 +269,10 @@ PUREFUNC int R_ZDoomPointOnSegSide(fixed_t x, fixed_t y, const seg_t *line)
   y -= ly;
 
   // Try to quickly decide by looking at sign bits.
-  if ((ldy ^ ldx ^ x ^ y) < 0)
-    return (ldy ^ x) < 0;          // (left is negative)
-  return (long long) y * ldx >= (long long) x * ldy;
+  // also use a mask to avoid branch prediction
+  mask = (ldy ^ ldx ^ x ^ y) >> 31;
+    return (mask & ((ldy ^ x) < 0)) |  // (left is negative)
+  (~mask & ((long long) y * ldx >= (long long) x * ldy));
 }
 
 int (*R_PointOnSegSide)(fixed_t x, fixed_t y, const seg_t *line);
