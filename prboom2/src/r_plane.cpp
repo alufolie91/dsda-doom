@@ -48,6 +48,8 @@
 #include "config.h"
 #endif
 
+#include <algorithm>
+
 #include "z_zone.h"  /* memory allocation wrappers -- killough */
 
 #include "doomstat.h"
@@ -64,6 +66,8 @@
 #include "dsda/map_format.h"
 #include "dsda/render_stats.h"
 #include "dsda/configuration.h"
+
+#include "core/thread_pool.h"
 
 int Sky1Texture;
 int Sky2Texture;
@@ -116,19 +120,19 @@ fixed_t *distscale = NULL;
 
 void R_InitPlanesRes(void)
 {
-  if (floorclip) Z_Free(floorclip);
+  if (floorclip)   Z_Free(floorclip);
   if (ceilingclip) Z_Free(ceilingclip);
-  if (spanstart) Z_Free(spanstart);
+  if (spanstart)   Z_Free(spanstart);
 
-  if (yslope) Z_Free(yslope);
-  if (distscale) Z_Free(distscale);
+  if (yslope)      Z_Free(yslope);
+  if (distscale)   Z_Free(distscale);
 
-  floorclip    = static_cast<int*>(Z_Calloc(1, SCREENWIDTH * sizeof(*floorclip)));
-  ceilingclip  = static_cast<int*>(Z_Calloc(1, SCREENWIDTH * sizeof(*ceilingclip)));
+  floorclip    = static_cast<int*>(Z_Calloc(1, SCREENWIDTH  * sizeof(*floorclip)));
+  ceilingclip  = static_cast<int*>(Z_Calloc(1, SCREENWIDTH  * sizeof(*ceilingclip)));
   spanstart    = static_cast<int*>(Z_Calloc(1, SCREENHEIGHT * sizeof(*spanstart)));
 
   yslope       = static_cast<int*>(Z_Calloc(1, SCREENHEIGHT * sizeof(*yslope)));
-  distscale    = static_cast<int*>(Z_Calloc(1, SCREENWIDTH * sizeof(*distscale)));
+  distscale    = static_cast<int*>(Z_Calloc(1, SCREENWIDTH  * sizeof(*distscale)));
 
   xtoskyangle  = dsda_IntConfig(dsda_config_render_linearsky) ? linearskyangle : xtoviewangle;
 }
@@ -140,10 +144,7 @@ void R_InitVisplanesRes(void)
   freetail = NULL;
   freehead = &freetail;
 
-  for (i = 0; i < MAXVISPLANES; i++)
-  {
-    visplanes[i] = 0;
-  }
+  memset(visplanes, 0, sizeof(visplanes));
 }
 
 //
@@ -189,12 +190,12 @@ static void R_MapPlane(int y, int x1, int x2, draw_span_vars_t *dsvars)
   den = (int64_t)FRACUNIT * FRACUNIT * D_abs(centery - y);
   distance = FixedMul(dsvars->planeheight, yslope[y]);
 
-  dsvars->xstep = (fixed_t)((int64_t)dsvars->sine * dsvars->planeheight * viewfocratio / den);
+  dsvars->xstep = (fixed_t)((int64_t)dsvars->sine   * dsvars->planeheight * viewfocratio / den);
   dsvars->ystep = (fixed_t)((int64_t)dsvars->cosine * dsvars->planeheight * viewfocratio / den);
 
   // killough 2/28/98: Add offsets
   dsvars->xfrac = dsvars->xoffs + FixedMul(dsvars->cosine, distance) + (x1 - centerx) * dsvars->xstep;
-  dsvars->yfrac = dsvars->yoffs - FixedMul(dsvars->sine, distance) + (x1 - centerx) * dsvars->ystep;
+  dsvars->yfrac = dsvars->yoffs - FixedMul(dsvars->sine, distance)   + (x1 - centerx) * dsvars->ystep;
 
   dsvars->xstep = FixedMul(dsvars->xstep, dsvars->xscale);
   dsvars->ystep = FixedMul(dsvars->ystep, dsvars->yscale);
@@ -233,8 +234,8 @@ void R_ClearPlanes(void)
   int i;
 
   // opening / clipping determination
-  for (i=0 ; i<viewwidth ; i++)
-    floorclip[i] = viewheight, ceilingclip[i] = -1;
+  std::fill(floorclip, floorclip + viewwidth, viewheight);
+  std::fill(ceilingclip, ceilingclip + viewwidth, -1);
 
   for (i=0;i<MAXVISPLANES;i++)    // new code -- killough
     for (*freehead = visplanes[i], visplanes[i] = NULL; *freehead; )
@@ -378,8 +379,6 @@ visplane_t *R_CheckPlane(visplane_t *pl, int start, int stop)
 // R_MakeSpans
 //
 
-#include "core/thread_pool.h"
-
 static void R_MakeSpans(int x, unsigned int t1, unsigned int b1,
                         unsigned int t2, unsigned int b2,
                         draw_span_vars_t *dsvars, dboolean allow_parallel)
@@ -393,8 +392,8 @@ static void R_MakeSpans(int x, unsigned int t1, unsigned int b1,
   constexpr const int kSpanTaskGranularity = 8;
   while (t1 < t2 && t1 <= b1)
   {
-    int32_t spanstartcopy[kSpanTaskGranularity] = {0};
-    int32_t taskspans = 0;
+    int spanstartcopy[kSpanTaskGranularity] = {0};
+    int taskspans = 0;
     for (int i = 0; i < kSpanTaskGranularity; i++)
     {
       if (!((t1 + i) < t2 && (t1 + i) <= b1))
@@ -424,8 +423,8 @@ static void R_MakeSpans(int x, unsigned int t1, unsigned int b1,
   }
   while (b1 > b2 && b1 >= t1)
   {
-    int32_t spanstartcopy[kSpanTaskGranularity] = {0};
-    int32_t taskspans = 0;
+    int spanstartcopy[kSpanTaskGranularity] = {0};
+    int taskspans = 0;
     for (int i = 0; i < kSpanTaskGranularity; i++)
     {
       if (!((b1 - i) > b2 && (b1 - i) >= t1))
