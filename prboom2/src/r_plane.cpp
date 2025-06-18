@@ -485,10 +485,6 @@ const rpatch_t *R_HackedSkyPatch(texture_t *texture)
 static void R_DoDrawPlane(visplane_t *pl, dboolean allow_parallel)
 {
   int x;
-  draw_column_vars_t dcvars;
-  R_DrawColumn_f colfunc = R_GetDrawColumnFunc(RDC_PIPELINE_STANDARD, RDRAW_FILTER_POINT);
-
-  R_SetDefaultDrawColumnVars(&dcvars);
 
   if (pl->minx <= pl->maxx) {
     // hexen_note: Skies
@@ -590,6 +586,10 @@ static void R_DoDrawPlane(visplane_t *pl, dboolean allow_parallel)
       int texture;
       const rpatch_t *tex_patch;
       angle_t an, flip;
+      draw_column_vars_t dcvars;
+      R_DrawColumn_f colfunc = R_GetDrawColumnFunc(RDC_PIPELINE_STANDARD, RDRAW_FILTER_POINT);
+
+      R_SetDefaultDrawColumnVars(&dcvars);
 
       // killough 10/98: allow skies to come from sidedefs.
       // Allows scrolling and/or animated skies, as well as
