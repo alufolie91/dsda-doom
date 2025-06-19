@@ -744,16 +744,6 @@ static void ST_updateWidgets(void)
     }
 }
 
-void ST_Ticker(void)
-{
-  if (raven) return SB_Ticker();
-
-  st_clock++;
-  st_randomnumber = M_Random();
-  ST_updateWidgets();
-  st_oldhealth = plyr->health;
-}
-
 int st_palette = 0;
 
 static void ST_doPaletteStuff(void)
@@ -824,6 +814,18 @@ void M_ChangeApplyPalette(void)
   }
   else
     V_SetPalette(0);
+}
+
+void ST_Ticker(void)
+{
+  if (raven) return SB_Ticker();
+
+  st_clock++;
+  st_randomnumber = M_Random();
+  ST_updateWidgets();
+  st_oldhealth = plyr->health;
+
+  ST_doPaletteStuff();  // Do red-/gold-shifts from damage/items
 }
 
 int ST_HealthColor(int health)
@@ -920,8 +922,6 @@ void ST_Drawer(dboolean refresh)
    * proff - really do it
    */
   st_firsttime = st_firsttime || refresh;
-
-  ST_doPaletteStuff();  // Do red-/gold-shifts from damage/items
 
   if (statusbaron) {
     if (st_firsttime || (V_IsOpenGLMode() || fadeBG()))
