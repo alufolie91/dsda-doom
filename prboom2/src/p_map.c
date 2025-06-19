@@ -1281,7 +1281,16 @@ dboolean P_CheckPosition (mobj_t* thing,fixed_t x,fixed_t y)
   tmbbox[BOXRIGHT] = x + tmthing->radius;
   tmbbox[BOXLEFT] = x - tmthing->radius;
 
-  newsec = R_PointInSector (x,y);
+  if (mbf21) // this might break compat
+  {
+    newsec = thing->subsector->sector;
+
+    if (thing->x != x || thing->y != y)
+      newsec = R_PointInSector (x,y);
+  }
+  else
+    newsec = R_PointInSector (x,y);
+
   floorline = blockline = ceilingline = NULL; // killough 8/1/98
 
   // Whether object can get out of a sticky situation:
