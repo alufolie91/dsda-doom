@@ -512,8 +512,6 @@ void D_Display (fixed_t frac)
     DSDA_REMOVE_CONTEXT(sf_status_bar);
 
     BorderNeedRefresh = false;
-    if (V_IsSoftwareMode())
-      R_DrawViewBorder();
 
     DSDA_ADD_CONTEXT(sf_hud);
     HU_Drawer();
