@@ -114,14 +114,14 @@ static int maxframe;
 
 void R_InitSpritesRes(void)
 {
-  if (xtoviewangle) Z_Free(xtoviewangle);
-  if (linearskyangle) Z_Free (linearskyangle);
-  if (negonearray) Z_Free(negonearray);
+  if (xtoviewangle)      Z_Free(xtoviewangle);
+  if (linearskyangle)    Z_Free (linearskyangle);
+  if (negonearray)       Z_Free(negonearray);
   if (screenheightarray) Z_Free(screenheightarray);
 
-  xtoviewangle = Z_Calloc(1, (SCREENWIDTH + 1) * sizeof(*xtoviewangle));
-  linearskyangle = Z_Calloc(1, (SCREENWIDTH + 1) * sizeof(*linearskyangle));
-  negonearray = Z_Calloc(1, SCREENWIDTH * sizeof(*negonearray));
+  xtoviewangle      = Z_Calloc(1, (SCREENWIDTH + 1) * sizeof(*xtoviewangle));
+  linearskyangle    = Z_Calloc(1, (SCREENWIDTH + 1) * sizeof(*linearskyangle));
+  negonearray       = Z_Calloc(1, SCREENWIDTH * sizeof(*negonearray));
   screenheightarray = Z_Calloc(1, SCREENWIDTH * sizeof(*screenheightarray));
 
   if (clipbot) Z_Free(clipbot);
@@ -465,7 +465,7 @@ void R_DrawMaskedColumn(
   int64_t     topscreen; // R_WiggleFix
   int64_t     bottomscreen; // R_WiggleFix
   fixed_t basetexturemid = dcvars->texturemid;
-  
+
   colheight = 0;
 
   dcvars->texheight = patch->height; // killough 11/98
@@ -1402,9 +1402,10 @@ static void R_DrawSprite (vissprite_t* spr)
   fixed_t lowscale;
 
   for (x = spr->x1 ; x<=spr->x2 ; x++)
+  {
     clipbot[x] = -2;
-  for (x = spr->x1 ; x<=spr->x2 ; x++)
     cliptop[x] = -2;
+  }
 
   // Scan drawsegs from end to start for obscuring segs.
   // The first drawseg that has a greater scale is the clip seg.
@@ -1514,12 +1515,12 @@ static void R_DrawSprite (vissprite_t* spr)
   // check for unclipped columns
 
   for (x = spr->x1 ; x<=spr->x2 ; x++)
+  {
     if (clipbot[x] == -2)
       clipbot[x] = viewheight;
-
-  for (x = spr->x1 ; x<=spr->x2 ; x++)
     if (cliptop[x] == -2)
       cliptop[x] = -1;
+  }
 
   mfloorclip = clipbot;
   mceilingclip = cliptop;
