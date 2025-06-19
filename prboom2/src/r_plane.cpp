@@ -139,8 +139,6 @@ void R_InitPlanesRes(void)
 
 void R_InitVisplanesRes(void)
 {
-  int i;
-
   freetail = NULL;
   freehead = &freetail;
 
