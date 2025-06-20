@@ -34,6 +34,7 @@
  *-----------------------------------------------------------------------------*/
 
 #include <stdint.h>
+#include <threads.h>
 
 #include "doomstat.h"
 #include "w_wad.h"
@@ -85,18 +86,23 @@ typedef enum
    COL_FLEXADD
 } columntype_e;
 
-static int    temp_x = 0;
-static int    tempyl[4], tempyh[4];
+typedef struct draw_column_temp_vars_s
+{
+  int    temp_x;
+  int    tempyl[4], tempyh[4];
 
-// e6y: resolution limitation is removed
-static byte           *tempbuf;
+  // e6y: resolution limitation is removed
+  byte           *tempbuf;
 
-static int    startx = 0;
-static int    temptype = COL_NONE;
-static int    commontop, commonbot;
-static const byte *temptranmap = NULL;
-// SoM 7-28-04: Fix the fuzz problem.
-static const byte   *tempfuzzmap;
+  int    startx;
+  int    temptype;
+  int    commontop, commonbot;
+  const byte *temptranmap;
+  // SoM 7-28-04: Fix the fuzz problem.
+  const byte   *tempfuzzmap;
+} draw_column_temp_vars_t;
+
+thread_local draw_column_temp_vars_t temp_columnvars = {};
 
 //
 // Spectre/Invisibility.
@@ -178,14 +184,14 @@ static void (*R_FlushQuadColumn)(void) = R_QuadFlushError;
 
 static void R_FlushColumns(void)
 {
-   if(temp_x != 4 || commontop >= commonbot)
+   if(temp_columnvars.temp_x != 4 || temp_columnvars.commontop >= temp_columnvars.commonbot)
       R_FlushWholeColumns();
    else
    {
       R_FlushHTColumns();
       R_FlushQuadColumn();
    }
-   temp_x = 0;
+   temp_columnvars.temp_x = 0;
 }
 
 //
@@ -198,12 +204,26 @@ static void R_FlushColumns(void)
 void R_ResetColumnBuffer(void)
 {
    // haleyjd 10/06/05: this must not be done if temp_x == 0!
-   if(temp_x)
+   if(temp_columnvars.temp_x)
       R_FlushColumns();
-   temptype = COL_NONE;
+   temp_columnvars.temptype = COL_NONE;
    R_FlushWholeColumns = R_FlushWholeError;
    R_FlushHTColumns    = R_FlushHTError;
    R_FlushQuadColumn   = R_QuadFlushError;
+}
+
+static inline void R_AllocTempBuf(void)
+{
+  thread_local static int oldscreenheight = 0;
+
+  // fucking horrible, but we need to alloc this shit per used thread
+  // all cause i dont want a static buffer for this
+  // TODO: make this shit not horrible
+  if (SCREENHEIGHT != oldscreenheight)
+  {
+    temp_columnvars.tempbuf  = static_cast<byte*>(realloc(temp_columnvars.tempbuf, (SCREENHEIGHT * 4) * sizeof(*temp_columnvars.tempbuf)));
+    oldscreenheight = SCREENHEIGHT;
+  }
 }
 
 #define R_DRAWCOLUMN_PIPELINE RDC_STANDARD
@@ -369,14 +389,14 @@ void R_InitTranslationTables (void)
   if (hexen)
   {
     int lumpnum = W_GetNumForName("trantbl0");
-    translationtables = Z_Malloc(256 * 3 * (g_maxplayers - 1));
+    translationtables = static_cast<byte*>(Z_Malloc(256 * 3 * (g_maxplayers - 1)));
 
     for (i = 0; i < g_maxplayers; i++)
       playernumtotrans[i] = i;
 
     for (i = 0; i < 3 * (g_maxplayers - 1); i++)
     {
-        const byte* transLump = W_LumpByNum(lumpnum + i);
+        const byte* transLump = static_cast<const byte*>(W_LumpByNum(lumpnum + i));
         memcpy(translationtables + i * 256, transLump, 256);
     }
 
@@ -387,7 +407,7 @@ void R_InitTranslationTables (void)
   // Remove dependency of colormaps aligned on 256-byte boundary
 
   if (translationtables == NULL) // CPhipps - allow multiple calls
-    translationtables = Z_Malloc(256*MAXTRANS);
+    translationtables = static_cast<byte*>(Z_Malloc(256*MAXTRANS));
 
   for (i=0; i<MAXTRANS; i++) transtocolour[i] = 255;
 
@@ -468,12 +488,9 @@ void R_InitBuffersRes(void)
   extern byte *solidcol;
 
   if (solidcol) Z_Free(solidcol);
-  if (tempbuf)  Z_Free(tempbuf);
+  solidcol = static_cast<byte*>(Z_Calloc(1, SCREENWIDTH * sizeof(*solidcol)));
 
-  solidcol = Z_Calloc(1, SCREENWIDTH * sizeof(*solidcol));
-  tempbuf  = Z_Calloc(1, (SCREENHEIGHT * 4) * sizeof(*tempbuf));
-
-  temp_x = 0;
+  temp_columnvars.temp_x = 0;
 }
 
 //
@@ -525,7 +542,7 @@ void R_FillBackColor (void)
   pixel_cnt = 0;
   r = g = b = 0;
 
-  lump = W_LumpByNum(stbarbg.lumpnum);
+  lump = static_cast<const byte*>(W_LumpByNum(stbarbg.lumpnum));
   width = *((const int16_t *) lump);
   width = LittleShort(width);
 

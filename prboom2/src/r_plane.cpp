@@ -682,14 +682,39 @@ static void R_DoDrawPlane(visplane_t *pl, dboolean allow_parallel)
           dcvars.texturemid = 200 << FRACBITS;
           dcvars.iscale = (200 << FRACBITS) / SCREENHEIGHT;
 
-          for (x = pl->minx; (dcvars.x = x) <= pl->maxx; x++)
-            if ((dcvars.yl = pl->top[x]) != SHRT_MAX && dcvars.yl <= (dcvars.yh = pl->bottom[x])) // dropoff overflow
+          x = pl->minx;
+
+          while (x <= pl->maxx)
+          {
+            // Tune concurrency granularity here to maximize throughput
+            // The cheaper colfunc is, the more coarse the task should be
+            constexpr const int kSkyPlaneMacroColumns = 8;
+
+            auto thunk = [=]() mutable -> void {
+              for (int i = 0; i < kSkyPlaneMacroColumns && i + x <= pl->maxx; i++)
+              {
+                dcvars.x = x + i;
+                if ((dcvars.yl = pl->top[x + i]) != SHRT_MAX && dcvars.yl <= (dcvars.yh = pl->bottom[x + i])) // dropoff overflow
+                {
+                  dcvars.source = R_GetPatchColumn(patch, (an + xtoskyangle[x + i]) >> ANGLETOSKYSHIFT)->pixels;
+                  dcvars.prevsource = R_GetPatchColumn(patch, (an + xtoskyangle[(x + i)-1]) >> ANGLETOSKYSHIFT)->pixels;
+                  dcvars.nextsource = R_GetPatchColumn(patch, (an + xtoskyangle[(x + i)+1]) >> ANGLETOSKYSHIFT)->pixels;
+                  colfunc(&dcvars);
+                }
+              }
+            };
+
+            if (allow_parallel)
             {
-              dcvars.source = R_GetPatchColumn(patch, (an + xtoskyangle[x]) >> ANGLETOSKYSHIFT)->pixels;
-              dcvars.prevsource = R_GetPatchColumn(patch, (an + xtoskyangle[x-1]) >> ANGLETOSKYSHIFT)->pixels;
-              dcvars.nextsource = R_GetPatchColumn(patch, (an + xtoskyangle[x+1]) >> ANGLETOSKYSHIFT)->pixels;
-              colfunc(&dcvars);
+              dsda::g_main_threadpool->schedule(std::move(thunk));
             }
+            else
+            {
+              (thunk)();
+            }
+
+            x += kSkyPlaneMacroColumns;
+          }
 
           return;
         }
@@ -698,14 +723,39 @@ static void R_DoDrawPlane(visplane_t *pl, dboolean allow_parallel)
       tex_patch = R_TextureCompositePatchByNum(texture);
 
       // killough 10/98: Use sky scrolling offset, and possibly flip picture
-      for (x = pl->minx; (dcvars.x = x) <= pl->maxx; x++)
-        if ((dcvars.yl = pl->top[x]) != SHRT_MAX && dcvars.yl <= (dcvars.yh = pl->bottom[x])) // dropoff overflow
+      x = pl->minx;
+
+      while (x <= pl->maxx)
+      {
+        // Tune concurrency granularity here to maximize throughput
+        // The cheaper colfunc is, the more coarse the task should be
+        constexpr const int kSkyPlaneMacroColumns = 8;
+
+        auto thunk = [=]() mutable -> void {
+          for (int i = 0; i < kSkyPlaneMacroColumns && i + x <= pl->maxx; i++)
+          {
+            dcvars.x = x + i;
+            if ((dcvars.yl = pl->top[x + i]) != SHRT_MAX && dcvars.yl <= (dcvars.yh = pl->bottom[x + i])) // dropoff overflow
+            {
+              dcvars.source = R_GetTextureColumn(tex_patch, ((an + xtoskyangle[x + i])^flip) >> ANGLETOSKYSHIFT);
+              dcvars.prevsource = R_GetTextureColumn(tex_patch, ((an + xtoskyangle[(x + i)-1])^flip) >> ANGLETOSKYSHIFT);
+              dcvars.nextsource = R_GetTextureColumn(tex_patch, ((an + xtoskyangle[(x + i)+1])^flip) >> ANGLETOSKYSHIFT);
+              colfunc(&dcvars);
+            }
+          }
+        };
+
+        if (allow_parallel)
         {
-          dcvars.source = R_GetTextureColumn(tex_patch, ((an + xtoskyangle[x])^flip) >> ANGLETOSKYSHIFT);
-          dcvars.prevsource = R_GetTextureColumn(tex_patch, ((an + xtoskyangle[x-1])^flip) >> ANGLETOSKYSHIFT);
-          dcvars.nextsource = R_GetTextureColumn(tex_patch, ((an + xtoskyangle[x+1])^flip) >> ANGLETOSKYSHIFT);
-          colfunc(&dcvars);
+          dsda::g_main_threadpool->schedule(std::move(thunk));
         }
+        else
+        {
+          (thunk)();
+        }
+
+        x += kSkyPlaneMacroColumns;
+      }
     }
     else {     // regular flat
 

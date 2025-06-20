@@ -377,7 +377,7 @@ set(COMMON_SRC
     r_data.c
     r_data.h
     r_defs.h
-    r_draw.c
+    r_draw.cpp
     r_draw.h
     r_fps.c
     r_fps.h

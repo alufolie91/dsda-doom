@@ -58,6 +58,8 @@ static void R_DRAWCOLUMN_FUNCNAME(draw_column_vars_t *dcvars)
   byte             *dest;            // killough
   fixed_t          frac;
   const fixed_t    fracstep = dcvars->iscale;
+
+  R_AllocTempBuf();
 #endif
 
 #if (R_DRAWCOLUMN_PIPELINE & RDC_FUZZ)
@@ -104,40 +106,40 @@ static void R_DRAWCOLUMN_FUNCNAME(draw_column_vars_t *dcvars)
    // SoM: MAGIC
    {
       // haleyjd: reordered predicates
-      if(temp_x == 4 ||
-         (temp_x && (temptype != COLTYPE || temp_x + startx != dcvars->x)))
+      if(temp_columnvars.temp_x == 4 ||
+         (temp_columnvars.temp_x && (temp_columnvars.temptype != COLTYPE || temp_columnvars.temp_x + temp_columnvars.startx != dcvars->x)))
          R_FlushColumns();
 
-      if(!temp_x)
+      if(!temp_columnvars.temp_x)
       {
-         startx = dcvars->x;
-         tempyl[0] = commontop = dcvars->yl;
-         tempyh[0] = commonbot = dcvars->yh;
-         temptype = COLTYPE;
+         temp_columnvars.startx = dcvars->x;
+         temp_columnvars.tempyl[0] = temp_columnvars.commontop = dcvars->yl;
+         temp_columnvars.tempyh[0] = temp_columnvars.commonbot = dcvars->yh;
+         temp_columnvars.temptype = COLTYPE;
 #if (R_DRAWCOLUMN_PIPELINE & RDC_TRANSLUCENT)
-         temptranmap = tranmap;
+         temp_columnvars.temptranmap = tranmap;
 #elif (R_DRAWCOLUMN_PIPELINE & RDC_FUZZ)
-         tempfuzzmap = fullcolormap; // SoM 7-28-04: Fix the fuzz problem.
+         temp_columnvars.tempfuzzmap = fullcolormap; // SoM 7-28-04: Fix the fuzz problem.
 #endif
          R_FlushWholeColumns = R_FLUSHWHOLE_FUNCNAME;
          R_FlushHTColumns    = R_FLUSHHEADTAIL_FUNCNAME;
          R_FlushQuadColumn   = R_FLUSHQUAD_FUNCNAME;
 #if (!(R_DRAWCOLUMN_PIPELINE & RDC_FUZZ))
-         dest = &tempbuf[dcvars->yl << 2];
+         dest = &temp_columnvars.tempbuf[dcvars->yl << 2];
 #endif
       } else {
-         tempyl[temp_x] = dcvars->yl;
-         tempyh[temp_x] = dcvars->yh;
+         temp_columnvars.tempyl[temp_columnvars.temp_x] = dcvars->yl;
+         temp_columnvars.tempyh[temp_columnvars.temp_x] = dcvars->yh;
 
-         if(dcvars->yl > commontop)
-            commontop = dcvars->yl;
-         if(dcvars->yh < commonbot)
-            commonbot = dcvars->yh;
+         if(dcvars->yl > temp_columnvars.commontop)
+            temp_columnvars.commontop = dcvars->yl;
+         if(dcvars->yh < temp_columnvars.commonbot)
+            temp_columnvars.commonbot = dcvars->yh;
 #if (!(R_DRAWCOLUMN_PIPELINE & RDC_FUZZ))
-         dest = &tempbuf[(dcvars->yl << 2) + temp_x];
+         dest = &temp_columnvars.tempbuf[(dcvars->yl << 2) + temp_columnvars.temp_x];
 #endif
       }
-      temp_x += 1;
+      temp_columnvars.temp_x += 1;
    }
 
 // do nothing else when drawin fuzz columns

@@ -29,7 +29,7 @@
  *-----------------------------------------------------------------------------*/
 
 #if (R_DRAWCOLUMN_PIPELINE & RDC_TRANSLUCENT)
-#define GETDESTCOLOR(col1, col2) (temptranmap[((col1)<<8)+(col2)])
+#define GETDESTCOLOR(col1, col2) (temp_columnvars.temptranmap[((col1)<<8)+(col2)])
 #else
 #define GETDESTCOLOR(col) (col)
 #endif
@@ -49,13 +49,13 @@ static void R_FLUSHWHOLE_FUNCNAME(void)
     int yl, yh, count, lines;
     byte *dest;
 
-    if ((temp_x + startx) % fuzzcellsize)
+    if ((temp_columnvars.temp_x + temp_columnvars.startx) % fuzzcellsize)
     {
         return;
     }
 
-    yl = tempyl[temp_x - 1];
-    yh = tempyh[temp_x - 1];
+    yl = temp_columnvars.tempyl[temp_columnvars.temp_x - 1];
+    yh = temp_columnvars.tempyh[temp_columnvars.temp_x - 1];
 
     count = yh - yl + 1;
 
@@ -73,7 +73,7 @@ static void R_FLUSHWHOLE_FUNCNAME(void)
 
     ++count;
 
-    dest = drawvars.topleft + yl * drawvars.pitch + startx + temp_x - fuzzcellsize;
+    dest = drawvars.topleft + yl * drawvars.pitch + temp_columnvars.startx + temp_columnvars.temp_x - fuzzcellsize;
 
     lines = fuzzcellsize - (yl % fuzzcellsize);
 
@@ -115,12 +115,12 @@ static void R_FLUSHWHOLE_FUNCNAME(void)
    byte *dest;
    int  count, yl;
 
-   while(--temp_x >= 0)
+   while(--temp_columnvars.temp_x >= 0)
    {
-      yl     = tempyl[temp_x];
-      source = &tempbuf[temp_x + (yl << 2)];
-      dest   = drawvars.topleft + yl*drawvars.pitch + startx + temp_x;
-      count  = tempyh[temp_x] - yl + 1;
+      yl     = temp_columnvars.tempyl[temp_columnvars.temp_x];
+      source = &temp_columnvars.tempbuf[temp_columnvars.temp_x + (yl << 2)];
+      dest   = drawvars.topleft + yl*drawvars.pitch + temp_columnvars.startx + temp_columnvars.temp_x;
+      count  = temp_columnvars.tempyh[temp_columnvars.temp_x] - yl + 1;
 
       while(--count >= 0)
       {
@@ -160,15 +160,15 @@ static void R_FLUSHHEADTAIL_FUNCNAME(void)
 
    while(colnum < 4)
    {
-      yl = tempyl[colnum];
-      yh = tempyh[colnum];
+      yl = temp_columnvars.tempyl[colnum];
+      yh = temp_columnvars.tempyh[colnum];
 
       // flush column head
-      if(yl < commontop)
+      if(yl < temp_columnvars.commontop)
       {
-         source = &tempbuf[colnum + (yl << 2)];
-         dest   = drawvars.topleft + yl*drawvars.pitch + startx + colnum;
-         count  = commontop - yl;
+         source = &temp_columnvars.tempbuf[colnum + (yl << 2)];
+         dest   = drawvars.topleft + yl*drawvars.pitch + temp_columnvars.startx + colnum;
+         count  = temp_columnvars.commontop - yl;
 
          while(--count >= 0)
          {
@@ -185,11 +185,11 @@ static void R_FLUSHHEADTAIL_FUNCNAME(void)
       }
 
       // flush column tail
-      if(yh > commonbot)
+      if(yh > temp_columnvars.commonbot)
       {
-         source = &tempbuf[colnum + ((commonbot + 1) << 2)];
-         dest   = drawvars.topleft + (commonbot + 1)*drawvars.pitch + startx + colnum;
-         count  = yh - commonbot;
+         source = &temp_columnvars.tempbuf[colnum + ((temp_columnvars.commonbot + 1) << 2)];
+         dest   = drawvars.topleft + (temp_columnvars.commonbot + 1)*drawvars.pitch + temp_columnvars.startx + colnum;
+         count  = yh - temp_columnvars.commonbot;
 
          while(--count >= 0)
          {
@@ -219,9 +219,9 @@ static void R_FLUSHQUAD_FUNCNAME(void)
       return;
    #endif
 
-   source = &tempbuf[commontop << 2];
-   dest = drawvars.topleft + commontop*drawvars.pitch + startx;
-   count = commonbot - commontop + 1;
+   source = &temp_columnvars.tempbuf[temp_columnvars.commontop << 2];
+   dest = drawvars.topleft + temp_columnvars.commontop*drawvars.pitch + temp_columnvars.startx;
+   count = temp_columnvars.commonbot - temp_columnvars.commontop + 1;
 
 #if (R_DRAWCOLUMN_PIPELINE & RDC_TRANSLUCENT)
    while(--count >= 0)

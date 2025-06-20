@@ -34,6 +34,10 @@
 #ifndef __LPRINTF__
 #define __LPRINTF__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdarg.h>
 #include <stddef.h>
 #include "doomtype.h"
@@ -61,5 +65,9 @@ void I_DisableMessageBoxes(void);
  * cphipps 01/11- moved from i_system.h */
 NORETURNC11 void I_Error(const char *error, ...) __attribute__((format(printf,1,2))) NORETURN;
 void I_Warn(const char *error, ...) __attribute__((format(printf,1,2)));
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif
