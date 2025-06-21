@@ -652,6 +652,7 @@ void R_ExecuteSetViewSize (void)
 {
   int i;
   int cheight;
+  fixed_t cosadj;
 
   setsizeneeded = false;
 
@@ -732,7 +733,7 @@ void R_ExecuteSetViewSize (void)
     // thing clipping
     screenheightarray[i] = viewheight;
 
-    fixed_t cosadj = D_abs(finecosine[xtoviewangle[i]>>ANGLETOFINESHIFT]);
+    cosadj = D_abs(finecosine[xtoviewangle[i]>>ANGLETOFINESHIFT]);
     distscale[i] = FixedDiv(FRACUNIT,cosadj);
   }
 
@@ -900,13 +901,14 @@ static void R_SetupFrame (player_t *player)
   dboolean HU_CrosshairEnabled(void);
 
   int i, cm;
+  int extra_brightness;
 
   int FocalTangent = finetangent[FINEANGLES/4 + FieldOfView/2];
 
   viewplayer = player;
 
   extralight = player->extralight;
-  int extra_brightness;
+
   extra_brightness = dsda_IntConfig(dsda_config_extra_level_brightness);
   if (extra_brightness < 0 || extra_brightness > 4) {
     extra_brightness = 0;
