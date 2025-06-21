@@ -222,6 +222,7 @@ static inline void R_AllocTempBuf(void)
   if (SCREENHEIGHT != oldscreenheight)
   {
     temp_columnvars.tempbuf  = static_cast<byte*>(realloc(temp_columnvars.tempbuf, (SCREENHEIGHT * 4) * sizeof(*temp_columnvars.tempbuf)));
+    memset(temp_columnvars.tempbuf, 0, (SCREENHEIGHT * 4) * sizeof(*temp_columnvars.tempbuf));
     oldscreenheight = SCREENHEIGHT;
   }
 }
