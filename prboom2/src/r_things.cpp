@@ -1404,8 +1404,11 @@ static void R_DrawSprite (vissprite_t* spr)
   fixed_t scale;
   fixed_t lowscale;
 
-  std::fill(clipbot + spr->x1, clipbot + spr->x2 + 1, -2);
-  std::fill(cliptop + spr->x1, cliptop + spr->x2 + 1, -2);
+  const short spr_x1 = spr->x1;
+  const short spr_x2 = spr->x2;
+
+  std::fill(clipbot + spr_x1, clipbot + spr_x2 + 1, -2);
+  std::fill(cliptop + spr_x1, cliptop + spr_x2 + 1, -2);
 
   // Scan drawsegs from end to start for obscuring segs.
   // The first drawseg that has a greater scale is the clip seg.
@@ -1419,10 +1422,13 @@ static void R_DrawSprite (vissprite_t* spr)
   {
     const drawseg_xrange_item_t *last = &drawsegs_xrange[drawsegs_xrange_count - 1];
     drawseg_xrange_item_t *curr = &drawsegs_xrange[-1];
+
     while (++curr <= last)
     {
+      __builtin_prefetch(curr + 1, 0, 3);
+
       // determine if the drawseg obscures the sprite
-      if (curr->x1 > spr->x2 || curr->x2 < spr->x1)
+      if (curr->x1 > spr_x2 || curr->x2 < spr_x1)
         continue;      // does not cover sprite
 
       ds = curr->user;
@@ -1443,15 +1449,15 @@ static void R_DrawSprite (vissprite_t* spr)
       {
         if (ds->maskedtexturecol)       // masked mid texture?
         {
-          r1 = ds->x1 < spr->x1 ? spr->x1 : ds->x1;
-          r2 = ds->x2 > spr->x2 ? spr->x2 : ds->x2;
+          r1 = ds->x1 < spr_x1 ? spr_x1 : ds->x1;
+          r2 = ds->x2 > spr_x2 ? spr_x2 : ds->x2;
           R_RenderMaskedSegRange(ds, r1, r2);
         }
         continue;               // seg is behind sprite
       }
 
-      r1 = ds->x1 < spr->x1 ? spr->x1 : ds->x1;
-      r2 = ds->x2 > spr->x2 ? spr->x2 : ds->x2;
+      r1 = ds->x1 < spr_x1 ? spr_x1 : ds->x1;
+      r2 = ds->x2 > spr_x2 ? spr_x2 : ds->x2;
 
       // clip this piece of the sprite
       // killough 3/27/98: optimized and made much shorter
@@ -1483,13 +1489,13 @@ static void R_DrawSprite (vissprite_t* spr)
           (h >>= FRACBITS) < viewheight) {
         if (mh <= 0 || (phs != -1 && viewz > sectors[phs].floorheight))
           {                          // clip bottom
-            for (x=spr->x1 ; x<=spr->x2 ; x++)
+            for (x=spr_x1 ; x<=spr_x1 ; x++)
               if (clipbot[x] == -2 || h < clipbot[x])
                 clipbot[x] = h;
           }
         else                        // clip top
           if (phs != -1 && viewz <= sectors[phs].floorheight) // killough 11/98
-            for (x=spr->x1 ; x<=spr->x2 ; x++)
+            for (x=spr_x1 ; x<=spr_x1 ; x++)
               if (cliptop[x] == -2 || h > cliptop[x])
                 cliptop[x] = h;
       }
@@ -1499,12 +1505,12 @@ static void R_DrawSprite (vissprite_t* spr)
           (h >>= FRACBITS) < viewheight) {
         if (phs != -1 && viewz >= sectors[phs].ceilingheight)
           {                         // clip bottom
-            for (x=spr->x1 ; x<=spr->x2 ; x++)
+            for (x=spr_x1 ; x<=spr_x1 ; x++)
               if (clipbot[x] == -2 || h < clipbot[x])
                 clipbot[x] = h;
           }
         else                       // clip top
-          for (x=spr->x1 ; x<=spr->x2 ; x++)
+          for (x=spr_x1 ; x<=spr_x1 ; x++)
             if (cliptop[x] == -2 || h > cliptop[x])
               cliptop[x] = h;
       }
@@ -1514,7 +1520,7 @@ static void R_DrawSprite (vissprite_t* spr)
   // all clipping has been performed, so draw the sprite
   // check for unclipped columns
 
-  for (x = spr->x1 ; x<=spr->x2 ; x++)
+  for (x = spr_x1 ; x<=spr_x2 ; x++)
   {
     if (clipbot[x] == -2)
       clipbot[x] = viewheight;
