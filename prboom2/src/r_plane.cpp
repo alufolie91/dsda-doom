@@ -268,24 +268,23 @@ static visplane_t *new_visplane(unsigned hash)
  */
 visplane_t *R_DupPlane(const visplane_t *pl, int start, int stop)
 {
-      int i;
-      unsigned hash = visplane_hash(pl->picnum, pl->lightlevel, pl->height);
-      visplane_t *new_pl = new_visplane(hash);
+  unsigned hash = visplane_hash(pl->picnum, pl->lightlevel, pl->height);
+  visplane_t *new_pl = new_visplane(hash);
 
-      new_pl->height = pl->height;
-      new_pl->picnum = pl->picnum;
-      new_pl->lightlevel = pl->lightlevel;
-      new_pl->special = pl->special;
-      new_pl->xoffs = pl->xoffs;           // killough 2/28/98
-      new_pl->yoffs = pl->yoffs;
-      new_pl->rotation = pl->rotation;
-      new_pl->xscale = pl->xscale;
-      new_pl->yscale = pl->yscale;
-      new_pl->minx = start;
-      new_pl->maxx = stop;
-      for (i = 0; i != SCREENWIDTH; i++)
-        new_pl->top[i] = SHRT_MAX;
-      return new_pl;
+  new_pl->height = pl->height;
+  new_pl->picnum = pl->picnum;
+  new_pl->lightlevel = pl->lightlevel;
+  new_pl->special = pl->special;
+  new_pl->xoffs = pl->xoffs;           // killough 2/28/98
+  new_pl->yoffs = pl->yoffs;
+  new_pl->rotation = pl->rotation;
+  new_pl->xscale = pl->xscale;
+  new_pl->yscale = pl->yscale;
+  new_pl->minx = start;
+  new_pl->maxx = stop;
+  std::fill(new_pl->top, new_pl->top + SCREENWIDTH, SHRT_MAX);
+
+  return new_pl;
 }
 //
 // R_FindPlane
@@ -345,12 +344,10 @@ visplane_t *R_FindPlane(fixed_t height, int picnum, int lightlevel, int special,
 
   if (V_IsSoftwareMode())
   {
-    int i;
     check->minx = viewwidth; // Was SCREENWIDTH -- killough 11/98
     check->maxx = -1;
 
-    for (i = 0; i != SCREENWIDTH; i++)
-      check->top[i] = SHRT_MAX;
+    std::fill(check->top, check->top + SCREENWIDTH, SHRT_MAX);
   }
 
   return check;
