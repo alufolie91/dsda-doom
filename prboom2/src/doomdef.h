@@ -35,6 +35,10 @@
 #ifndef __DOOMDEF__
 #define __DOOMDEF__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* use config.h if autoconf made one -- josh */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -557,5 +561,9 @@ typedef enum
 #define TXT_USEPUZZLEFAILED    "YOU CANNOT USE THIS HERE"
 
 extern dboolean hexen;
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif          // __DOOMDEF__

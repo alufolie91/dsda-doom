@@ -34,6 +34,10 @@
 #ifndef __R_BSP__
 #define __R_BSP__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern seg_t    *curline;
 extern side_t   *sidedef;
 extern line_t   *linedef;
@@ -58,5 +62,9 @@ void R_ForceRenderPolyObjs(void);
 
 /* killough 4/13/98: fake floors/ceilings for deep water / fake ceilings: */
 sector_t *R_FakeFlat(sector_t *, sector_t *, int *, int *, dboolean);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

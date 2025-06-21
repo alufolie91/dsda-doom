@@ -34,6 +34,10 @@
 #ifndef __R_THINGS__
 #define __R_THINGS__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "r_draw.h"
 
 #define MINZ        (FRACUNIT*4)
@@ -77,5 +81,9 @@ void R_ClearSprites(void);
 void R_DrawMasked(void);
 
 void R_SetClipPlanes(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

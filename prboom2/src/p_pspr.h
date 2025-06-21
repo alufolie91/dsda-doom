@@ -34,6 +34,10 @@
 #ifndef __P_PSPR__
 #define __P_PSPR__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Basic data types.
  * Needs fixed point, and BAM angles. */
 
@@ -159,4 +163,7 @@ void P_SetPspriteNF(struct player_s * player, int position, statenum_t stnum);
 void P_PostMorphWeapon(struct player_s * player, weapontype_t weapon);
 void P_ActivateMorphWeapon(struct player_s * player);
 
+#ifdef __cplusplus
+} // extern "C"
+#endif
 #endif

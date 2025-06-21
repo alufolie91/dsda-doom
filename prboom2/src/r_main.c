@@ -398,19 +398,18 @@ static void R_InitTextureMapping (void)
       int limit = finetangent[FINEANGLES/4 + FieldOfView/2];
       if (finetangent[i] > limit)
         t = -1;
-      else
-        if (finetangent[i] < -limit)
+      else if (finetangent[i] < -limit)
           t = viewwidth+1;
       else
-        {
-          t = FixedMul(finetangent[i], focallength);
-          t = (centerxfrac - t + FRACUNIT-1) >> FRACBITS;
-          if (t < -1)
-            t = -1;
-          else
-            if (t > viewwidth+1)
-              t = viewwidth+1;
-        }
+      {
+        t = FixedMul(finetangent[i], focallength);
+        t = (centerxfrac - t + FRACUNIT-1) >> FRACBITS;
+        if (t < -1)
+          t = -1;
+        else
+          if (t > viewwidth+1)
+            t = viewwidth+1;
+      }
       viewangletox[i] = t;
     }
 
@@ -421,15 +420,15 @@ static void R_InitTextureMapping (void)
   linearskyfactor = FIXED2DOUBLE(finetangent[FINEANGLES/4 + FieldOfView/2]) * ANG90;
 
   for (x=0; x<=viewwidth; x++)
-    {
-      for (i=0; viewangletox[i] > x; i++)
-        ;
-      xtoviewangle[x] = (i<<ANGLETOFINESHIFT)-ANG90;
+  {
+    for (i=0; viewangletox[i] > x; i++)
+      ;
+    xtoviewangle[x] = (i<<ANGLETOFINESHIFT)-ANG90;
 
-      // [FG] linear horizontal sky scrolling
-      angle = (0.5 - x / (double)viewwidth) * linearskyfactor;
-      linearskyangle[x] = (angle >= 0) ? angle : ANGLE_MAX + angle;
-    }
+    // [FG] linear horizontal sky scrolling
+    angle = (0.5 - x / (double)viewwidth) * linearskyfactor;
+    linearskyangle[x] = (angle >= 0) ? angle : ANGLE_MAX + angle;
+  }
 
   // Take out the fencepost cases from viewangletox.
   for (i=0; i<FINEANGLES/2; i++)
@@ -469,30 +468,30 @@ static void R_InitLightTables (void)
   // Calculate the light levels to use
   //  for each level / distance combination.
   for (i=0; i< LIGHTLEVELS; i++)
+  {
+    // SoM: the LIGHTBRIGHT constant must be used to scale the start offset of
+    // the colormaps, otherwise the levels are staggered and become slightly
+    // darker.
+    int j, startmap = ((LIGHTLEVELS-LIGHTBRIGHT-i)*2)*NUMCOLORMAPS/LIGHTLEVELS;
+    for (j=0; j<MAXLIGHTZ; j++)
     {
-      // SoM: the LIGHTBRIGHT constant must be used to scale the start offset of
-      // the colormaps, otherwise the levels are staggered and become slightly
-      // darker.
-      int j, startmap = ((LIGHTLEVELS-LIGHTBRIGHT-i)*2)*NUMCOLORMAPS/LIGHTLEVELS;
-      for (j=0; j<MAXLIGHTZ; j++)
-        {
-    // CPhipps - use 320 here instead of SCREENWIDTH, otherwise hires is
-    //           brighter than normal res
-          int scale = FixedDiv ((320/2*FRACUNIT), (j+1)<<LIGHTZSHIFT);
-          int t, level = startmap - (scale >>= LIGHTSCALESHIFT)/DISTMAP;
+      // CPhipps - use 320 here instead of SCREENWIDTH, otherwise hires is
+      //           brighter than normal res
+      int scale = FixedDiv ((320/2*FRACUNIT), (j+1)<<LIGHTZSHIFT);
+      int t, level = startmap - (scale >>= LIGHTSCALESHIFT)/DISTMAP;
 
-          if (level < 0)
-            level = 0;
-          else
-            if (level >= NUMCOLORMAPS)
-              level = NUMCOLORMAPS-1;
+      if (level < 0)
+        level = 0;
+      else
+        if (level >= NUMCOLORMAPS)
+          level = NUMCOLORMAPS-1;
 
-          // killough 3/20/98: Initialize multiple colormaps
-          level *= 256;
-          for (t=0; t<numcolormaps; t++)         // killough 4/4/98
-            c_zlight[t][i][j] = colormaps[t] + level;
-        }
+      // killough 3/20/98: Initialize multiple colormaps
+      level *= 256;
+      for (t=0; t<numcolormaps; t++)         // killough 4/4/98
+        c_zlight[t][i][j] = colormaps[t] + level;
     }
+  }
 }
 
 //
@@ -693,7 +692,7 @@ void R_ExecuteSetViewSize (void)
   // e6y: wide-res
   projection = wide_centerx<<FRACBITS;
 
-// proff 11/06/98: Added for high-res
+  // proff 11/06/98: Added for high-res
   // calculate projectiony using int64_t math to avoid overflow when SCREENWIDTH>4228
   projectiony = (fixed_t)((((int64_t)cheight * centerx * 320) / 200) / SCREENWIDTH * FRACUNIT);
   // e6y: this is a precalculated value for more precise flats drawing (see R_MapPlane)
@@ -725,18 +724,17 @@ void R_ExecuteSetViewSize (void)
 
   skyiscale = (200 << FRACBITS) / SCREENHEIGHT;
 
-	// [RH] Sky height fix for screens not 200 (or 240) pixels tall
-	R_InitSkyMap();
+  // [RH] Sky height fix for screens not 200 (or 240) pixels tall
+  R_InitSkyMap();
 
-  // thing clipping
   for (i=0 ; i<viewwidth ; i++)
+  {
+    // thing clipping
     screenheightarray[i] = viewheight;
 
-  for (i=0 ; i<viewwidth ; i++)
-    {
-      fixed_t cosadj = D_abs(finecosine[xtoviewangle[i]>>ANGLETOFINESHIFT]);
-      distscale[i] = FixedDiv(FRACUNIT,cosadj);
-    }
+    fixed_t cosadj = D_abs(finecosine[xtoviewangle[i]>>ANGLETOFINESHIFT]);
+    distscale[i] = FixedDiv(FRACUNIT,cosadj);
+  }
 
   // e6y
   // Calculate the light levels to use
@@ -957,18 +955,18 @@ static void R_SetupFrame (player_t *player)
   }
 
   if (player->fixedcolormap)
-    {
-      // killough 3/20/98: localize scalelightfixed (readability/optimization)
-      static const lighttable_t *scalelightfixed[MAXLIGHTSCALE];
+  {
+    // killough 3/20/98: localize scalelightfixed (readability/optimization)
+    static const lighttable_t *scalelightfixed[MAXLIGHTSCALE];
 
-      fixedcolormap = fullcolormap   // killough 3/20/98: use fullcolormap
-        + player->fixedcolormap*256*sizeof(lighttable_t);
+    fixedcolormap = fullcolormap   // killough 3/20/98: use fullcolormap
+      + player->fixedcolormap*256*sizeof(lighttable_t);
 
-      walllights = scalelightfixed;
+    walllights = scalelightfixed;
 
-      for (i=0 ; i<MAXLIGHTSCALE ; i++)
-        scalelightfixed[i] = fixedcolormap;
-    }
+    for (i=0 ; i<MAXLIGHTSCALE ; i++)
+      scalelightfixed[i] = fixedcolormap;
+  }
   else
     fixedcolormap = 0;
 

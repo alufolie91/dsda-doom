@@ -18,6 +18,10 @@
 #ifndef __DSDA_GLOBAL__
 #define __DSDA_GLOBAL__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "doomtype.h"
 
 extern int g_maxplayers;
@@ -106,5 +110,9 @@ extern const char* g_skyflatname;
 extern dboolean heretic;
 
 void dsda_InitGlobal(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

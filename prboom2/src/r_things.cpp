@@ -31,6 +31,8 @@
  *
  *-----------------------------------------------------------------------------*/
 
+#include <algorithm>
+
 #include "doomstat.h"
 #include "w_wad.h"
 #include "r_main.h"
@@ -119,14 +121,14 @@ void R_InitSpritesRes(void)
   if (negonearray)       Z_Free(negonearray);
   if (screenheightarray) Z_Free(screenheightarray);
 
-  xtoviewangle      = Z_Calloc(1, (SCREENWIDTH + 1) * sizeof(*xtoviewangle));
-  linearskyangle    = Z_Calloc(1, (SCREENWIDTH + 1) * sizeof(*linearskyangle));
-  negonearray       = Z_Calloc(1, SCREENWIDTH * sizeof(*negonearray));
-  screenheightarray = Z_Calloc(1, SCREENWIDTH * sizeof(*screenheightarray));
+  xtoviewangle      = static_cast<angle_t*>(Z_Calloc(1, (SCREENWIDTH + 1) * sizeof(*xtoviewangle)));
+  linearskyangle    = static_cast<angle_t*>(Z_Calloc(1, (SCREENWIDTH + 1) * sizeof(*linearskyangle)));
+  negonearray       = static_cast<int*>(Z_Calloc(1, SCREENWIDTH * sizeof(*negonearray)));
+  screenheightarray = static_cast<int*>(Z_Calloc(1, SCREENWIDTH * sizeof(*screenheightarray)));
 
   if (clipbot) Z_Free(clipbot);
 
-  clipbot = Z_Calloc(1, 2 * SCREENWIDTH * sizeof(*clipbot));
+  clipbot = static_cast<int*>(Z_Calloc(1, 2 * SCREENWIDTH * sizeof(*clipbot)));
   cliptop = clipbot + SCREENWIDTH;
 }
 
@@ -197,14 +199,14 @@ static void R_InstallSpriteLump(int lump, unsigned frame,
   }
 
   if (sprtemp[frame].lump[rotation] == -1)
+  {
+    sprtemp[frame].lump[rotation] = lump - firstspritelump;
+    if (flipped)
     {
-      sprtemp[frame].lump[rotation] = lump - firstspritelump;
-      if (flipped)
-      {
-        sprtemp[frame].flip |= (1 << rotation);
-      }
-      sprtemp[frame].rotate = true; //jff 4/24/98 only change if rot used
+      sprtemp[frame].flip |= (1 << rotation);
     }
+    sprtemp[frame].rotate = true; //jff 4/24/98 only change if rot used
+  }
 }
 
 //
@@ -233,21 +235,26 @@ static void R_InstallSpriteLump(int lump, unsigned frame,
 
 #define R_SpriteNameHash(s) ((unsigned)((s)[0]-((s)[1]*3-(s)[3]*2-(s)[2])*2))
 
+struct hash_entry {
+  int index;
+  int next;
+};
+
 static void R_InitSpriteDefs(const char * const * namelist)
 {
   size_t numentries = lastspritelump-firstspritelump+1;
-  struct { int index, next; } *hash;
   int i;
+  hash_entry* hash;
 
   if (!numentries || !*namelist)
     return;
 
-  sprites = Z_Calloc(num_sprites, sizeof(*sprites));
+  sprites = static_cast<spritedef_t*>(Z_Calloc(num_sprites, sizeof(*sprites)));
 
   // Create hash table based on just the first four letters of each sprite
   // killough 1/31/98
 
-  hash = Z_Malloc(sizeof(*hash)*numentries); // allocate hash table
+  hash = static_cast<hash_entry*>(Z_Malloc(sizeof(*hash)*numentries)); // allocate hash table
 
   for (i=0; (size_t)i<numentries; i++)             // initialize hash table as empty
     hash[i].index = -1;
@@ -285,7 +292,7 @@ static void R_InitSpriteDefs(const char * const * namelist)
           maxframe = -1;
           do
             {
-              register lumpinfo_t *lump = lumpinfo + j + firstspritelump;
+              lumpinfo_t *lump = lumpinfo + j + firstspritelump;
 
               // Fast portable comparison -- killough
               // (using int pointer cast is nonportable):
@@ -379,8 +386,7 @@ static void R_InitSpriteDefs(const char * const * namelist)
               }
 
               // allocate space for the frames present and copy sprtemp to it
-              sprites[i].spriteframes =
-                Z_Malloc (maxframe * sizeof(spriteframe_t));
+              sprites[i].spriteframes = static_cast<spriteframe_t*>(Z_Malloc (maxframe * sizeof(spriteframe_t)));
               memcpy (sprites[i].spriteframes, sprtemp,
                       maxframe*sizeof(spriteframe_t));
             }
@@ -403,9 +409,7 @@ static int num_vissprite, num_vissprite_alloc, num_vissprite_ptrs;
 
 void R_InitSprites(const char * const *namelist)
 {
-  int i;
-  for (i=0; i<SCREENWIDTH; i++)    // killough 2/8/98
-    negonearray[i] = -1;
+  std::fill(negonearray, negonearray + SCREENWIDTH, -1);    // killough 2/8/98
   R_InitSpriteDefs(namelist);
 }
 
@@ -430,7 +434,7 @@ static vissprite_t *R_NewVisSprite(void)
       size_t num_vissprite_alloc_prev = num_vissprite_alloc;
 
       num_vissprite_alloc = num_vissprite_alloc ? num_vissprite_alloc*2 : 128;
-      vissprites = Z_Realloc(vissprites,num_vissprite_alloc*sizeof(*vissprites));
+      vissprites = static_cast<vissprite_t*>(Z_Realloc(vissprites,num_vissprite_alloc*sizeof(*vissprites)));
 
       //e6y: set all fields to zero
       memset(vissprites + num_vissprite_alloc_prev, 0,
@@ -711,8 +715,6 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
   if (tz < r_near_clip_plane)
     return;
 
-  xscale = FixedDiv(projection, tz);
-
   gxt = -FixedMul(tr_x,viewsin);
   gyt = FixedMul(tr_y,viewcos);
   tx = -(gyt+gxt);
@@ -721,7 +723,9 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
   if (D_abs(tx) > ((int64_t) tz << 2))
     return;
 
-    // decide which patch to use for sprite relative to player
+  xscale = FixedDiv(projection, tz);
+
+  // decide which patch to use for sprite relative to player
 #ifdef RANGECHECK
   if ((unsigned) thing->sprite >= (unsigned)num_sprites)
     I_Error ("R_ProjectSprite: Invalid sprite number %i", thing->sprite);
@@ -742,28 +746,28 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
   sprframe = &sprdef->spriteframes[thing->frame & FF_FRAMEMASK];
 
   if (sprframe->rotate)
+  {
+    // choose a different rotation based on player view
+    angle_t rot;
+    angle_t ang = R_PointToAngle2(viewx, viewy, fx, fy);
+    if (sprframe->lump[0] == sprframe->lump[1])
     {
-      // choose a different rotation based on player view
-      angle_t rot;
-      angle_t ang = R_PointToAngle2(viewx, viewy, fx, fy);
-      if (sprframe->lump[0] == sprframe->lump[1])
-      {
-        rot = (ang - thing->angle + (angle_t)(ANG45/2)*9) >> 28;
-      }
-      else
-      {
-        rot = (ang - thing->angle + (angle_t)(ANG45 / 2) * 9 -
-          (angle_t)(ANG180 / 16)) >> 28;
-      }
-      lump = sprframe->lump[rot];
-      flip = (dboolean)(sprframe->flip & (1 << rot));
+      rot = (ang - thing->angle + (angle_t)(ANG45/2)*9) >> 28;
     }
+    else
+    {
+      rot = (ang - thing->angle + (angle_t)(ANG45 / 2) * 9 -
+        (angle_t)(ANG180 / 16)) >> 28;
+    }
+    lump = sprframe->lump[rot];
+    flip = (dboolean)(sprframe->flip & (1 << rot));
+  }
   else
-    {
-      // use single rotation for all views
-      lump = sprframe->lump[0];
-      flip = (dboolean)(sprframe->flip & 1);
-    }
+  {
+    // use single rotation for all views
+    lump = sprframe->lump[0];
+    flip = (dboolean)(sprframe->flip & 1);
+  }
 
   {
     const rpatch_t* patch = R_PatchByNum(lump+firstspritelump);
@@ -806,18 +810,18 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
   heightsec = thing->subsector->sector->heightsec;
 
   if (heightsec != -1)   // only clip things which are in special sectors
-    {
-      int phs = viewplayer->mo->subsector->sector->heightsec;
-      if (phs != -1 && viewz < sectors[phs].floorheight ?
-          fz >= sectors[heightsec].floorheight :
-          gzt < sectors[heightsec].floorheight)
-        return;
-      if (phs != -1 && viewz > sectors[phs].ceilingheight ?
-          gzt < sectors[heightsec].ceilingheight &&
-          viewz >= sectors[heightsec].ceilingheight :
-          fz >= sectors[heightsec].ceilingheight)
-        return;
-    }
+  {
+    const int phs = viewplayer->mo->subsector->sector->heightsec;
+    if (phs != -1 && viewz < sectors[phs].floorheight ?
+        fz >= sectors[heightsec].floorheight :
+        gzt < sectors[heightsec].floorheight)
+      return;
+    if (phs != -1 && viewz > sectors[phs].ceilingheight ?
+        gzt < sectors[heightsec].ceilingheight &&
+        viewz >= sectors[heightsec].ceilingheight :
+        fz >= sectors[heightsec].ceilingheight)
+      return;
+  }
 
   //e6y FIXME!!!
   if (thing == players[displayplayer].mo && walkcamera.type != 2)
@@ -883,15 +887,15 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
   vis->color = thing->color;
 
   if (flip)
-    {
-      vis->startfrac = (width<<FRACBITS)-1;
-      vis->xiscale = -iscale;
-    }
+  {
+    vis->startfrac = (width<<FRACBITS)-1;
+    vis->xiscale = -iscale;
+  }
   else
-    {
-      vis->startfrac = 0;
-      vis->xiscale = iscale;
-    }
+  {
+    vis->startfrac = 0;
+    vis->xiscale = iscale;
+  }
 
   if (vis->x1 > x1)
     vis->startfrac += vis->xiscale*(vis->x1-x1);
@@ -1148,15 +1152,15 @@ static void R_DrawPSprite (pspdef_t *psp)
   vis->color = 0;
 
   if (flip)
-    {
-      vis->xiscale = -pspriteiscale;
-      vis->startfrac = (width<<FRACBITS)-1;
-    }
+  {
+    vis->xiscale = -pspriteiscale;
+    vis->startfrac = (width<<FRACBITS)-1;
+  }
   else
-    {
-      vis->xiscale = pspriteiscale;
-      vis->startfrac = 0;
-    }
+  {
+    vis->xiscale = pspriteiscale;
+    vis->startfrac = 0;
+  }
 
   if (vis->x1 > x1)
     vis->startfrac += vis->xiscale*(vis->x1-x1);
@@ -1328,64 +1332,63 @@ void R_DrawPlayerSprites(void)
 static void msort(vissprite_t **s, vissprite_t **t, int n)
 {
   if (n >= 16)
-    {
-      int n1 = n/2, n2 = n - n1;
-      vissprite_t **s1 = s, **s2 = s + n1, **d = t;
+  {
+    int n1 = n/2, n2 = n - n1;
+    vissprite_t **s1 = s, **s2 = s + n1, **d = t;
 
-      msort(s1, t, n1);
-      msort(s2, t, n2);
+    msort(s1, t, n1);
+    msort(s2, t, n2);
 
-      while ((*s1)->scale > (*s2)->scale ?
-             (*d++ = *s1++, --n1) : (*d++ = *s2++, --n2));
+    while ((*s1)->scale > (*s2)->scale ?
+            (*d++ = *s1++, --n1) : (*d++ = *s2++, --n2));
 
-      if (n2)
-        bcopyp(d, s2, n2);
-      else
-        bcopyp(d, s1, n1);
+    if (n2)
+      bcopyp(d, s2, n2);
+    else
+      bcopyp(d, s1, n1);
 
-      bcopyp(s, t, n);
-    }
+    bcopyp(s, t, n);
+  }
   else
+  {
+    int i;
+    for (i = 1; i < n; i++)
     {
-      int i;
-      for (i = 1; i < n; i++)
+      vissprite_t *temp = s[i];
+      if (s[i-1]->scale < temp->scale)
         {
-          vissprite_t *temp = s[i];
-          if (s[i-1]->scale < temp->scale)
-            {
-              int j = i;
-              while ((s[j] = s[j-1])->scale < temp->scale && --j);
-              s[j] = temp;
-            }
+          int j = i;
+          while ((s[j] = s[j-1])->scale < temp->scale && --j);
+          s[j] = temp;
         }
     }
+  }
 }
 
 void R_SortVisSprites (void)
 {
   if (num_vissprite)
+  {
+    int i = num_vissprite;
+
+    // If we need to allocate more pointers for the vissprites,
+    // allocate as many as were allocated for sprites -- killough
+    // killough 9/22/98: allocate twice as many
+
+    if (num_vissprite_ptrs < num_vissprite*2)
     {
-      int i = num_vissprite;
-
-      // If we need to allocate more pointers for the vissprites,
-      // allocate as many as were allocated for sprites -- killough
-      // killough 9/22/98: allocate twice as many
-
-      if (num_vissprite_ptrs < num_vissprite*2)
-        {
-          Z_Free(vissprite_ptrs);  // better than realloc -- no preserving needed
-          vissprite_ptrs = Z_Malloc((num_vissprite_ptrs = num_vissprite_alloc*2)
-                                  * sizeof *vissprite_ptrs);
-        }
-
-      while (--i>=0)
-        vissprite_ptrs[num_vissprite-i-1] = vissprites+i;
-
-      // killough 9/22/98: replace qsort with merge sort, since the keys
-      // are roughly in order to begin with, due to BSP rendering.
-
-      msort(vissprite_ptrs, vissprite_ptrs + num_vissprite, num_vissprite);
+      Z_Free(vissprite_ptrs);  // better than realloc -- no preserving needed
+      vissprite_ptrs = static_cast<vissprite_t**>(Z_Malloc((num_vissprite_ptrs = num_vissprite_alloc*2) * sizeof *vissprite_ptrs));
     }
+
+    while (--i>=0)
+      vissprite_ptrs[num_vissprite-i-1] = vissprites+i;
+
+    // killough 9/22/98: replace qsort with merge sort, since the keys
+    // are roughly in order to begin with, due to BSP rendering.
+
+    msort(vissprite_ptrs, vissprite_ptrs + num_vissprite, num_vissprite);
+  }
 }
 
 //
@@ -1401,11 +1404,8 @@ static void R_DrawSprite (vissprite_t* spr)
   fixed_t scale;
   fixed_t lowscale;
 
-  for (x = spr->x1 ; x<=spr->x2 ; x++)
-  {
-    clipbot[x] = -2;
-    cliptop[x] = -2;
-  }
+  std::fill(clipbot + spr->x1, clipbot + spr->x2 + 1, -2);
+  std::fill(cliptop + spr->x1, cliptop + spr->x2 + 1, -2);
 
   // Scan drawsegs from end to start for obscuring segs.
   // The first drawseg that has a greater scale is the clip seg.
@@ -1477,7 +1477,7 @@ static void R_DrawSprite (vissprite_t* spr)
   if (spr->heightsec != -1)  // only things in specially marked sectors
     {
       fixed_t h,mh;
-      int phs = viewplayer->mo->subsector->sector->heightsec;
+      const int phs = viewplayer->mo->subsector->sector->heightsec;
       if ((mh = sectors[spr->heightsec].floorheight) > spr->gz &&
           (h = centeryfrac - FixedMul(mh-=viewz, spr->scale)) >= 0 &&
           (h >>= FRACBITS) < viewheight) {
@@ -1488,10 +1488,10 @@ static void R_DrawSprite (vissprite_t* spr)
                 clipbot[x] = h;
           }
         else                        // clip top
-    if (phs != -1 && viewz <= sectors[phs].floorheight) // killough 11/98
-      for (x=spr->x1 ; x<=spr->x2 ; x++)
-        if (cliptop[x] == -2 || h > cliptop[x])
-    cliptop[x] = h;
+          if (phs != -1 && viewz <= sectors[phs].floorheight) // killough 11/98
+            for (x=spr->x1 ; x<=spr->x2 ; x++)
+              if (cliptop[x] == -2 || h > cliptop[x])
+                cliptop[x] = h;
       }
 
       if ((mh = sectors[spr->heightsec].ceilingheight) < spr->gzt &&
@@ -1553,9 +1553,9 @@ void R_DrawMasked(void)
       drawsegs_xrange_size = 2 * maxdrawsegs;
       for(i = 0; i < DS_RANGES_COUNT; i++)
       {
-        drawsegs_xranges[i].items = Z_Realloc(
+        drawsegs_xranges[i].items = static_cast<drawseg_xrange_item_t*>(Z_Realloc(
           drawsegs_xranges[i].items,
-          drawsegs_xrange_size * sizeof(drawsegs_xranges[i].items[0]));
+          drawsegs_xrange_size * sizeof(drawsegs_xranges[i].items[0])));
       }
     }
     for (ds = ds_p; ds-- > drawsegs;)

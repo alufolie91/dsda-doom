@@ -165,17 +165,17 @@ dboolean R_StatusBarVisible(void)
 
 static void R_FlushWholeError(void)
 {
-   I_Error("R_FlushWholeColumns called without being initialized.\n");
+  // I_Error("R_FlushWholeColumns called without being initialized.\n");
 }
 
 static void R_FlushHTError(void)
 {
-   I_Error("R_FlushHTColumns called without being initialized.\n");
+  // I_Error("R_FlushHTColumns called without being initialized.\n");
 }
 
 static void R_QuadFlushError(void)
 {
-   I_Error("R_FlushQuadColumn called without being initialized.\n");
+  // I_Error("R_FlushQuadColumn called without being initialized.\n");
 }
 
 static void (*R_FlushWholeColumns)(void) = R_FlushWholeError;

@@ -34,6 +34,10 @@
 #ifndef __E6Y__
 #define __E6Y__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdarg.h>
 
 #include "hu_lib.h"
@@ -247,5 +251,9 @@ void I_vWarning(const char *message, va_list argList);
 #define PRB_IDYES               6
 #define PRB_IDNO                7
 int I_MessageBox(const char* text, unsigned int type);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

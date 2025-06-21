@@ -35,6 +35,10 @@
 #ifndef __R_FPS__
 #define __R_FPS__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "doomstat.h"
 
 extern int movement_smooth;
@@ -60,5 +64,9 @@ void R_RestoreInterpolations();
 void R_ActivateSectorInterpolations();
 void R_ActivateThinkerInterpolations(thinker_t *th);
 void R_StopInterpolationIfNeeded(thinker_t *th);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

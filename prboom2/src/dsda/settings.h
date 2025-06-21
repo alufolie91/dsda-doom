@@ -18,6 +18,10 @@
 #ifndef __DSDA_SETTINGS__
 #define __DSDA_SETTINGS__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "doomtype.h"
 
 #define UNSPECIFIED_COMPLEVEL -2
@@ -76,5 +80,9 @@ dboolean dsda_AllowMouse(void);
 void dsda_WatchGameControllerEvent(void);
 void dsda_WatchMouseEvent(void);
 void dsda_LiftInputRestrictions(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif
