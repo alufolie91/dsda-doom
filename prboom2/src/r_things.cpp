@@ -256,15 +256,13 @@ static void R_InitSpriteDefs(const char * const * namelist)
 
   hash = static_cast<hash_entry*>(Z_Malloc(sizeof(*hash)*numentries)); // allocate hash table
 
-  for (i=0; (size_t)i<numentries; i++)             // initialize hash table as empty
-    hash[i].index = -1;
-
   for (i=0; (size_t)i<numentries; i++)             // Prepend each sprite to hash chain
-    {                                      // prepend so that later ones win
-      int j = R_SpriteNameHash(lumpinfo[i+firstspritelump].name) % numentries;
-      hash[i].next = hash[j].index;
-      hash[j].index = i;
-    }
+  {                                                // prepend so that later ones win
+    hash[i].index = -1; // initialize hash table as empty
+    int j = R_SpriteNameHash(lumpinfo[i+firstspritelump].name) % numentries;
+    hash[i].next = hash[j].index;
+    hash[j].index = i;
+  }
 
   // scan all the lump names for each of the names,
   //  noting the highest frame letter.
@@ -430,17 +428,18 @@ void R_ClearSprites (void)
 static vissprite_t *R_NewVisSprite(void)
 {
   if (num_vissprite >= num_vissprite_alloc)             // killough
-    {
-      size_t num_vissprite_alloc_prev = num_vissprite_alloc;
+  {
+    size_t num_vissprite_alloc_prev = num_vissprite_alloc;
 
-      num_vissprite_alloc = num_vissprite_alloc ? num_vissprite_alloc*2 : 128;
-      vissprites = static_cast<vissprite_t*>(Z_Realloc(vissprites,num_vissprite_alloc*sizeof(*vissprites)));
+    num_vissprite_alloc = num_vissprite_alloc ? num_vissprite_alloc*2 : 128;
+    vissprites = static_cast<vissprite_t*>(Z_Realloc(vissprites,num_vissprite_alloc*sizeof(*vissprites)));
 
-      //e6y: set all fields to zero
-      memset(vissprites + num_vissprite_alloc_prev, 0,
-        (num_vissprite_alloc - num_vissprite_alloc_prev)*sizeof(*vissprites));
-    }
- return vissprites + num_vissprite++;
+    //e6y: set all fields to zero
+    memset(vissprites + num_vissprite_alloc_prev, 0,
+      (num_vissprite_alloc - num_vissprite_alloc_prev)*sizeof(*vissprites));
+  }
+
+  return vissprites + num_vissprite++;
 }
 
 //
@@ -465,10 +464,10 @@ void R_DrawMaskedColumn(
   const rcolumn_t *nextcolumn
 )
 {
-  int     i;
+  int         i;
   int64_t     topscreen; // R_WiggleFix
   int64_t     bottomscreen; // R_WiggleFix
-  fixed_t basetexturemid = dcvars->texturemid;
+  fixed_t     basetexturemid = dcvars->texturemid;
 
   colheight = 0;
 
@@ -494,22 +493,22 @@ void R_DrawMaskedColumn(
 
       // killough 3/2/98, 3/27/98: Failsafe against overflow/crash:
       if (dcvars->yl >= 0 && dcvars->yl <= dcvars->yh && dcvars->yh < viewheight)
-        {
-          dcvars->source = column->pixels + post->topdelta;
-          dcvars->prevsource = prevcolumn->pixels + post->topdelta;
-          dcvars->nextsource = nextcolumn->pixels + post->topdelta;
+      {
+        dcvars->source = column->pixels + post->topdelta;
+        dcvars->prevsource = prevcolumn->pixels + post->topdelta;
+        dcvars->nextsource = nextcolumn->pixels + post->topdelta;
 
-          dcvars->texturemid = basetexturemid - (post->topdelta<<FRACBITS);
+        dcvars->texturemid = basetexturemid - (post->topdelta<<FRACBITS);
 
-          dcvars->edgeslope = post->slope;
-          // Drawn by either R_DrawColumn
-          //  or (SHADOW) R_DrawFuzzColumn.
-          dcvars->drawingmasked = 1; // POPE
-          colfunc (dcvars);
-          dcvars->drawingmasked = 0; // POPE
+        dcvars->edgeslope = post->slope;
+        // Drawn by either R_DrawColumn
+        //  or (SHADOW) R_DrawFuzzColumn.
+        dcvars->drawingmasked = 1; // POPE
+        colfunc (dcvars);
+        dcvars->drawingmasked = 0; // POPE
 
-          colheight += dcvars->yh - dcvars->yl + 1;
-        }
+        colheight += dcvars->yh - dcvars->yl + 1;
+      }
     }
   dcvars->texturemid = basetexturemid;
 }
@@ -595,7 +594,7 @@ static void R_DrawVisSprite(vissprite_t *vis)
     colfunc = R_GetDrawColumnFunc(RDC_PIPELINE_STANDARD, RDRAW_FILTER_POINT); // killough 3/14/98, 4/11/98
   }
 
-// proff 11/06/98: Changed for high-res
+  // proff 11/06/98: Changed for high-res
   dcvars.iscale = FixedDiv (FRACUNIT, vis->scale);
   dcvars.texturemid = vis->texturemid;
   frac = vis->startfrac;
@@ -603,35 +602,34 @@ static void R_DrawVisSprite(vissprite_t *vis)
   sprtopscreen = centeryfrac - FixedMul(dcvars.texturemid,spryscale);
 
   // check to see if weapon is a vissprite
-  if(vis->mobjflags & MF_PLAYERSPRITE)
+  if (vis->mobjflags & MF_PLAYERSPRITE)
   {
     // [FG] fix garbage lines at the top of weapon sprites
     dcvars.iscale = pspriteiyscale;
     dcvars.texturemid += FixedMul(((centery - viewheight/2)<<FRACBITS), dcvars.iscale);
     sprtopscreen += (viewheight/2 - centery)<<FRACBITS;
   }
-
-  if (vis->floorclip && !(vis->mobjflags & MF_PLAYERSPRITE))
+  else if (vis->floorclip)
   {
     fixed_t sprbotscreen = sprtopscreen + FixedMul(LittleShort(patch->height) << FRACBITS, spryscale);
     dcvars.baseclip = (sprbotscreen - FixedMul(vis->floorclip, spryscale)) >> FRACBITS;
   }
 
   for (dcvars.x=vis->x1 ; dcvars.x<=vis->x2 ; dcvars.x++, frac += vis->xiscale)
-    {
-      texturecolumn = frac>>FRACBITS;
+  {
+    texturecolumn = frac>>FRACBITS;
 
-      if (!dcvars.colormap) R_CheckFuzzCol(dcvars.x, colheight);
+    if (!dcvars.colormap) R_CheckFuzzCol(dcvars.x, colheight);
 
-      R_DrawMaskedColumn(
-        patch,
-        colfunc,
-        &dcvars,
-        R_GetPatchColumnClamped(patch, texturecolumn),
-        R_GetPatchColumnClamped(patch, texturecolumn-1),
-        R_GetPatchColumnClamped(patch, texturecolumn+1)
-      );
-    }
+    R_DrawMaskedColumn(
+      patch,
+      colfunc,
+      &dcvars,
+      R_GetPatchColumnClamped(patch, texturecolumn),
+      R_GetPatchColumnClamped(patch, texturecolumn-1),
+      R_GetPatchColumnClamped(patch, texturecolumn+1)
+    );
+  }
 }
 
 int r_near_clip_plane = MINZ;
@@ -803,9 +801,9 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
     return;
   }
 
-    // killough 3/27/98: exclude things totally separated
-    // from the viewer, by either water or fake ceilings
-    // killough 4/11/98: improve sprite clipping for underwater/fake ceilings
+  // killough 3/27/98: exclude things totally separated
+  // from the viewer, by either water or fake ceilings
+  // killough 4/11/98: improve sprite clipping for underwater/fake ceilings
 
   heightsec = thing->subsector->sector->heightsec;
 
@@ -841,7 +839,7 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
   vis->heightsec = heightsec;
 
   vis->mobjflags = thing->flags;
-// proff 11/06/98: Changed for high-res
+  // proff 11/06/98: Changed for high-res
   vis->scale = FixedDiv(projectiony, tz);
   vis->gzt = gzt;                          // killough 3/27/98
 
@@ -911,12 +909,12 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
   else if (LevelUseFullBright && thing->frame & FF_FULLBRIGHT)
     vis->colormap = fullcolormap;     // full bright  // killough 3/20/98
   else
-    {      // diminished light
-      int index = (int)(((int64_t)xscale * 160 / wide_centerx) >> LIGHTSCALESHIFT);
-      if (index >= MAXLIGHTSCALE)
-        index = MAXLIGHTSCALE - 1;
-      vis->colormap = spritelights[index];
-    }
+  {      // diminished light
+    int index = (int)(((int64_t)xscale * 160 / wide_centerx) >> LIGHTSCALESHIFT);
+    if (index >= MAXLIGHTSCALE)
+      index = MAXLIGHTSCALE - 1;
+    vis->colormap = spritelights[index];
+  }
 
   R_UpdateVisSpriteTranMap(vis, thing);
 }
@@ -1147,7 +1145,7 @@ static void R_DrawPSprite (pspdef_t *psp)
 
   vis->x1 = x1 < 0 ? 0 : x1;
   vis->x2 = x2 >= viewwidth ? viewwidth-1 : x2;
-// proff 11/06/98: Added for high-res
+  // proff 11/06/98: Added for high-res
   vis->scale = pspriteyscale;
   vis->color = 0;
 
@@ -1356,11 +1354,11 @@ static void msort(vissprite_t **s, vissprite_t **t, int n)
     {
       vissprite_t *temp = s[i];
       if (s[i-1]->scale < temp->scale)
-        {
-          int j = i;
-          while ((s[j] = s[j-1])->scale < temp->scale && --j);
-          s[j] = temp;
-        }
+      {
+        int j = i;
+        while ((s[j] = s[j-1])->scale < temp->scale && --j);
+        s[j] = temp;
+      }
     }
   }
 }
@@ -1481,40 +1479,40 @@ static void R_DrawSprite (vissprite_t* spr)
   // killough 11/98: fix disappearing sprites
 
   if (spr->heightsec != -1)  // only things in specially marked sectors
-    {
-      fixed_t h,mh;
-      const int phs = viewplayer->mo->subsector->sector->heightsec;
-      if ((mh = sectors[spr->heightsec].floorheight) > spr->gz &&
-          (h = centeryfrac - FixedMul(mh-=viewz, spr->scale)) >= 0 &&
-          (h >>= FRACBITS) < viewheight) {
-        if (mh <= 0 || (phs != -1 && viewz > sectors[phs].floorheight))
-          {                          // clip bottom
-            for (x=spr_x1 ; x<=spr_x1 ; x++)
-              if (clipbot[x] == -2 || h < clipbot[x])
-                clipbot[x] = h;
-          }
-        else                        // clip top
-          if (phs != -1 && viewz <= sectors[phs].floorheight) // killough 11/98
-            for (x=spr_x1 ; x<=spr_x1 ; x++)
-              if (cliptop[x] == -2 || h > cliptop[x])
-                cliptop[x] = h;
+  {
+    fixed_t h,mh;
+    const int phs = viewplayer->mo->subsector->sector->heightsec;
+    if ((mh = sectors[spr->heightsec].floorheight) > spr->gz &&
+        (h = centeryfrac - FixedMul(mh-=viewz, spr->scale)) >= 0 &&
+        (h >>= FRACBITS) < viewheight) {
+      if (mh <= 0 || (phs != -1 && viewz > sectors[phs].floorheight))
+      {                          // clip bottom
+        for (x=spr_x1 ; x<=spr_x1 ; x++)
+          if (clipbot[x] == -2 || h < clipbot[x])
+            clipbot[x] = h;
       }
-
-      if ((mh = sectors[spr->heightsec].ceilingheight) < spr->gzt &&
-          (h = centeryfrac - FixedMul(mh-viewz, spr->scale)) >= 0 &&
-          (h >>= FRACBITS) < viewheight) {
-        if (phs != -1 && viewz >= sectors[phs].ceilingheight)
-          {                         // clip bottom
-            for (x=spr_x1 ; x<=spr_x1 ; x++)
-              if (clipbot[x] == -2 || h < clipbot[x])
-                clipbot[x] = h;
-          }
-        else                       // clip top
+      else                        // clip top
+        if (phs != -1 && viewz <= sectors[phs].floorheight) // killough 11/98
           for (x=spr_x1 ; x<=spr_x1 ; x++)
             if (cliptop[x] == -2 || h > cliptop[x])
               cliptop[x] = h;
-      }
     }
+
+    if ((mh = sectors[spr->heightsec].ceilingheight) < spr->gzt &&
+        (h = centeryfrac - FixedMul(mh-viewz, spr->scale)) >= 0 &&
+        (h >>= FRACBITS) < viewheight) {
+      if (phs != -1 && viewz >= sectors[phs].ceilingheight)
+      {                         // clip bottom
+        for (x=spr_x1 ; x<=spr_x1 ; x++)
+          if (clipbot[x] == -2 || h < clipbot[x])
+            clipbot[x] = h;
+      }
+      else                       // clip top
+        for (x=spr_x1 ; x<=spr_x1 ; x++)
+          if (cliptop[x] == -2 || h > cliptop[x])
+            cliptop[x] = h;
+    }
+  }
   // killough 3/27/98: end special clipping for deep water / fake ceilings
 
   // all clipping has been performed, so draw the sprite
@@ -1597,7 +1595,7 @@ void R_DrawMasked(void)
 
   for (i = num_vissprite ;--i>=0; )
   {
-    vissprite_t* spr = vissprite_ptrs[i];
+    const vissprite_t* spr = vissprite_ptrs[i];
 
     if (spr->x2 < cx)
     {
