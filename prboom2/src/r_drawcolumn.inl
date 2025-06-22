@@ -58,8 +58,6 @@ static void R_DRAWCOLUMN_FUNCNAME(draw_column_vars_t *dcvars)
   byte*  __restrict dest;            // killough
   intptr_t          frac;
   const intptr_t    fracstep = dcvars->iscale;
-
-  R_AllocTempBuf();
 #endif
 
 #if (R_DRAWCOLUMN_PIPELINE & RDC_FUZZ)

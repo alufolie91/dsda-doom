@@ -228,22 +228,6 @@ void R_ResetColumnBuffer(void)
     dsda::g_main_threadpool->schedule(std::move(flush_task)); // then all the columndata from the worker threads / skydraw
 }
 
-static inline void R_AllocTempBuf(void)
-{
-  thread_local static int oldscreenheight = 0;
-
-  // fucking horrible, but we need to alloc this shit per used thread
-  // all cause i dont want a static buffer for this
-  // TODO: make this shit not horrible
-  if (SCREENHEIGHT != oldscreenheight)
-  {
-    temp_columnvars.tempbuf  = static_cast<byte*>(realloc(temp_columnvars.tempbuf, (SCREENHEIGHT * 4) * sizeof(*temp_columnvars.tempbuf)));
-    memset(temp_columnvars.tempbuf, 0, (SCREENHEIGHT * 4) * sizeof(*temp_columnvars.tempbuf));
-    temp_columnvars.temp_x = 0;
-    oldscreenheight = SCREENHEIGHT;
-  }
-}
-
 #define R_DRAWCOLUMN_PIPELINE RDC_STANDARD
 #define R_FLUSHWHOLE_FUNCNAME R_FlushWhole
 #define R_FLUSHHEADTAIL_FUNCNAME R_FlushHT
@@ -507,6 +491,15 @@ void R_InitBuffersRes(void)
 
   if (solidcol) Z_Free(solidcol);
   solidcol = static_cast<byte*>(Z_Calloc(1, SCREENWIDTH * sizeof(*solidcol)));
+
+  auto init_tempbuf = [] {
+    free(temp_columnvars.tempbuf);
+    temp_columnvars.tempbuf = static_cast<byte*>(calloc(1, (SCREENHEIGHT * 4) * sizeof(*temp_columnvars.tempbuf)));
+    temp_columnvars.temp_x = 0;
+  };
+
+  init_tempbuf();
+  dsda::g_main_threadpool->for_each(std::move(init_tempbuf));
 }
 
 //
