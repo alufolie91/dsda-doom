@@ -52,10 +52,10 @@
 
 static void R_DRAWCOLUMN_FUNCNAME(draw_column_vars_t *dcvars)
 {
-  int              count;
+  intptr_t          count;
 
 #if (!(R_DRAWCOLUMN_PIPELINE & RDC_FUZZ))
-  byte             * __restrict dest;            // killough
+  byte*  __restrict dest;            // killough
   intptr_t          frac;
   const intptr_t    fracstep = dcvars->iscale;
 
@@ -198,7 +198,7 @@ static void R_DRAWCOLUMN_FUNCNAME(draw_column_vars_t *dcvars)
         if (frac < 0)
           while ((frac += heightmask) <  0);
         else
-          while (frac >= (int)heightmask)
+          while (frac >= (intptr_t)heightmask)
             frac -= heightmask;
 
         while (count--) {
@@ -209,7 +209,7 @@ static void R_DRAWCOLUMN_FUNCNAME(draw_column_vars_t *dcvars)
 
           *dest = GETCOL(frac);
           dest += 4;
-          if ((frac += fracstep) >= (int)heightmask)
+          if ((frac += fracstep) >= (intptr_t)heightmask)
             frac -= heightmask;
         }
       }

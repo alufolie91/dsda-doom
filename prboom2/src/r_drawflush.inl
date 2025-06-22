@@ -46,8 +46,8 @@ static void R_FLUSHWHOLE_FUNCNAME(void)
    // Scaled software fuzz algorithm
 #if (R_DRAWCOLUMN_PIPELINE & RDC_FUZZ)
 {
-    int yl, yh, count, lines;
-    byte *dest;
+    intptr_t yl, yh, count, lines;
+    byte * __restrict dest;
 
     if ((temp_columnvars.temp_x + temp_columnvars.startx) % fuzzcellsize)
     {
@@ -79,7 +79,7 @@ static void R_FLUSHWHOLE_FUNCNAME(void)
 
     do
     {
-        int mask;
+        intptr_t mask;
         byte fuzz;
 
         count -= lines;
@@ -111,9 +111,9 @@ static void R_FLUSHWHOLE_FUNCNAME(void)
 }
 #else
 {
-   byte *source;
-   byte *dest;
-   int  count, yl;
+   byte* __restrict source;
+   byte* __restrict dest;
+   intptr_t  count, yl;
 
    while(--temp_columnvars.temp_x >= 0)
    {
@@ -147,10 +147,10 @@ static void R_FLUSHWHOLE_FUNCNAME(void)
 //
 static void R_FLUSHHEADTAIL_FUNCNAME(void)
 {
-   byte *source;
-   byte *dest;
-   int count, colnum = 0;
-   int yl, yh;
+    byte* __restrict source;
+    byte* __restrict dest;
+    intptr_t count, colnum = 0;
+    intptr_t yl, yh;
 
    #if (R_DRAWCOLUMN_PIPELINE & RDC_FUZZ)
       // Only whole flushes are supported for fuzz
@@ -210,9 +210,9 @@ static void R_FLUSHHEADTAIL_FUNCNAME(void)
 
 static void R_FLUSHQUAD_FUNCNAME(void)
 {
-   byte *source;
-   byte *dest;
-   int count;
+    byte* __restrict source;
+    byte* __restrict dest;
+    intptr_t count;
 
    #if (R_DRAWCOLUMN_PIPELINE & RDC_FUZZ)
       // Only whole flushes are supported for fuzz
