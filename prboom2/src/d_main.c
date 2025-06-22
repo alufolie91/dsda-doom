@@ -116,8 +116,6 @@
 
 #include "hexen/sn_sonix.h"
 
-#include "core/thread_pool.h"
-
 // NSM
 #include "i_capture.h"
 
@@ -2189,8 +2187,6 @@ static void D_DoomMainSetup(void)
   {
     I_CapturePrep(arg->value.v_string);
   }
-
-  I_ThreadPoolInit();
 
   //jff 9/3/98 use logical output routine
   lprintf(LO_DEBUG, "ST_Init: Init status bar.\n");

@@ -262,6 +262,8 @@ void I_SetProcessPriority(void)
   }
 }
 
+#include "../core/thread_pool.h"
+
 //int main(int argc, const char * const * argv)
 int main(int argc, char **argv)
 {
@@ -311,6 +313,8 @@ int main(int argc, char **argv)
      loud SFX noise because the sound card is
      left in an unstable state.
   */
+
+  I_ThreadPoolInit();
 
   I_AtExit(I_EssentialQuit, true, "I_EssentialQuit", exit_priority_first);
   I_AtExit(I_Quit, false, "I_Quit", exit_priority_last);
