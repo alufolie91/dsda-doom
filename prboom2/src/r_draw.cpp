@@ -205,10 +205,6 @@ static void R_FlushColumns(void)
 //
 void R_ResetColumnBuffer(void)
 {
-  int r_parallel;
-
-  r_parallel = dsda_IntConfig(dsda_config_render_parallel);
-
   auto flush_task = [] {
     // haleyjd 10/06/05: this must not be done if temp_x == 0!
     if (temp_columnvars.temp_x) {
@@ -224,7 +220,7 @@ void R_ResetColumnBuffer(void)
   // flush main threads column data
   flush_task();
 
-  if (r_parallel)
+  if (dsda_IntConfig(dsda_config_render_parallel))
     dsda::g_main_threadpool->for_each(std::move(flush_task)); // then all the columndata from the worker threads / skydraw
 }
 

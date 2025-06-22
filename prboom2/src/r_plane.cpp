@@ -901,9 +901,7 @@ void R_DrawPlanes (void)
   visplane_t *pl;
   int i;
 
-  int r_parallel;
-
-  r_parallel = dsda_IntConfig(dsda_config_render_parallel);
+  const bool r_parallel = dsda_IntConfig(dsda_config_render_parallel);
 
   dsda::ThreadPool::Sema tp_sema;
   dsda::g_main_threadpool->begin_sema();
