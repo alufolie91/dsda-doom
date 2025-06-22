@@ -225,7 +225,7 @@ void R_ResetColumnBuffer(void)
   flush_task();
 
   if (r_parallel)
-    dsda::g_main_threadpool->schedule(std::move(flush_task)); // then all the columndata from the worker threads / skydraw
+    dsda::g_main_threadpool->for_each(std::move(flush_task)); // then all the columndata from the worker threads / skydraw
 }
 
 #define R_DRAWCOLUMN_PIPELINE RDC_STANDARD
