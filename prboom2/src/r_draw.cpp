@@ -178,9 +178,9 @@ static void R_QuadFlushError(void)
   I_Error("R_FlushQuadColumn called without being initialized.\n");
 }
 
-static void (*R_FlushWholeColumns)(void) = R_FlushWholeError;
-static void (*R_FlushHTColumns)(void)    = R_FlushHTError;
-static void (*R_FlushQuadColumn)(void) = R_QuadFlushError;
+static thread_local void (*R_FlushWholeColumns)(void) = R_FlushWholeError;
+static thread_local void (*R_FlushHTColumns)(void)    = R_FlushHTError;
+static thread_local void (*R_FlushQuadColumn)(void)   = R_QuadFlushError;
 
 static void R_FlushColumns(void)
 {
