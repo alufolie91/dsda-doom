@@ -223,6 +223,7 @@ static inline void R_AllocTempBuf(void)
   {
     temp_columnvars.tempbuf  = static_cast<byte*>(realloc(temp_columnvars.tempbuf, (SCREENHEIGHT * 4) * sizeof(*temp_columnvars.tempbuf)));
     memset(temp_columnvars.tempbuf, 0, (SCREENHEIGHT * 4) * sizeof(*temp_columnvars.tempbuf));
+    temp_columnvars.temp_x = 0;
     oldscreenheight = SCREENHEIGHT;
   }
 }
@@ -490,8 +491,6 @@ void R_InitBuffersRes(void)
 
   if (solidcol) Z_Free(solidcol);
   solidcol = static_cast<byte*>(Z_Calloc(1, SCREENWIDTH * sizeof(*solidcol)));
-
-  temp_columnvars.temp_x = 0;
 }
 
 //
