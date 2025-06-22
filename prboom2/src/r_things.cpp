@@ -256,9 +256,11 @@ static void R_InitSpriteDefs(const char * const * namelist)
 
   hash = static_cast<hash_entry*>(Z_Malloc(sizeof(*hash)*numentries)); // allocate hash table
 
+  for (i=0; (size_t)i<numentries; i++)             // initialize hash table as empty
+    hash[i].index = -1;
+
   for (i=0; (size_t)i<numentries; i++)             // Prepend each sprite to hash chain
   {                                                // prepend so that later ones win
-    hash[i].index = -1; // initialize hash table as empty
     int j = R_SpriteNameHash(lumpinfo[i+firstspritelump].name) % numentries;
     hash[i].next = hash[j].index;
     hash[j].index = i;
