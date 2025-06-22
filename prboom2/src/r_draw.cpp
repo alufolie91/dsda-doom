@@ -48,6 +48,8 @@
 
 #include "dsda/stretch.h"
 
+#include "core/thread_pool.h"
+
 //
 // All drawing to the view buffer is accomplished in this file.
 // The other refresh files only know about ccordinates,
@@ -203,13 +205,21 @@ static void R_FlushColumns(void)
 //
 void R_ResetColumnBuffer(void)
 {
-   // haleyjd 10/06/05: this must not be done if temp_x == 0!
-   if(temp_columnvars.temp_x)
+  auto flush_task = [] {
+    // haleyjd 10/06/05: this must not be done if temp_x == 0!
+    if (temp_columnvars.temp_x) {
       R_FlushColumns();
-   temp_columnvars.temptype = COL_NONE;
-   R_FlushWholeColumns = R_FlushWholeError;
-   R_FlushHTColumns    = R_FlushHTError;
-   R_FlushQuadColumn   = R_QuadFlushError;
+    }
+
+    temp_columnvars.temptype = COL_NONE;
+    R_FlushWholeColumns = R_FlushWholeError;
+    R_FlushHTColumns    = R_FlushHTError;
+    R_FlushQuadColumn   = R_QuadFlushError;
+  };
+
+  dsda::g_main_threadpool->schedule(std::move(flush_task));
+
+  flush_task();
 }
 
 static inline void R_AllocTempBuf(void)
