@@ -18,6 +18,10 @@
 #ifndef __DSDA_ARGS__
 #define __DSDA_ARGS__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "doomtype.h"
 
 typedef enum {
@@ -149,6 +153,7 @@ typedef enum {
   dsda_arg_apply_mbf_codepointers_to_any_complevel,
   dsda_arg_reset_monsterspawner_params_after_loading,
   dsda_arg_debug_mapinfo,
+  dsda_arg_singlethreaded,
   dsda_arg_count,
 } dsda_arg_identifier_t;
 
@@ -173,5 +178,9 @@ void dsda_UpdateStringArg(dsda_arg_identifier_t id, const char* param);
 void dsda_AppendStringArg(dsda_arg_identifier_t id, const char* param);
 void dsda_UpdateFlag(dsda_arg_identifier_t id, dboolean found);
 void dsda_PrintArgHelp(void);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif

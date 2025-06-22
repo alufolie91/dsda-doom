@@ -22,6 +22,7 @@
 
 #include "../cxxutil.hpp"
 #include "../m_argv.h"
+#include "../dsda/args.h"
 
 using namespace dsda;
 
@@ -307,11 +308,11 @@ void I_ThreadPoolInit(void)
 		thread_count -= 1;
 	}
 
-	/*if (M_CheckParmEx("-singlethreaded"))
+	if (dsda_Arg(dsda_arg_singlethreaded)->found)
 	{
 		g_main_threadpool = std::make_unique<ThreadPool>();
 	}
-	else*/
+	else
 	{
 		g_main_threadpool = std::make_unique<ThreadPool>(thread_count);
 	}

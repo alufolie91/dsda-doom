@@ -693,6 +693,11 @@ static arg_config_t arg_config[dsda_arg_count] = {
     "turns on mapinfo parsing in doom (temporary arg for testing)",
     arg_null,
   },
+  [dsda_arg_singlethreaded] = {
+    "-singlethreaded", NULL, NULL,
+    "single thread span drawers",
+    arg_null,
+  },
 };
 
 static dsda_arg_t arg_value[dsda_arg_count];
