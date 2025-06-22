@@ -34,10 +34,10 @@ class ThreadPool
 public:
 	struct Task
 	{
-		void (*thunk)(void*);
-		void (*deleter)(void*);
-		std::shared_ptr<std::atomic<uint32_t>> pseudosema;
-		std::array<std::byte, 512 - sizeof(void(*)(void*)) * 2 - sizeof(std::shared_ptr<std::atomic<uint32_t>>)> raw;
+		void (*thunk)(void*) = nullptr;
+		void (*deleter)(void*) = nullptr;
+		std::shared_ptr<std::atomic<uint32_t>> pseudosema = nullptr;
+		std::array<std::byte, 512 - sizeof(void(*)(void*)) * 2 - sizeof(decltype(pseudosema))> raw = {};
 	};
 
 	using Queue = SpMcQueue<Task>;
