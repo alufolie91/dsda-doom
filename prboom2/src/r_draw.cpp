@@ -451,20 +451,20 @@ void R_InitTranslationTables (void)
 //
 
 void R_DrawSpan(draw_span_vars_t *dsvars) {
-  unsigned count = dsvars->x2 - dsvars->x1 + 1;
-  fixed_t xfrac = dsvars->xfrac;
-  fixed_t yfrac = dsvars->yfrac;
-  const fixed_t xstep = dsvars->xstep;
-  const fixed_t ystep = dsvars->ystep;
+  uintptr_t count = static_cast<uintptr_t>(dsvars->x2 - dsvars->x1 + 1);
+  intptr_t xfrac = dsvars->xfrac;
+  intptr_t yfrac = dsvars->yfrac;
+  const intptr_t xstep = dsvars->xstep;
+  const intptr_t ystep = dsvars->ystep;
   const byte *source = dsvars->source;
   const byte *colormap = dsvars->colormap;
   byte *dest = drawvars.topleft + dsvars->y*drawvars.pitch + dsvars->x1;
 
   while (count >= 8){
     for (int i = 0; i < 8; i++){
-      const fixed_t xtemp = (xfrac >> 16) & 63;
-      const fixed_t ytemp = (yfrac >> 10) & 4032;
-      const fixed_t spot = xtemp | ytemp;
+      const intptr_t xtemp = (xfrac >> 16) & 63;
+      const intptr_t ytemp = (yfrac >> 10) & 4032;
+      const intptr_t spot  = xtemp | ytemp;
       xfrac += xstep;
       yfrac += ystep;
       dest[i] = colormap[source[spot]];
@@ -474,9 +474,9 @@ void R_DrawSpan(draw_span_vars_t *dsvars) {
   }
 
   while (count) {
-    const fixed_t xtemp = (xfrac >> 16) & 63;
-    const fixed_t ytemp = (yfrac >> 10) & 4032;
-    const fixed_t spot = xtemp | ytemp;
+    const intptr_t xtemp = (xfrac >> 16) & 63;
+    const intptr_t ytemp = (yfrac >> 10) & 4032;
+    const intptr_t spot  = xtemp | ytemp;
     xfrac += xstep;
     yfrac += ystep;
     *dest++ = colormap[source[spot]];

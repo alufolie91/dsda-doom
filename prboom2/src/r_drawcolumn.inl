@@ -56,8 +56,8 @@ static void R_DRAWCOLUMN_FUNCNAME(draw_column_vars_t *dcvars)
 
 #if (!(R_DRAWCOLUMN_PIPELINE & RDC_FUZZ))
   byte             *dest;            // killough
-  fixed_t          frac;
-  const fixed_t    fracstep = dcvars->iscale;
+  intptr_t          frac;
+  const intptr_t    fracstep = dcvars->iscale;
 
   R_AllocTempBuf();
 #endif
@@ -178,9 +178,9 @@ static void R_DRAWCOLUMN_FUNCNAME(draw_column_vars_t *dcvars)
         frac += fracstep;
       }
     } else {
-      unsigned heightmask = dcvars->texheight-1; // CPhipps - specify type
+      uintptr_t heightmask = dcvars->texheight-1; // CPhipps - specify type
       if (! (dcvars->texheight & heightmask) ) { // power of 2 -- killough
-        fixed_t fixedt_heightmask = (heightmask<<FRACBITS)|0xffff;
+        intptr_t fixedt_heightmask = (heightmask<<FRACBITS)|0xffff;
         while ((count-=2)>=0) { // texture height is a power of 2 -- killough
           *dest = GETCOL(frac & fixedt_heightmask);
           dest += 4;
