@@ -55,6 +55,9 @@ typedef unsigned char byte;
 #define BETWEEN(l,u,x) ((l)>(x)?(l):(x)>(u)?(u):(x))
 #endif
 
+#define LIKELY(x)    __builtin_expect(!!(x), 1)
+#define UNLIKELY(x)  __builtin_expect(!!(x), 0)
+
 #include <inttypes.h>
 #include <limits.h>
 

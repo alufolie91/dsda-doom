@@ -1261,7 +1261,7 @@ void P_MobjThinker (mobj_t* mobj)
   // removed old code which looked at target references
   // (we use pointer reference counting now)
 
-  if (mobj->type == MT_MUSICSOURCE)
+  if (UNLIKELY(mobj->type == MT_MUSICSOURCE))
   {
     MusInfoThinker(mobj);
     return;
