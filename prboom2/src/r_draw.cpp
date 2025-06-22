@@ -456,9 +456,9 @@ void R_DrawSpan(draw_span_vars_t *dsvars) {
   intptr_t yfrac = dsvars->yfrac;
   const intptr_t xstep = dsvars->xstep;
   const intptr_t ystep = dsvars->ystep;
-  const byte *source = dsvars->source;
-  const byte *colormap = dsvars->colormap;
-  byte *dest = drawvars.topleft + dsvars->y*drawvars.pitch + dsvars->x1;
+  const byte * __restrict source = dsvars->source;
+  const byte * __restrict colormap = dsvars->colormap;
+  byte * __restrict dest = drawvars.topleft + dsvars->y*drawvars.pitch + dsvars->x1;
 
   while (count >= 8){
     for (int i = 0; i < 8; i++){
