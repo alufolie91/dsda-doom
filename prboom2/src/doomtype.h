@@ -114,13 +114,13 @@ typedef unsigned char byte;
 #endif
 
 typedef enum {
-  doom_12_compatibility,   /* Doom v1.2 */
-  doom_1666_compatibility, /* Doom v1.666 */
-  doom2_19_compatibility,  /* Doom & Doom 2 v1.9 */
-  ultdoom_compatibility,   /* Ultimate Doom and Doom95 */
-  finaldoom_compatibility,     /* Final Doom */
-  dosdoom_compatibility,     /* DosDoom 0.47 */
-  tasdoom_compatibility,     /* TASDoom */
+  doom_12_compatibility,                 /* Doom v1.2 */
+  doom_1666_compatibility,               /* Doom v1.666 */
+  doom2_19_compatibility,                /* Doom & Doom 2 v1.9 */
+  ultdoom_compatibility,                 /* Ultimate Doom and Doom95 */
+  finaldoom_compatibility,               /* Final Doom */
+  dosdoom_compatibility,                 /* DosDoom 0.47 */
+  tasdoom_compatibility,                 /* TASDoom */
   boom_compatibility_compatibility,      /* Boom's compatibility mode */
   boom_201_compatibility,                /* Boom v2.01 */
   boom_202_compatibility,                /* Boom v2.02 */
