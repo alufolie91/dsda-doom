@@ -1,4 +1,3 @@
-# Fork notes:
 this is mostly just me messing around with code, 
 learning code things,
 trying to make things faster,
