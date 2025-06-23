@@ -142,10 +142,12 @@ static mobj_t* P_TeleportDestination(short thing_id, int tag)
     return NULL;
   }
 
+  const int class = (mbf21 ? th_teleport : th_misc);
+
   FIND_SECTORS(id_p, tag)
   {
     register thinker_t* th = NULL;
-    while ((th = P_NextThinker(th, mbf21 ? th_misc : th_teleport)) != NULL)
+    while ((th = P_NextThinker(th, class)) != NULL)
       if (th->function == P_MobjThinker) {
         register mobj_t* m = (mobj_t*)th;
         if (m->type == MT_TELEPORTMAN  &&
