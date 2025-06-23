@@ -72,6 +72,8 @@
 
 #include "hexen/po_man.h"
 
+mobj_t *mobjcache = NULL;
+
 // heretic_note: static NUMSTATES arrays here - probably fine?
 // NUMSTATES > HERETIC_NUMSTATES
 
@@ -1697,8 +1699,17 @@ mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
   state_t*    st;
   mobjinfo_t* info;
 
-  mobj = Z_MallocLevel (sizeof(*mobj));
-  memset (mobj, 0, sizeof (*mobj));
+  if (mobjcache != NULL)
+  {
+    mobj = mobjcache;
+    mobjcache = mobjcache->snext; // repurposing this for savegame compat lel
+    memset (mobj, 0, sizeof (*mobj));
+  }
+  else
+  {
+    mobj = Z_CallocLevel (1, sizeof(*mobj));
+  }
+
   info = &mobjinfo[type];
   mobj->type = type;
   mobj->info = info;
@@ -1749,11 +1760,11 @@ mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
 
   if (z == ONFLOORZ)
   {
-      mobj->z = mobj->floorz;
+    mobj->z = mobj->floorz;
   }
   else if (z == ONCEILINGZ)
   {
-      mobj->z = mobj->ceilingz - mobj->height;
+    mobj->z = mobj->ceilingz - mobj->height;
   }
   else if (raven && z == FLOATRANDZ)
   {

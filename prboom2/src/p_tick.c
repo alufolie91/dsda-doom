@@ -142,6 +142,7 @@ void P_AddThinker(thinker_t* thinker)
   thinker->cnext = thinker->cprev = NULL;
   P_UpdateThinker(thinker);
   newthinkerpresent = true;
+  thinker->cachable = (thinker->function == P_MobjThinker || thinker->function == P_BlasterMobjThinker);
 }
 
 //
@@ -180,7 +181,17 @@ void P_RemoveThinkerDelayed(thinker_t *thinker)
         thinker_t *th = thinker->cnext;
         (th->cprev = thinker->cprev)->cnext = th;
       }
-      Z_Free(thinker);
+
+      if (thinker->cachable == true)
+      {
+        // put cachable thinkers in the mobj cache, so we can avoid allocations
+        ((mobj_t *)thinker)->snext = mobjcache;
+        mobjcache = (mobj_t *)thinker;
+      }
+      else
+      {
+        Z_Free(thinker);
+      }
     }
 }
 

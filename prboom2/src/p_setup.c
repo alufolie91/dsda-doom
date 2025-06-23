@@ -3687,6 +3687,8 @@ void P_SetupLevel(int episode, int map, int playermask, int skill)
 
   Z_FreeLevel();
 
+  mobjcache = NULL;
+
   P_InitThinkers();
 
   // e6y

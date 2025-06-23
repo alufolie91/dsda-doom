@@ -36,6 +36,8 @@
 #ifndef __D_THINK__
 #define __D_THINK__
 
+#include "doomtype.h"
+
 /*
  * Experimental stuff.
  * To compile this as "ANSI C with classes"
@@ -87,6 +89,7 @@ typedef struct thinker_s
    * this one using pointers. Used for garbage collection.
    */
   unsigned references;
+  dboolean cachable;
 } thinker_t;
 
 #endif
