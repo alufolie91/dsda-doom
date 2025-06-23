@@ -50,6 +50,8 @@
 
 #include "core/thread_pool.h"
 
+bool drawsky = false;
+
 //
 // All drawing to the view buffer is accomplished in this file.
 // The other refresh files only know about ccordinates,
@@ -220,8 +222,11 @@ void R_ResetColumnBuffer(void)
   // flush main threads column data
   flush_task();
 
-  if (dsda_IntConfig(dsda_config_render_parallel))
+  if (drawsky && dsda_IntConfig(dsda_config_render_parallel))
+  {
     dsda::g_main_threadpool->for_each(std::move(flush_task)); // then all the columndata from the worker threads / skydraw
+    drawsky = false;
+  }
 }
 
 #define R_DRAWCOLUMN_PIPELINE RDC_STANDARD

@@ -89,6 +89,8 @@ typedef struct draw_column_vars_s
 
 void R_SetDefaultDrawColumnVars(draw_column_vars_t *dcvars);
 
+extern bool drawsky;
+
 typedef struct {
   int                 y;
   int                 x1;

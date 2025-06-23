@@ -595,6 +595,8 @@ static void R_DoDrawPlane(visplane_t *pl, dboolean allow_parallel)
 
       R_SetDefaultDrawColumnVars(&dcvars);
 
+      drawsky = true;
+
       // killough 10/98: allow skies to come from sidedefs.
       // Allows scrolling and/or animated skies, as well as
       // arbitrary multiple skies per level without having
