@@ -678,6 +678,72 @@ static void R_RenderSegLoop (void)
   }
 }
 
+static void R_MarkSegBounds(void)
+{
+  for (; rw_x < rw_stopx; rw_x++)
+  {
+      // mark floor / ceiling areas
+      int yh = (int)(bottomfrac>>HEIGHTBITS);
+      int yl = (int)((topfrac+HEIGHTUNIT-1)>>HEIGHTBITS);
+
+      // no space above wall?
+      int bottom,top = ceilingclip[rw_x]+1;
+
+      if (yl < top)
+        yl = top;
+
+      if (markceiling)
+      {
+        bottom = yl-1;
+
+        if (bottom >= floorclip[rw_x])
+          bottom = floorclip[rw_x]-1;
+
+        if (top <= bottom)
+        {
+          ceilingplane->top[rw_x] = top;
+          ceilingplane->bottom[rw_x] = bottom;
+        }
+        // SoM: this should be set here
+        ceilingclip[rw_x] = bottom;
+      }
+
+      bottom = floorclip[rw_x]-1;
+      if (yh > bottom)
+        yh = bottom;
+
+      if (markfloor)
+      {
+        top  = yh < ceilingclip[rw_x] ? ceilingclip[rw_x] : yh;
+
+        if (++top <= bottom)
+        {
+          floorplane->top[rw_x] = top;
+          floorplane->bottom[rw_x] = bottom;
+        }
+        // SoM: This should be set here to prevent overdraw
+        floorclip[rw_x] = top;
+      }
+
+      if (markceiling) // no top wall
+        ceilingclip[rw_x] = yl-1;
+
+      if (markfloor) // no bottom wall
+        floorclip[rw_x] = yh+1;
+
+      // cph - if we completely blocked further sight through this column,
+      // add this info to the solid columns array for r_bsp.c
+      if (floorclip[rw_x] <= ceilingclip[rw_x] + 1)
+      {
+        solidcol[rw_x] = 1; didsolidcol = 1;
+      }
+
+      rw_scale += rw_scalestep;
+      topfrac += topstep;
+      bottomfrac += bottomstep;
+  }
+}
+
 //
 // R_StoreWallRange
 // A wall segment will be drawn
@@ -1024,7 +1090,23 @@ void R_StoreWallRange(const int start, const int stop)
   }
 
   didsolidcol = 0;
-  R_RenderSegLoop();
+
+  if (!segtextured)
+  {
+    if (markfloor || markceiling)
+      R_MarkSegBounds();
+    else
+    {
+      for ( ; rw_x < rw_stopx ; rw_x++)
+      {
+        rw_scale += rw_scalestep;
+      }
+    }
+  }
+  else
+  {
+    R_RenderSegLoop();
+  }
 
   /* cph - if a column was made solid by this wall, we _must_ save full clipping info */
   if (backsector && didsolidcol)
