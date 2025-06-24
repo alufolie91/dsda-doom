@@ -106,7 +106,7 @@ typedef struct draw_column_temp_vars_s
   const byte *fuzzmap;
 } draw_column_temp_vars_t;
 
-thread_local draw_column_vars_t temp_dcvars = {};
+thread_local draw_column_temp_vars_t temp_dcvars = {};
 
 //
 // Spectre/Invisibility.
