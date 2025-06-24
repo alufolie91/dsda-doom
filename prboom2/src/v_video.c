@@ -801,7 +801,7 @@ static void NULL_DrawLine(fline_t* fl, int color) {}
 static void NULL_DrawLineWu(fline_t* fl, int color) {}
 static void NULL_DrawShaded(int scrn, int x, int y, int width, int height, int shade) {}
 
-static video_mode_t current_videomode = VID_MODESW;
+video_mode_t current_videomode = VID_MODESW;
 
 V_BeginUIDraw_f V_BeginUIDraw = NULL_BeginUIDraw;
 V_EndUIDraw_f V_EndUIDraw = NULL_EndUIDraw;
@@ -872,14 +872,6 @@ void V_InitMode(video_mode_t mode) {
       current_videomode = VID_MODEGL;
       break;
   }
-}
-
-dboolean V_IsSoftwareMode(void) {
-  return current_videomode == VID_MODESW;
-}
-
-dboolean V_IsOpenGLMode(void) {
-  return current_videomode == VID_MODEGL;
 }
 
 dboolean V_IsUILightmodeIndexed(void) {

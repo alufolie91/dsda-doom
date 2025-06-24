@@ -152,11 +152,18 @@ typedef enum {
   VID_MODEMAX
 } video_mode_t;
 
+extern video_mode_t current_videomode;
+
 void V_InitMode(video_mode_t mode);
 
 // video mode query interface
-dboolean V_IsSoftwareMode(void);
-dboolean V_IsOpenGLMode(void);
+INLINE static dboolean V_IsSoftwareMode(void) {
+  return current_videomode == VID_MODESW;
+}
+
+INLINE static dboolean V_IsOpenGLMode(void) {
+  return current_videomode == VID_MODEGL;
+}
 
 // [XA] indexed lightmode query interface
 dboolean V_IsUILightmodeIndexed(void);
