@@ -544,6 +544,8 @@ function(AddGameExecutable TARGET SOURCES)
         ${FAST_MATH_FLAG}
     )
 
+    target_compile_options(${TARGET} PRIVATE -g)
+
     #target_compile_options(${TARGET} PRIVATE -fsanitize=address)
     #target_link_options(${TARGET} PRIVATE -fsanitize=address)
 
