@@ -907,7 +907,7 @@ static void R_SetupFrame (player_t *player)
   int i, cm;
   int extra_brightness;
 
-  int FocalTangent = finetangent[FINEANGLES/4 + FieldOfView/2];
+  const int FocalTangent = finetangent[FINEANGLES/4 + FieldOfView/2];
 
   viewplayer = player;
 

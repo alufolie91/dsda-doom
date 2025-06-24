@@ -325,16 +325,8 @@ static void FUNC_V_DrawBackground(const char* flatname, int scrn)
 
 void V_Init (void)
 {
-  int  i;
-
   // reset the all
-  for (i = 0; i<NUM_SCREENS; i++) {
-    screens[i].data = NULL;
-    screens[i].not_on_heap = false;
-    screens[i].width = 0;
-    screens[i].height = 0;
-    screens[i].pitch = 0;
-  }
+  memset(screens, 0, NUM_SCREENS * sizeof(screeninfo_t));
 }
 
 //
@@ -627,7 +619,7 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch,
 // a dark faded background under menus.
 //
 static void FUNC_V_DrawShaded(int scrn, int x, int y, int width, int height, int shade)
-{ 
+{
   const lighttable_t *darkcolormap;
   extern dboolean LevelUseFullBright;
   extern const byte* colormap_lump;
