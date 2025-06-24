@@ -476,33 +476,28 @@ void R_DrawMaskedColumn(
   dcvars->texheight = patch->height; // killough 11/98
   for (i=0; i<column->numPosts; i++) {
       const rpost_t *post = &column->posts[i];
+      const int topdelta = post->topdelta;
 
       // calculate unclipped screen coordinates for post
-      topscreen = sprtopscreen + spryscale*post->topdelta;
+      topscreen    = sprtopscreen + spryscale*topdelta;
       bottomscreen = topscreen + spryscale*post->length;
 
-      dcvars->yl = (int)((topscreen+FRACUNIT-1)>>FRACBITS);
-      dcvars->yh = (int)((bottomscreen-1)>>FRACBITS);
+      dcvars->yl = MAX((int)((topscreen + FRACUNIT - 1) >> FRACBITS), mceilingclip[dcvars->x] + 1);
+      dcvars->yh = MIN((int)((bottomscreen - 1) >> FRACBITS), mfloorclip[dcvars->x] - 1);
 
-      if (dcvars->yh >= mfloorclip[dcvars->x])
-        dcvars->yh = mfloorclip[dcvars->x]-1;
-
-      if (dcvars->yl <= mceilingclip[dcvars->x])
-        dcvars->yl = mceilingclip[dcvars->x]+1;
-
-      if (dcvars->yh >= dcvars->baseclip && dcvars->baseclip != -1)
+      if (dcvars->baseclip != -1 && dcvars->yh >= dcvars->baseclip)
         dcvars->yh = dcvars->baseclip;
 
       // killough 3/2/98, 3/27/98: Failsafe against overflow/crash:
       if (dcvars->yl >= 0 && dcvars->yl <= dcvars->yh && dcvars->yh < viewheight)
       {
-        dcvars->source = column->pixels + post->topdelta;
-        dcvars->prevsource = prevcolumn->pixels + post->topdelta;
-        dcvars->nextsource = nextcolumn->pixels + post->topdelta;
+        dcvars->source     = column->pixels + topdelta;
+        dcvars->prevsource = prevcolumn->pixels + topdelta;
+        dcvars->nextsource = nextcolumn->pixels + topdelta;
 
-        dcvars->texturemid = basetexturemid - (post->topdelta<<FRACBITS);
+        dcvars->texturemid = basetexturemid - (topdelta<<FRACBITS);
 
-        dcvars->edgeslope = post->slope;
+        dcvars->edgeslope  = post->slope;
         // Drawn by either R_DrawColumn
         //  or (SHADOW) R_DrawFuzzColumn.
         dcvars->drawingmasked = 1; // POPE
