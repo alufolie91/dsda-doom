@@ -1257,6 +1257,11 @@ fixed_t FloatBobOffsets[64] = {
 
 static void PlayerLandedOnThing(mobj_t * mo, mobj_t * onmobj, fixed_t gravity);
 
+void P_MusicSourceThinker (mobj_t* mobj)
+{
+  MusInfoThinker(mobj);
+}
+
 void P_MobjThinker (mobj_t* mobj)
 {
   // killough 11/98:
