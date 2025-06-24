@@ -31,8 +31,9 @@ int P_GetMobj(mobj_t* mi, size_t s);
 
 static dboolean dsda_IsMSecNodeMobj(thinker_t* thinker)
 {
-  return thinker->function == P_MobjThinker ||
-         thinker->function == P_BlasterMobjThinker;
+  return thinker->function == P_MobjThinker        ||
+         thinker->function == P_BlasterMobjThinker ||
+         thinker->function == P_MusicSourceThinker;
 }
 
 // The MSecNodes store an intersecting web of nodes.

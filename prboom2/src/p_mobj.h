@@ -439,22 +439,23 @@ typedef struct mobj_s
 extern int iquehead;
 extern int iquetail;
 
-int P_MobjSpawnHealth(const mobj_t* mobj);
-mobj_t* P_SubstNullMobj (mobj_t* th);
-void    P_RespawnSpecials(void);
+int      P_MobjSpawnHealth(const mobj_t* mobj);
+mobj_t*  P_SubstNullMobj (mobj_t* th);
+void     P_RespawnSpecials(void);
 mobj_t  *P_SpawnMobj(fixed_t x, fixed_t y, fixed_t z, mobjtype_t type);
-void    P_RemoveMobj(mobj_t *th);
+void     P_RemoveMobj(mobj_t *th);
 dboolean P_SetMobjState(mobj_t *mobj, statenum_t state);
-void    P_MobjThinker(mobj_t *mobj);
-void    P_SpawnPuff(fixed_t x, fixed_t y, fixed_t z);
-void    P_SpawnBlood(fixed_t x, fixed_t y, fixed_t z, int damage, mobj_t *bleeder);
+void     P_MobjThinker(mobj_t *mobj);
+void     P_MusicSourceThinker (mobj_t* mobj);
+void     P_SpawnPuff(fixed_t x, fixed_t y, fixed_t z);
+void     P_SpawnBlood(fixed_t x, fixed_t y, fixed_t z, int damage, mobj_t *bleeder);
 mobj_t  *P_SpawnMissile(mobj_t *source, mobj_t *dest, mobjtype_t type);
 mobj_t  *P_SpawnPlayerMissile(mobj_t *source, mobjtype_t type);
 dboolean P_IsDoomnumAllowed(int doomnum);
-mobj_t* P_SpawnMapThing (const mapthing_t*  mthing, int index);
-void    P_SpawnPlayer(int n, const mapthing_t *mthing);
+mobj_t*  P_SpawnMapThing (const mapthing_t*  mthing, int index);
+void     P_SpawnPlayer(int n, const mapthing_t *mthing);
 dboolean P_CheckMissileSpawn(mobj_t*);  // killough 8/2/98
-void    P_ExplodeMissile(mobj_t*);    // killough
+void     P_ExplodeMissile(mobj_t*);    // killough
 
 void P_RemoveMonsters(void);
 

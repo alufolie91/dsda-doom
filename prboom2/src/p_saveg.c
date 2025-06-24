@@ -361,8 +361,9 @@ static int number_of_thinkers;
 
 static dboolean P_IsMobjThinker(thinker_t* thinker)
 {
-  return thinker->function == P_MobjThinker ||
-         thinker->function == P_BlasterMobjThinker ||
+  return thinker->function  == P_MobjThinker        ||
+         thinker->function  == P_BlasterMobjThinker ||
+         thinker->function  == P_MusicSourceThinker ||
          (thinker->function == P_RemoveThinkerDelayed && thinker->references);
 }
 
@@ -1659,7 +1660,11 @@ void P_UnArchiveThinkers(void) {
           //      mobj->floorz = mobj->subsector->sector->floorheight;
           //      mobj->ceilingz = mobj->subsector->sector->ceilingheight;
 
-          mobj->thinker.function = P_MobjThinker;
+          if (mobj->type == MT_MUSICSOURCE)
+            mobj->thinker.function = P_MusicSourceThinker;
+          else
+            mobj->thinker.function = P_MobjThinker;
+
           P_AddThinker (&mobj->thinker);
 
           if (heretic && mobj->type == HERETIC_MT_BLASTERFX1)

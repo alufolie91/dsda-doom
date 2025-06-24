@@ -160,7 +160,8 @@ void SV_RestoreMapArchive(void)
 
 static dboolean SV_IsMobjThinker(thinker_t *th)
 {
-  return th->function == P_MobjThinker ||
+  return th->function == P_MobjThinker        ||
+         th->function == P_MusicSourceThinker ||
          (th->function == P_RemoveThinkerDelayed && th->references);
 }
 
@@ -1477,7 +1478,10 @@ static void UnarchiveMobjs(void)
         mobj->floorz = mobj->subsector->sector->floorheight;
         mobj->ceilingz = mobj->subsector->sector->ceilingheight;
 
-        mobj->thinker.function = P_MobjThinker;
+        if (mobj->type == MT_MUSICSOURCE)
+            mobj->thinker.function = P_MusicSourceThinker;
+        else
+            mobj->thinker.function = P_MobjThinker;
 
         references = mobj->thinker.references;
         P_AddThinker(&mobj->thinker);

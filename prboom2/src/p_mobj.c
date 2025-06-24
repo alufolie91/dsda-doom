@@ -1263,12 +1263,6 @@ void P_MobjThinker (mobj_t* mobj)
   // removed old code which looked at target references
   // (we use pointer reference counting now)
 
-  if (UNLIKELY(mobj->type == MT_MUSICSOURCE))
-  {
-    MusInfoThinker(mobj);
-    return;
-  }
-
   mobj->PrevX = mobj->x;
   mobj->PrevY = mobj->y;
   mobj->PrevZ = mobj->z;
@@ -1822,7 +1816,10 @@ mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
   mobj->PrevY = mobj->y;
   mobj->PrevZ = mobj->z;
 
-  mobj->thinker.function = P_MobjThinker;
+  if (mobj->type == MT_MUSICSOURCE)
+    mobj->thinker.function = P_MusicSourceThinker;
+  else
+    mobj->thinker.function = P_MobjThinker;
 
   //e6y
   mobj->friction = ORIG_FRICTION;                        // phares 3/17/98
