@@ -106,10 +106,7 @@ int       *texturetranslation;
 //
 
 const byte *R_GetTextureColumn(const rpatch_t *texpatch, int col) {
-  while (col < 0)
-    col += texpatch->width;
-  col &= texpatch->widthmask;
-
+  col = ((unsigned int)col) & texpatch->widthmask;
   return texpatch->columns[col].pixels;
 }
 
