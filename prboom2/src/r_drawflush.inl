@@ -43,6 +43,8 @@
 //
 static void R_FLUSHWHOLE_FUNCNAME(void)
 {
+    const __restrict intptr_t stride = drawvars.pitch;
+
    // Scaled software fuzz algorithm
 #if (R_DRAWCOLUMN_PIPELINE & RDC_FUZZ)
 {
@@ -73,7 +75,7 @@ static void R_FLUSHWHOLE_FUNCNAME(void)
 
     ++count;
 
-    dest = drawvars.topleft + yl * drawvars.pitch + temp_columnvars.startx + temp_columnvars.temp_x - fuzzcellsize;
+    dest = drawvars.topleft + yl * stride + temp_columnvars.startx + temp_columnvars.temp_x - fuzzcellsize;
 
     lines = fuzzcellsize - (yl % fuzzcellsize);
 
@@ -98,7 +100,7 @@ static void R_FLUSHWHOLE_FUNCNAME(void)
         do
         {
             memset(dest, fuzz, fuzzcellsize);
-            dest += drawvars.pitch;
+            dest += stride;
         } while (--lines);
 
         ++fuzzpos;
@@ -119,7 +121,7 @@ static void R_FLUSHWHOLE_FUNCNAME(void)
    {
       yl     = temp_columnvars.tempyl[temp_columnvars.temp_x];
       source = &temp_columnvars.tempbuf[temp_columnvars.temp_x + (yl << 2)];
-      dest   = drawvars.topleft + yl*drawvars.pitch + temp_columnvars.startx + temp_columnvars.temp_x;
+      dest   = drawvars.topleft + yl*stride + temp_columnvars.startx + temp_columnvars.temp_x;
       count  = temp_columnvars.tempyh[temp_columnvars.temp_x] - yl + 1;
 
       while(--count >= 0)
@@ -131,7 +133,7 @@ static void R_FLUSHWHOLE_FUNCNAME(void)
 #endif
 
          source += 4;
-         dest += drawvars.pitch;
+         dest += stride;
       }
    }
 }
@@ -158,6 +160,8 @@ static void R_FLUSHHEADTAIL_FUNCNAME(void)
       return;
    #endif
 
+   const __restrict intptr_t stride = drawvars.pitch;
+
    while(colnum < 4)
    {
       yl = temp_columnvars.tempyl[colnum];
@@ -167,7 +171,7 @@ static void R_FLUSHHEADTAIL_FUNCNAME(void)
       if(yl < temp_columnvars.commontop)
       {
          source = &temp_columnvars.tempbuf[colnum + (yl << 2)];
-         dest   = drawvars.topleft + yl*drawvars.pitch + temp_columnvars.startx + colnum;
+         dest   = drawvars.topleft + yl*stride + temp_columnvars.startx + colnum;
          count  = temp_columnvars.commontop - yl;
 
          while(--count >= 0)
@@ -180,7 +184,7 @@ static void R_FLUSHHEADTAIL_FUNCNAME(void)
 #endif
 
             source += 4;
-            dest += drawvars.pitch;
+            dest += stride;
          }
       }
 
@@ -188,7 +192,7 @@ static void R_FLUSHHEADTAIL_FUNCNAME(void)
       if(yh > temp_columnvars.commonbot)
       {
          source = &temp_columnvars.tempbuf[colnum + ((temp_columnvars.commonbot + 1) << 2)];
-         dest   = drawvars.topleft + (temp_columnvars.commonbot + 1)*drawvars.pitch + temp_columnvars.startx + colnum;
+         dest   = drawvars.topleft + (temp_columnvars.commonbot + 1)*stride + temp_columnvars.startx + colnum;
          count  = yh - temp_columnvars.commonbot;
 
          while(--count >= 0)
@@ -201,7 +205,7 @@ static void R_FLUSHHEADTAIL_FUNCNAME(void)
 #endif
 
             source += 4;
-            dest += drawvars.pitch;
+            dest += stride;
          }
       }
       ++colnum;
@@ -219,8 +223,10 @@ static void R_FLUSHQUAD_FUNCNAME(void)
       return;
    #endif
 
+   const __restrict intptr_t stride = drawvars.pitch;
+
    source = &temp_columnvars.tempbuf[temp_columnvars.commontop << 2];
-   dest = drawvars.topleft + temp_columnvars.commontop*drawvars.pitch + temp_columnvars.startx;
+   dest = drawvars.topleft + temp_columnvars.commontop*stride + temp_columnvars.startx;
    count = temp_columnvars.commonbot - temp_columnvars.commontop + 1;
 
 #if (R_DRAWCOLUMN_PIPELINE & RDC_TRANSLUCENT)
@@ -230,16 +236,16 @@ static void R_FLUSHQUAD_FUNCNAME(void)
       dest[1] = GETDESTCOLOR(dest[1], source[1]);
       dest[2] = GETDESTCOLOR(dest[2], source[2]);
       dest[3] = GETDESTCOLOR(dest[3], source[3]);
-      source += 4 * sizeof(byte);
-      dest += drawvars.pitch * sizeof(byte);
+      source += 4    * sizeof(byte);
+      dest += stride * sizeof(byte);
    }
 #else
    if ((sizeof(int) == 4) && (((intptr_t)source % 4) == 0) && (((intptr_t)dest % 4) == 0)) {
       while(--count >= 0)
       {
-         *(int *)dest = *(int *)source;
-         source += 4 * sizeof(byte);
-         dest += drawvars.pitch * sizeof(byte);
+         *(int *)dest =   *(int *)source;
+         source += 4      * sizeof(byte);
+         dest   += stride * sizeof(byte);
       }
    } else {
       while(--count >= 0)
@@ -248,8 +254,8 @@ static void R_FLUSHQUAD_FUNCNAME(void)
          dest[1] = source[1];
          dest[2] = source[2];
          dest[3] = source[3];
-         source += 4 * sizeof(byte);
-         dest += drawvars.pitch * sizeof(byte);
+         source += 4      * sizeof(byte);
+         dest   += stride * sizeof(byte);
       }
    }
 #endif
