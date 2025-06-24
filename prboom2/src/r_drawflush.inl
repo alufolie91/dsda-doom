@@ -29,7 +29,7 @@
  *-----------------------------------------------------------------------------*/
 
 #if (R_DRAWCOLUMN_PIPELINE & RDC_TRANSLUCENT)
-#define GETDESTCOLOR(col1, col2) (temp_columnvars.temptranmap[((col1)<<8)+(col2)])
+#define GETDESTCOLOR(col1, col2) (temp_dcvars.tranmap[((col1)<<8)+(col2)])
 #else
 #define GETDESTCOLOR(col) (col)
 #endif
@@ -51,13 +51,13 @@ static void R_FLUSHWHOLE_FUNCNAME(void)
     intptr_t yl, yh, count, lines;
     byte * __restrict dest;
 
-    if ((temp_columnvars.temp_x + temp_columnvars.startx) % fuzzcellsize)
+    if ((temp_dcvars.x + temp_dcvars.startx) % fuzzcellsize)
     {
         return;
     }
 
-    yl = temp_columnvars.tempyl[temp_columnvars.temp_x - 1];
-    yh = temp_columnvars.tempyh[temp_columnvars.temp_x - 1];
+    yl = temp_dcvars.yl[temp_dcvars.x - 1];
+    yh = temp_dcvars.yh[temp_dcvars.x - 1];
 
     count = yh - yl + 1;
 
@@ -75,7 +75,7 @@ static void R_FLUSHWHOLE_FUNCNAME(void)
 
     ++count;
 
-    dest = drawvars.topleft + yl * stride + temp_columnvars.startx + temp_columnvars.temp_x - fuzzcellsize;
+    dest = drawvars.topleft + yl * stride + temp_dcvars.startx + temp_dcvars.x - fuzzcellsize;
 
     lines = fuzzcellsize - (yl % fuzzcellsize);
 
@@ -117,12 +117,12 @@ static void R_FLUSHWHOLE_FUNCNAME(void)
    byte* __restrict dest;
    intptr_t  count, yl;
 
-   while(--temp_columnvars.temp_x >= 0)
+   while(--temp_dcvars.x >= 0)
    {
-      yl     = temp_columnvars.tempyl[temp_columnvars.temp_x];
-      source = &temp_columnvars.tempbuf[temp_columnvars.temp_x + (yl << 2)];
-      dest   = drawvars.topleft + yl*stride + temp_columnvars.startx + temp_columnvars.temp_x;
-      count  = temp_columnvars.tempyh[temp_columnvars.temp_x] - yl + 1;
+      yl     = temp_dcvars.yl[temp_dcvars.x];
+      source = &temp_dcvars.buf[temp_dcvars.x + (yl << 2)];
+      dest   = drawvars.topleft + yl*stride + temp_dcvars.startx + temp_dcvars.x;
+      count  = temp_dcvars.yh[temp_dcvars.x] - yl + 1;
 
       while(--count >= 0)
       {
@@ -164,15 +164,15 @@ static void R_FLUSHHEADTAIL_FUNCNAME(void)
 
    while(colnum < 4)
    {
-      yl = temp_columnvars.tempyl[colnum];
-      yh = temp_columnvars.tempyh[colnum];
+      yl = temp_dcvars.yl[colnum];
+      yh = temp_dcvars.yh[colnum];
 
       // flush column head
-      if(yl < temp_columnvars.commontop)
+      if(yl < temp_dcvars.commontop)
       {
-         source = &temp_columnvars.tempbuf[colnum + (yl << 2)];
-         dest   = drawvars.topleft + yl*stride + temp_columnvars.startx + colnum;
-         count  = temp_columnvars.commontop - yl;
+         source = &temp_dcvars.buf[colnum + (yl << 2)];
+         dest   = drawvars.topleft + yl*stride + temp_dcvars.startx + colnum;
+         count  = temp_dcvars.commontop - yl;
 
          while(--count >= 0)
          {
@@ -189,11 +189,11 @@ static void R_FLUSHHEADTAIL_FUNCNAME(void)
       }
 
       // flush column tail
-      if(yh > temp_columnvars.commonbot)
+      if(yh > temp_dcvars.commonbot)
       {
-         source = &temp_columnvars.tempbuf[colnum + ((temp_columnvars.commonbot + 1) << 2)];
-         dest   = drawvars.topleft + (temp_columnvars.commonbot + 1)*stride + temp_columnvars.startx + colnum;
-         count  = yh - temp_columnvars.commonbot;
+         source = &temp_dcvars.buf[colnum + ((temp_dcvars.commonbot + 1) << 2)];
+         dest   = drawvars.topleft + (temp_dcvars.commonbot + 1)*stride + temp_dcvars.startx + colnum;
+         count  = yh - temp_dcvars.commonbot;
 
          while(--count >= 0)
          {
@@ -225,9 +225,9 @@ static void R_FLUSHQUAD_FUNCNAME(void)
 
    const __restrict intptr_t stride = drawvars.pitch;
 
-   source = &temp_columnvars.tempbuf[temp_columnvars.commontop << 2];
-   dest = drawvars.topleft + temp_columnvars.commontop*stride + temp_columnvars.startx;
-   count = temp_columnvars.commonbot - temp_columnvars.commontop + 1;
+   source = &temp_dcvars.buf[temp_dcvars.commontop << 2];
+   dest = drawvars.topleft + temp_dcvars.commontop*stride + temp_dcvars.startx;
+   count = temp_dcvars.commonbot - temp_dcvars.commontop + 1;
 
 #if (R_DRAWCOLUMN_PIPELINE & RDC_TRANSLUCENT)
    while(--count >= 0)

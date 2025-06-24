@@ -92,21 +92,21 @@ typedef enum
 
 typedef struct draw_column_temp_vars_s
 {
-  intptr_t    temp_x;
-  intptr_t    tempyl[4], tempyh[4];
+  intptr_t    x;
+  intptr_t    yl[4], yh[4];
 
   // e6y: resolution limitation is removed
-  byte        *tempbuf;
+  byte        *buf;
 
   intptr_t    startx;
-  intptr_t    temptype;
+  intptr_t    type;
   intptr_t    commontop, commonbot;
-  const byte *temptranmap;
+  const byte *tranmap;
   // SoM 7-28-04: Fix the fuzz problem.
-  const byte *tempfuzzmap;
+  const byte *fuzzmap;
 } draw_column_temp_vars_t;
 
-thread_local draw_column_temp_vars_t temp_columnvars = {};
+thread_local draw_column_vars_t temp_dcvars = {};
 
 //
 // Spectre/Invisibility.
@@ -188,14 +188,14 @@ static thread_local void (*R_FlushQuadColumn)(void)   = R_QuadFlushError;
 
 static void R_FlushColumns(void)
 {
-   if(temp_columnvars.temp_x != 4 || temp_columnvars.commontop >= temp_columnvars.commonbot)
+   if(temp_dcvars.x != 4 || temp_dcvars.commontop >= temp_dcvars.commonbot)
       R_FlushWholeColumns();
    else
    {
       R_FlushHTColumns();
       R_FlushQuadColumn();
    }
-   temp_columnvars.temp_x = 0;
+   temp_dcvars.x = 0;
 }
 
 //
@@ -208,12 +208,12 @@ static void R_FlushColumns(void)
 void R_ResetColumnBuffer(void)
 {
   auto flush_task = [] {
-    // haleyjd 10/06/05: this must not be done if temp_x == 0!
-    if (temp_columnvars.temp_x) {
+    // haleyjd 10/06/05: this must not be done if x == 0!
+    if (temp_dcvars.x) {
       R_FlushColumns();
     }
 
-    temp_columnvars.temptype = COL_NONE;
+    temp_dcvars.type = COL_NONE;
     R_FlushWholeColumns = R_FlushWholeError;
     R_FlushHTColumns    = R_FlushHTError;
     R_FlushQuadColumn   = R_QuadFlushError;
@@ -494,9 +494,9 @@ void R_InitBuffersRes(void)
   solidcol = static_cast<byte*>(Z_Calloc(1, SCREENWIDTH * sizeof(*solidcol)));
 
   auto init_tempbuf = [] {
-    free(temp_columnvars.tempbuf);
-    temp_columnvars.tempbuf = static_cast<byte*>(calloc(1, (SCREENHEIGHT * 4) * sizeof(*temp_columnvars.tempbuf)));
-    temp_columnvars.temp_x = 0;
+    free(temp_dcvars.buf);
+    temp_dcvars.buf = static_cast<byte*>(calloc(1, (SCREENHEIGHT * 4) * sizeof(*temp_dcvars.buf)));
+    temp_dcvars.x = 0;
   };
 
   init_tempbuf();
