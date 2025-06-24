@@ -92,18 +92,18 @@ typedef enum
 
 typedef struct draw_column_temp_vars_s
 {
-  int    temp_x;
-  int    tempyl[4], tempyh[4];
+  intptr_t    temp_x;
+  intptr_t    tempyl[4], tempyh[4];
 
   // e6y: resolution limitation is removed
-  byte           *tempbuf;
+  byte        *tempbuf;
 
-  int    startx;
-  int    temptype;
-  int    commontop, commonbot;
+  intptr_t    startx;
+  intptr_t    temptype;
+  intptr_t    commontop, commonbot;
   const byte *temptranmap;
   // SoM 7-28-04: Fix the fuzz problem.
-  const byte   *tempfuzzmap;
+  const byte *tempfuzzmap;
 } draw_column_temp_vars_t;
 
 thread_local draw_column_temp_vars_t temp_columnvars = {};
