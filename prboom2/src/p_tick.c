@@ -97,7 +97,7 @@ void P_UpdateThinker(thinker_t *thinker)
     class = th_misc;
   else {
     register mobj_t* m = (mobj_t*)thinker;
-    if (mbf21 && m->type == MT_TELEPORTMAN)
+    if (luggy_compat && m->type == MT_TELEPORTMAN)
       class = th_teleport;
     else if (m->health > 0 && (m->flags & MF_COUNTKILL || m->type == MT_SKULL))
     {

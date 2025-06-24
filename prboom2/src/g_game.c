@@ -2360,7 +2360,7 @@ const char * comp_lev_str[MAX_COMPATIBILITY_LEVEL] =
 
 const char * hexen_skill_fighter[5] = { "SQUIRE", "KNIGHT", "WARRIOR", "BERSERKER", "TITAN" };
 const char * hexen_skill_cleric[5] = { "ALTAR BOY", "ACOLYTE", "PRIEST", "CARDINAL", "POPE" };
-const char * hexen_skill_mage[5] = { "APPRENTICE", "ENCHANTER", "SORCERER", "WARLOCK", "ARCHIMAGE" };  
+const char * hexen_skill_mage[5] = { "APPRENTICE", "ENCHANTER", "SORCERER", "WARLOCK", "ARCHIMAGE" };
 
 //==========================================================================
 //
@@ -3345,7 +3345,7 @@ void G_BeginRecording (void)
     { /* Write version code into demo */
       unsigned char v = 0;
       switch(compatibility_level) {
-        case mbf_compatibility: v = 203; break; // e6y: Bug in MBF compatibility mode fixed
+        case mbf_compatibility:      v = 203; break; // e6y: Bug in MBF compatibility mode fixed
         case prboom_2_compatibility: v = 210; break;
         case prboom_3_compatibility: v = 211; break;
         case prboom_4_compatibility: v = 212; break;

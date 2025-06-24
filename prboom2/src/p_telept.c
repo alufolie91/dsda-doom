@@ -142,7 +142,7 @@ static mobj_t* P_TeleportDestination(short thing_id, int tag)
     return NULL;
   }
 
-  const int class = (mbf21 ? th_teleport : th_misc);
+  const int class = (luggy_compat ? th_teleport : th_misc);
 
   FIND_SECTORS(id_p, tag)
   {

@@ -72,6 +72,9 @@ extern complevel_t compatibility_level;
 #define mbf_features (compatibility_level>=mbf_compatibility)
 #define mbf21 (compatibility_level == mbf21_compatibility)
 
+// i dont feel like desynching demos, so dont do certain things when recording/watching em
+#define luggy_compat (!demorecording && !demoplayback && mbf_features) // mbf since i need certain behaviours from vanilla doom
+
 extern int demo_insurance;      // killough 4/5/98
 
 // -------------------------------------------

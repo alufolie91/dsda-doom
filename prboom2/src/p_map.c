@@ -1281,7 +1281,7 @@ dboolean P_CheckPosition (mobj_t* thing,fixed_t x,fixed_t y)
   tmbbox[BOXRIGHT] = x + tmthing->radius;
   tmbbox[BOXLEFT] = x - tmthing->radius;
 
-  if (mbf21) // this might break compat
+  if (luggy_compat) // this might break compat
   {
     newsec = thing->subsector->sector;
 
