@@ -469,7 +469,7 @@ static void R_MakeSpans(int x, unsigned int t1, unsigned int b1,
 // when drawing skies, it used this to "overrun" into the lower patch pixels
 const rpatch_t *R_HackedSkyPatch(texture_t *texture)
 {
-  if (heretic && texture->patchcount == 1)
+  if (texture->patchcount == 1)
   {
     const rpatch_t *patch;
 
@@ -484,413 +484,417 @@ const rpatch_t *R_HackedSkyPatch(texture_t *texture)
   return NULL;
 }
 
-// New function, by Lee Killough
+// static void R_DoDrawHexenSkyPlane(visplane_t *pl, dboolean allow_parallel)
+// {
+//  hexen_note: Skies
+//  if (pl->picnum == skyflatnum)
+//  {                       // Sky flat
+//       #define SKYTEXTUREMIDSHIFTED 200
+//
+//       byte *source;
+//      byte *source2;
+//      int offset;
+//      int skyTexture;
+//      int offset2;
+//      int skyTexture2;
+//
+//      if (DoubleSky)
+//      {                   // Render 2 layers, sky 1 in front
+//           offset = Sky1ColumnOffset >> 16;
+//          skyTexture = texturetranslation[Sky1Texture];
+//          offset2 = Sky2ColumnOffset >> 16;
+//          skyTexture2 = texturetranslation[Sky2Texture];
+//          for (x = pl->minx; x <= pl->maxx; x++)
+//          {
+//              dc_yl = pl->top[x];
+//              dc_yh = pl->bottom[x];
+//              if (dc_yl <= dc_yh)
+//              {
+//                  count = dc_yh - dc_yl;
+//                  if (count < 0)
+//                  {
+//                      return;
+//                  }
+//                  angle = (viewangle + xtoviewangle[x])
+//                      >> ANGLETOSKYSHIFT;
+//                  source = R_GetColumn(skyTexture, angle + offset);
+//                  source2 = R_GetColumn(skyTexture2, angle + offset2);
+//                  dest = ylookup[dc_yl] + columnofs[x];
+//                  frac = SKYTEXTUREMIDSHIFTED * FRACUNIT + (dc_yl - centery) * fracstep;
+//                  do
+//                  {
+//                      if (source[frac >> FRACBITS])
+//                      {
+//                          *dest = source[frac >> FRACBITS];
+//                          frac += fracstep;
+//                      }
+//                      else
+//                      {
+//                          *dest = source2[frac >> FRACBITS];
+//                          frac += fracstep;
+//                      }
+//                      dest += SCREENWIDTH;
+//                  }
+//                  while (count--);
+//              }
+//          }
+//          continue;       // Next visplane
+//      }
+//      else
+//      {                   // Render single layer
+//          if (pl->special == 200)
+//          {               // Use sky 2
+//              offset = Sky2ColumnOffset >> 16;
+//              skyTexture = texturetranslation[Sky2Texture];
+//          }
+//          else
+//          {               // Use sky 1
+//              offset = Sky1ColumnOffset >> 16;
+//              skyTexture = texturetranslation[Sky1Texture];
+//          }
+//          for (x = pl->minx; x <= pl->maxx; x++)
+//          {
+//              dc_yl = pl->top[x];
+//              dc_yh = pl->bottom[x];
+//              if (dc_yl <= dc_yh)
+//              {
+//                  count = dc_yh - dc_yl;
+//                  if (count < 0)
+//                  {
+//                      return;
+//                  }
+//                  angle = (viewangle + xtoviewangle[x])
+//                      >> ANGLETOSKYSHIFT;
+//                  source = R_GetColumn(skyTexture, angle + offset);
+//                  dest = ylookup[dc_yl] + columnofs[x];
+//                  frac = SKYTEXTUREMIDSHIFTED * FRACUNIT + (dc_yl - centery) * fracstep;
+//                  do
+//                  {
+//                      *dest = source[frac >> FRACBITS];
+//                      dest += SCREENWIDTH;
+//                      frac += fracstep;
+//                   }
+//                  while (count--);
+//              }
+//          }
+//          continue;       // Next visplane
+//       }
+//    }
+// }
 
+namespace
+{
+  enum class SkyPlaneType
+  {
+    kHeretic,
+    kNormal,
+  };
+
+template <SkyPlaneType Type>
+static void R_DoDrawSkyPlane(visplane_t *pl, draw_column_vars_t dcvars, const rpatch_t *patch, angle_t an, angle_t flip, dboolean allow_parallel)
+{
+  int x;
+  const R_DrawColumn_f colfunc = R_GetDrawColumnFunc(RDC_PIPELINE_STANDARD, RDRAW_FILTER_POINT);
+
+  if constexpr (Type == SkyPlaneType::kHeretic)
+  {
+    (void)flip;
+  }
+
+  x = pl->minx;
+
+  while (x <= pl->maxx)
+  {
+    // Tune concurrency granularity here to maximize throughput
+    // The cheaper colfunc is, the more coarse the task should be
+    constexpr const int kSkyPlaneMacroColumns = 8;
+
+    auto thunk = [=]() mutable -> void {
+      for (int i = 0; i < kSkyPlaneMacroColumns && i + x <= pl->maxx; i++)
+      {
+        dcvars.x = x + i;
+        if ((dcvars.yl = pl->top[x + i]) != SHRT_MAX && dcvars.yl <= (dcvars.yh = pl->bottom[x + i])) // dropoff overflow
+        {
+          if constexpr (Type == SkyPlaneType::kHeretic)
+          {
+            dcvars.source     = R_GetPatchColumn(patch, (an + xtoskyangle[x + i])     >> ANGLETOSKYSHIFT)->pixels;
+            dcvars.prevsource = R_GetPatchColumn(patch, (an + xtoskyangle[(x + i)-1]) >> ANGLETOSKYSHIFT)->pixels;
+            dcvars.nextsource = R_GetPatchColumn(patch, (an + xtoskyangle[(x + i)+1]) >> ANGLETOSKYSHIFT)->pixels;
+          }
+
+          if constexpr (Type == SkyPlaneType::kNormal)
+          {
+            dcvars.source     = R_GetTextureColumn(patch, ((an + xtoskyangle[x + i])^flip)     >> ANGLETOSKYSHIFT);
+            dcvars.prevsource = R_GetTextureColumn(patch, ((an + xtoskyangle[(x + i)-1])^flip) >> ANGLETOSKYSHIFT);
+            dcvars.nextsource = R_GetTextureColumn(patch, ((an + xtoskyangle[(x + i)+1])^flip) >> ANGLETOSKYSHIFT);
+          }
+
+          colfunc(&dcvars);
+        }
+      }
+    };
+
+    if (allow_parallel)
+    {
+      dsda::g_main_threadpool->schedule(std::move(thunk));
+    }
+    else
+    {
+      (thunk)();
+    }
+
+    x += kSkyPlaneMacroColumns;
+  }
+}
+};
+
+// New function, by Lee Killough
 static void R_DoDrawPlane(visplane_t *pl, dboolean allow_parallel)
 {
   int x;
+  int stop, light;
 
-  if (pl->minx <= pl->maxx) {
-    // hexen_note: Skies
-    // if (pl->picnum == skyflatnum)
-    // {                       // Sky flat
-    //     #define SKYTEXTUREMIDSHIFTED 200
-    //
-    //     byte *source;
-    //     byte *source2;
-    //     int offset;
-    //     int skyTexture;
-    //     int offset2;
-    //     int skyTexture2;
-    //
-    //     if (DoubleSky)
-    //     {                   // Render 2 layers, sky 1 in front
-    //         offset = Sky1ColumnOffset >> 16;
-    //         skyTexture = texturetranslation[Sky1Texture];
-    //         offset2 = Sky2ColumnOffset >> 16;
-    //         skyTexture2 = texturetranslation[Sky2Texture];
-    //         for (x = pl->minx; x <= pl->maxx; x++)
-    //         {
-    //             dc_yl = pl->top[x];
-    //             dc_yh = pl->bottom[x];
-    //             if (dc_yl <= dc_yh)
-    //             {
-    //                 count = dc_yh - dc_yl;
-    //                 if (count < 0)
-    //                 {
-    //                     return;
-    //                 }
-    //                 angle = (viewangle + xtoviewangle[x])
-    //                     >> ANGLETOSKYSHIFT;
-    //                 source = R_GetColumn(skyTexture, angle + offset);
-    //                 source2 = R_GetColumn(skyTexture2, angle + offset2);
-    //                 dest = ylookup[dc_yl] + columnofs[x];
-    //                 frac = SKYTEXTUREMIDSHIFTED * FRACUNIT + (dc_yl - centery) * fracstep;
-    //                 do
-    //                 {
-    //                     if (source[frac >> FRACBITS])
-    //                     {
-    //                         *dest = source[frac >> FRACBITS];
-    //                         frac += fracstep;
-    //                     }
-    //                     else
-    //                     {
-    //                         *dest = source2[frac >> FRACBITS];
-    //                         frac += fracstep;
-    //                     }
-    //                     dest += SCREENWIDTH;
-    //                 }
-    //                 while (count--);
-    //             }
-    //         }
-    //         continue;       // Next visplane
-    //     }
-    //     else
-    //     {                   // Render single layer
-    //         if (pl->special == 200)
-    //         {               // Use sky 2
-    //             offset = Sky2ColumnOffset >> 16;
-    //             skyTexture = texturetranslation[Sky2Texture];
-    //         }
-    //         else
-    //         {               // Use sky 1
-    //             offset = Sky1ColumnOffset >> 16;
-    //             skyTexture = texturetranslation[Sky1Texture];
-    //         }
-    //         for (x = pl->minx; x <= pl->maxx; x++)
-    //         {
-    //             dc_yl = pl->top[x];
-    //             dc_yh = pl->bottom[x];
-    //             if (dc_yl <= dc_yh)
-    //             {
-    //                 count = dc_yh - dc_yl;
-    //                 if (count < 0)
-    //                 {
-    //                     return;
-    //                 }
-    //                 angle = (viewangle + xtoviewangle[x])
-    //                     >> ANGLETOSKYSHIFT;
-    //                 source = R_GetColumn(skyTexture, angle + offset);
-    //                 dest = ylookup[dc_yl] + columnofs[x];
-    //                 frac = SKYTEXTUREMIDSHIFTED * FRACUNIT + (dc_yl - centery) * fracstep;
-    //                 do
-    //                 {
-    //                     *dest = source[frac >> FRACBITS];
-    //                     dest += SCREENWIDTH;
-    //                     frac += fracstep;
-    //                 }
-    //                 while (count--);
-    //             }
-    //         }
-    //         continue;       // Next visplane
-    //     }
-    // }
+  if (pl->minx > pl->maxx)
+    return;
 
-    if (pl->picnum == skyflatnum || pl->picnum & PL_SKYFLAT) { // sky flat
-      int texture;
-      const rpatch_t *tex_patch;
-      angle_t an, flip;
-      draw_column_vars_t dcvars;
-      R_DrawColumn_f colfunc = R_GetDrawColumnFunc(RDC_PIPELINE_STANDARD, RDRAW_FILTER_POINT);
+  // sky flat
+  if (pl->picnum == skyflatnum || pl->picnum & PL_SKYFLAT) {
+    int texture;
+    const rpatch_t *tex_patch;
+    angle_t an, flip;
+    draw_column_vars_t dcvars;
 
-      R_SetDefaultDrawColumnVars(&dcvars);
+    R_SetDefaultDrawColumnVars(&dcvars);
 
-      drawsky = true;
+    drawsky = true;
 
-      // killough 10/98: allow skies to come from sidedefs.
-      // Allows scrolling and/or animated skies, as well as
-      // arbitrary multiple skies per level without having
-      // to use info lumps.
+    // killough 10/98: allow skies to come from sidedefs.
+    // Allows scrolling and/or animated skies, as well as
+    // arbitrary multiple skies per level without having
+    // to use info lumps.
 
-      an = viewangle;
+    an = viewangle;
 
-      if (pl->picnum & PL_SKYFLAT_LINE)
+    if (pl->picnum & PL_SKYFLAT_LINE)
+    {
+      // Sky Linedef
+      const line_t *l = &lines[pl->picnum & ~PL_SKYFLAT_LINE];
+
+      // Sky transferred from first sidedef
+      const side_t *s = *l->sidenum + sides;
+
+      // Texture comes from upper texture of reference sidedef
+      texture = texturetranslation[s->toptexture];
+
+      // Horizontal offset is turned into an angle offset,
+      // to allow sky rotation as well as careful positioning.
+      // However, the offset is scaled very small, so that it
+      // allows a long-period of sky rotation.
+
+      an += s->textureoffset;
+
+      // Vertical offset allows careful sky positioning.
+
+      dcvars.texturemid = s->rowoffset - 28*FRACUNIT;
+
+      // We sometimes flip the picture horizontally.
+      //
+      // Doom always flipped the picture, so we make it optional,
+      // to make it easier to use the new feature, while to still
+      // allow old sky textures to be used.
+
+      flip = l->special==272 ? 0u : ~0u;
+
+      if (skystretch)
       {
-        // Sky Linedef
-        const line_t *l = &lines[pl->picnum & ~PL_SKYFLAT_LINE];
-
-        // Sky transferred from first sidedef
-        const side_t *s = *l->sidenum + sides;
-
-        // Texture comes from upper texture of reference sidedef
-        texture = texturetranslation[s->toptexture];
-
-        // Horizontal offset is turned into an angle offset,
-        // to allow sky rotation as well as careful positioning.
-        // However, the offset is scaled very small, so that it
-        // allows a long-period of sky rotation.
-
-        an += s->textureoffset;
-
-        // Vertical offset allows careful sky positioning.
-
-        dcvars.texturemid = s->rowoffset - 28*FRACUNIT;
-
-        // We sometimes flip the picture horizontally.
-        //
-        // Doom always flipped the picture, so we make it optional,
-        // to make it easier to use the new feature, while to still
-        // allow old sky textures to be used.
-
-        flip = l->special==272 ? 0u : ~0u;
-
-        if (skystretch)
-        {
-          int skyheight = textureheight[texture]>>FRACBITS;
-          dcvars.texturemid = (int)((int64_t)dcvars.texturemid * skyheight / SKYSTRETCH_HEIGHT);
-        }
-      }
-      else if (pl->picnum & PL_SKYFLAT_SECTOR)
-      {
-        dcvars.texturemid = skytexturemid;
-        texture = pl->picnum & ~PL_SKYFLAT_SECTOR;
-        flip = 0;
-      }
-      else
-      {    // Normal Doom sky, only one allowed per level
-        dcvars.texturemid = skytexturemid;    // Default y-offset
-        texture = texturetranslation[skytexture]; // Default texture
-        flip = 0;                         // Doom flips it
-      }
-
-      /* Sky is always drawn full bright, i.e. colormaps[0] is used.
-       * Because of this hack, sky is not affected by INVUL inverse mapping.
-       * Until Boom fixed this. Compat option added in MBF. */
-
-      if (comp[comp_skymap] || !(dcvars.colormap = fixedcolormap))
-        dcvars.colormap = fullcolormap;          // killough 3/20/98
-
-      //dcvars.texturemid = skytexturemid;
-      dcvars.texheight = textureheight[texture]>>FRACBITS; // killough
-
-      // proff 09/21/98: Changed for high-res
-
-      // e6y
-      // disable sky texture scaling if status bar is used
-      // old code: dcvars.iscale = FRACUNIT*200/viewheight;
-      dcvars.iscale = skyiscale;
-
-      {
-        const rpatch_t *patch;
-
-        patch = R_HackedSkyPatch(textures[texture]);
-
-        if (patch)
-        {
-          dcvars.texheight = patch->height;
-          dcvars.texturemid = 200 << FRACBITS;
-          dcvars.iscale = (200 << FRACBITS) / SCREENHEIGHT;
-
-          x = pl->minx;
-
-          while (x <= pl->maxx)
-          {
-            // Tune concurrency granularity here to maximize throughput
-            // The cheaper colfunc is, the more coarse the task should be
-            constexpr const int kSkyPlaneMacroColumns = 8;
-
-            auto thunk = [=]() mutable -> void {
-              for (int i = 0; i < kSkyPlaneMacroColumns && i + x <= pl->maxx; i++)
-              {
-                dcvars.x = x + i;
-                if ((dcvars.yl = pl->top[x + i]) != SHRT_MAX && dcvars.yl <= (dcvars.yh = pl->bottom[x + i])) // dropoff overflow
-                {
-                  dcvars.source = R_GetPatchColumn(patch, (an + xtoskyangle[x + i]) >> ANGLETOSKYSHIFT)->pixels;
-                  dcvars.prevsource = R_GetPatchColumn(patch, (an + xtoskyangle[(x + i)-1]) >> ANGLETOSKYSHIFT)->pixels;
-                  dcvars.nextsource = R_GetPatchColumn(patch, (an + xtoskyangle[(x + i)+1]) >> ANGLETOSKYSHIFT)->pixels;
-                  colfunc(&dcvars);
-                }
-              }
-            };
-
-            if (allow_parallel)
-            {
-              dsda::g_main_threadpool->schedule(std::move(thunk));
-            }
-            else
-            {
-              (thunk)();
-            }
-
-            x += kSkyPlaneMacroColumns;
-          }
-
-          return;
-        }
-      }
-
-      tex_patch = R_TextureCompositePatchByNum(texture);
-
-      // killough 10/98: Use sky scrolling offset, and possibly flip picture
-      x = pl->minx;
-
-      while (x <= pl->maxx)
-      {
-        // Tune concurrency granularity here to maximize throughput
-        // The cheaper colfunc is, the more coarse the task should be
-        constexpr const int kSkyPlaneMacroColumns = 8;
-
-        auto thunk = [=]() mutable -> void {
-          for (int i = 0; i < kSkyPlaneMacroColumns && i + x <= pl->maxx; i++)
-          {
-            dcvars.x = x + i;
-            if ((dcvars.yl = pl->top[x + i]) != SHRT_MAX && dcvars.yl <= (dcvars.yh = pl->bottom[x + i])) // dropoff overflow
-            {
-              dcvars.source = R_GetTextureColumn(tex_patch, ((an + xtoskyangle[x + i])^flip) >> ANGLETOSKYSHIFT);
-              dcvars.prevsource = R_GetTextureColumn(tex_patch, ((an + xtoskyangle[(x + i)-1])^flip) >> ANGLETOSKYSHIFT);
-              dcvars.nextsource = R_GetTextureColumn(tex_patch, ((an + xtoskyangle[(x + i)+1])^flip) >> ANGLETOSKYSHIFT);
-              colfunc(&dcvars);
-            }
-          }
-        };
-
-        if (allow_parallel)
-        {
-          dsda::g_main_threadpool->schedule(std::move(thunk));
-        }
-        else
-        {
-          (thunk)();
-        }
-
-        x += kSkyPlaneMacroColumns;
+        int skyheight = textureheight[texture]>>FRACBITS;
+        dcvars.texturemid = (int)((int64_t)dcvars.texturemid * skyheight / SKYSTRETCH_HEIGHT);
       }
     }
-    else {     // regular flat
+    else if (pl->picnum & PL_SKYFLAT_SECTOR)
+    {
+      dcvars.texturemid = skytexturemid;
+      texture = pl->picnum & ~PL_SKYFLAT_SECTOR;
+      flip = 0;
+    }
+    else
+    {    // Normal Doom sky, only one allowed per level
+      dcvars.texturemid = skytexturemid;    // Default y-offset
+      texture = texturetranslation[skytexture]; // Default texture
+      flip = 0;                         // Doom flips it
+    }
 
-      int stop, light;
-      draw_span_vars_t dsvars = {};
+    /* Sky is always drawn full bright, i.e. colormaps[0] is used.
+     * Because of this hack, sky is not affected by INVUL inverse mapping.
+     * Until Boom fixed this. Compat option added in MBF. */
 
-      dsvars.source = static_cast<const byte*>(W_LumpByNum(firstflat + flattranslation[pl->picnum]));
-      dsvars.xoffs = pl->xoffs;
-      dsvars.yoffs = pl->yoffs;
-      dsvars.xscale = pl->xscale;
-      dsvars.yscale = pl->yscale;
+    if (comp[comp_skymap] || !(dcvars.colormap = fixedcolormap))
+      dcvars.colormap = fullcolormap;          // killough 3/20/98
 
-      if (pl->rotation)
+    //dcvars.texturemid = skytexturemid;
+    dcvars.texheight = textureheight[texture]>>FRACBITS; // killough
+
+    // proff 09/21/98: Changed for high-res
+
+    // e6y
+    // disable sky texture scaling if status bar is used
+    // old code: dcvars.iscale = FRACUNIT*200/viewheight;
+    dcvars.iscale = skyiscale;
+
+    if (heretic)
+    {
+      const rpatch_t *patch;
+
+      patch = R_HackedSkyPatch(textures[texture]);
+
+      if (patch)
       {
-        fixed_t rotation_cos, rotation_sin;
-
-        rotation_cos = finecosine[pl->rotation >> ANGLETOFINESHIFT];
-        rotation_sin = finesine[pl->rotation >> ANGLETOFINESHIFT];
-
-        dsvars.xoffs += FixedMul(rotation_cos, viewx) - FixedMul(rotation_sin, viewy);
-        dsvars.yoffs -= FixedMul(rotation_sin, viewx) + FixedMul(rotation_cos, viewy);
-        dsvars.sine = finesine[(viewangle + pl->rotation) >> ANGLETOFINESHIFT];
-        dsvars.cosine = finecosine[(viewangle + pl->rotation) >> ANGLETOFINESHIFT];
+        dcvars.texheight = patch->height;
+        dcvars.texturemid = 200 << FRACBITS;
+        dcvars.iscale = (200 << FRACBITS) / SCREENHEIGHT;
+        R_DoDrawSkyPlane<SkyPlaneType::kHeretic>(pl, dcvars, patch, an, flip, allow_parallel);
+        return;
       }
-      else
-      {
-        dsvars.xoffs += viewx;
-        dsvars.yoffs -= viewy;
-        dsvars.sine = viewsin;
-        dsvars.cosine = viewcos;
-      }
+    }
 
-      if (map_format.hexen)
-      {
-        int scrollOffset = leveltime >> 1 & 63;
+    tex_patch = R_TextureCompositePatchByNum(texture);
 
-        switch (pl->special)
-        {                       // Handle scrolling flats
-          case 201:
-          case 202:
-          case 203:          // Scroll_North_xxx
-            dsvars.source = dsvars.source + ((scrollOffset
-                                       << (pl->special - 201) & 63) << 6);
-            break;
-          case 204:
-          case 205:
-          case 206:          // Scroll_East_xxx
-            dsvars.source = dsvars.source + ((63 - scrollOffset)
-                                      << (pl->special - 204) & 63);
-            break;
-          case 207:
-          case 208:
-          case 209:          // Scroll_South_xxx
-            dsvars.source = dsvars.source + (((63 - scrollOffset)
-                                       << (pl->special - 207) & 63) << 6);
-            break;
-          case 210:
-          case 211:
-          case 212:          // Scroll_West_xxx
-            dsvars.source = dsvars.source + (scrollOffset
-                                      << (pl->special - 210) & 63);
-            break;
-          case 213:
-          case 214:
-          case 215:          // Scroll_NorthWest_xxx
-            dsvars.source = dsvars.source + (scrollOffset
-                                      << (pl->special - 213) & 63) +
-                ((scrollOffset << (pl->special - 213) & 63) << 6);
-            break;
-          case 216:
-          case 217:
-          case 218:          // Scroll_NorthEast_xxx
-            dsvars.source = dsvars.source + ((63 - scrollOffset)
-                                      << (pl->special - 216) & 63) +
-                ((scrollOffset << (pl->special - 216) & 63) << 6);
-            break;
-          case 219:
-          case 220:
-          case 221:          // Scroll_SouthEast_xxx
-            dsvars.source = dsvars.source + ((63 - scrollOffset)
-                                      << (pl->special - 219) & 63) +
-                (((63 - scrollOffset) << (pl->special - 219) & 63) << 6);
-            break;
-          case 222:
-          case 223:
-          case 224:          // Scroll_SouthWest_xxx
-            dsvars.source = dsvars.source + (scrollOffset
-                                      << (pl->special - 222) & 63) +
-                (((63 - scrollOffset) << (pl->special - 222) & 63) << 6);
-            break;
-          default:
-            break;
-        }
-      }
-      else if (heretic)
-      {
-        switch (pl->special)
-        {
-          case 20:
-          case 21:
-          case 22:
-          case 23:
-          case 24:           // Scroll_East
-            dsvars.source = dsvars.source +
-              ((63 - ((leveltime >> 1) & 63)) << (pl->special - 20) & 63);
-            break;
-          case 4:            // Scroll_EastLavaDamage
-            dsvars.source = dsvars.source +
-              (((63 - ((leveltime >> 1) & 63)) << 3) & 63);
-            break;
-        }
-      }
+    // killough 10/98: Use sky scrolling offset, and possibly flip picture
+    R_DoDrawSkyPlane<SkyPlaneType::kNormal>(pl, dcvars, tex_patch, an, flip, allow_parallel);
+    return;
+  }
 
-      dsvars.planeheight = D_abs(pl->height-viewz);
+  // regular flat
+  draw_span_vars_t dsvars = {};
 
-      // SoM 10/19/02: deep water colormap fix
-      if(fixedcolormap)
-        light = (255  >> LIGHTSEGSHIFT);
-      else
-        light = (pl->lightlevel >> LIGHTSEGSHIFT) + (extralight * LIGHTBRIGHT);
+  dsvars.source = static_cast<const byte*>(W_LumpByNum(firstflat + flattranslation[pl->picnum]));
+  dsvars.xoffs = pl->xoffs;
+  dsvars.yoffs = pl->yoffs;
+  dsvars.xscale = pl->xscale;
+  dsvars.yscale = pl->yscale;
 
-      if(light >= LIGHTLEVELS)
-        light = LIGHTLEVELS-1;
+  if (pl->rotation)
+  {
+    fixed_t rotation_cos, rotation_sin;
 
-      if(light < 0)
-        light = 0;
+    rotation_cos = finecosine[pl->rotation >> ANGLETOFINESHIFT];
+    rotation_sin = finesine[pl->rotation >> ANGLETOFINESHIFT];
 
-      stop = pl->maxx + 1;
-      dsvars.planezlight = zlight[light];
-      pl->top[pl->minx-1] = pl->top[stop] = SHRT_MAX; // dropoff overflow
+    dsvars.xoffs += FixedMul(rotation_cos, viewx) - FixedMul(rotation_sin, viewy);
+    dsvars.yoffs -= FixedMul(rotation_sin, viewx) + FixedMul(rotation_cos, viewy);
+    dsvars.sine = finesine[(viewangle + pl->rotation) >> ANGLETOFINESHIFT];
+    dsvars.cosine = finecosine[(viewangle + pl->rotation) >> ANGLETOFINESHIFT];
+  }
+  else
+  {
+    dsvars.xoffs += viewx;
+    dsvars.yoffs -= viewy;
+    dsvars.sine = viewsin;
+    dsvars.cosine = viewcos;
+  }
 
-      for (x = pl->minx ; x <= stop ; x++)
-         R_MakeSpans(x,pl->top[x-1],pl->bottom[x-1],
-                     pl->top[x],pl->bottom[x], &dsvars, allow_parallel);
+  if (map_format.hexen)
+  {
+    int scrollOffset = leveltime >> 1 & 63;
+
+    switch (pl->special)
+    {                       // Handle scrolling flats
+      case 201:
+      case 202:
+      case 203:          // Scroll_North_xxx
+        dsvars.source = dsvars.source + ((scrollOffset
+                                    << (pl->special - 201) & 63) << 6);
+        break;
+      case 204:
+      case 205:
+      case 206:          // Scroll_East_xxx
+        dsvars.source = dsvars.source + ((63 - scrollOffset)
+                                  << (pl->special - 204) & 63);
+        break;
+      case 207:
+      case 208:
+      case 209:          // Scroll_South_xxx
+        dsvars.source = dsvars.source + (((63 - scrollOffset)
+                                    << (pl->special - 207) & 63) << 6);
+        break;
+      case 210:
+      case 211:
+      case 212:          // Scroll_West_xxx
+        dsvars.source = dsvars.source + (scrollOffset
+                                  << (pl->special - 210) & 63);
+        break;
+      case 213:
+      case 214:
+      case 215:          // Scroll_NorthWest_xxx
+        dsvars.source = dsvars.source + (scrollOffset
+                                  << (pl->special - 213) & 63) +
+            ((scrollOffset << (pl->special - 213) & 63) << 6);
+        break;
+      case 216:
+      case 217:
+      case 218:          // Scroll_NorthEast_xxx
+        dsvars.source = dsvars.source + ((63 - scrollOffset)
+                                  << (pl->special - 216) & 63) +
+            ((scrollOffset << (pl->special - 216) & 63) << 6);
+        break;
+      case 219:
+      case 220:
+      case 221:          // Scroll_SouthEast_xxx
+        dsvars.source = dsvars.source + ((63 - scrollOffset)
+                                  << (pl->special - 219) & 63) +
+            (((63 - scrollOffset) << (pl->special - 219) & 63) << 6);
+        break;
+      case 222:
+      case 223:
+      case 224:          // Scroll_SouthWest_xxx
+        dsvars.source = dsvars.source + (scrollOffset
+                                  << (pl->special - 222) & 63) +
+            (((63 - scrollOffset) << (pl->special - 222) & 63) << 6);
+        break;
+      default:
+        break;
     }
   }
+  else if (heretic)
+  {
+    switch (pl->special)
+    {
+      case 20:
+      case 21:
+      case 22:
+      case 23:
+      case 24:           // Scroll_East
+        dsvars.source = dsvars.source +
+          ((63 - ((leveltime >> 1) & 63)) << (pl->special - 20) & 63);
+        break;
+      case 4:            // Scroll_EastLavaDamage
+        dsvars.source = dsvars.source +
+          (((63 - ((leveltime >> 1) & 63)) << 3) & 63);
+        break;
+    }
+  }
+
+  dsvars.planeheight = D_abs(pl->height-viewz);
+
+  // SoM 10/19/02: deep water colormap fix
+  if(fixedcolormap)
+    light = (255  >> LIGHTSEGSHIFT);
+  else
+    light = (pl->lightlevel >> LIGHTSEGSHIFT) + (extralight * LIGHTBRIGHT);
+
+  if(light >= LIGHTLEVELS)
+    light = LIGHTLEVELS-1;
+
+  if(light < 0)
+    light = 0;
+
+  stop = pl->maxx + 1;
+  dsvars.planezlight = zlight[light];
+  pl->top[pl->minx-1] = pl->top[stop] = SHRT_MAX; // dropoff overflow
+
+  for (x = pl->minx ; x <= stop ; x++)
+      R_MakeSpans(x,pl->top[x-1],pl->bottom[x-1],
+                  pl->top[x],pl->bottom[x], &dsvars, allow_parallel);
 }
 
 //

@@ -188,7 +188,7 @@ static thread_local void (*R_FlushQuadColumn)(void)   = R_QuadFlushError;
 
 static void R_FlushColumns(void)
 {
-   if(temp_dcvars.x != 4 || temp_dcvars.commontop >= temp_dcvars.commonbot)
+   if (temp_dcvars.x != 4 || temp_dcvars.commontop >= temp_dcvars.commonbot)
       R_FlushWholeColumns();
    else
    {
@@ -213,7 +213,7 @@ void R_ResetColumnBuffer(void)
       R_FlushColumns();
     }
 
-    temp_dcvars.type = COL_NONE;
+    temp_dcvars.type    = COL_NONE;
     R_FlushWholeColumns = R_FlushWholeError;
     R_FlushHTColumns    = R_FlushHTError;
     R_FlushQuadColumn   = R_QuadFlushError;

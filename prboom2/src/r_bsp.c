@@ -110,9 +110,9 @@ static void R_ClipWallSegment(int first, int last, dboolean solid)
       else to = p - solidcol;
       R_StoreWallRange(first, to-1);
       if (solid) {
-  memset(solidcol+first,1,to-first);
+      memset(solidcol+first,1,to-first);
       }
-  first = to;
+      first = to;
     }
   }
 }
