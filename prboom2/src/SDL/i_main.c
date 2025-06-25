@@ -84,6 +84,10 @@
 #include "dsda/wad_stats.h"
 #include "dsda/zipfile.h"
 
+#include <pthread.h>
+
+static pthread_t g_main_thread_id;
+
 /* Most of the following has been rewritten by Lee Killough
  *
  * killough 4/13/98: Make clock rate adjustable by scale factor
@@ -176,6 +180,12 @@ void I_AtExit(atexit_func_t func, dboolean run_on_error,
 void I_SafeExit(int rc)
 {
   atexit_listentry_t *entry;
+
+  if (!pthread_equal(g_main_thread_id, pthread_self()))
+  {
+    // Do not attempt a graceful shutdown. Errors off the main thread are unresolvable.
+    exit(-2);
+  }
 
   lprintf(LO_DEBUG, "\n"); // Separator after game loop
 
@@ -315,6 +325,8 @@ int main(int argc, char **argv)
   */
 
   I_ThreadPoolInit();
+
+  g_main_thread_id = pthread_self();
 
   I_AtExit(I_EssentialQuit, true, "I_EssentialQuit", exit_priority_first);
   I_AtExit(I_Quit, false, "I_Quit", exit_priority_last);
