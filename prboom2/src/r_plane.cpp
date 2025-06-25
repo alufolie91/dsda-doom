@@ -607,7 +607,7 @@ static void R_DoDrawSkyPlane(visplane_t *pl, draw_column_vars_t dcvars, const rp
   {
     // Tune concurrency granularity here to maximize throughput
     // The cheaper colfunc is, the more coarse the task should be
-    constexpr const int kSkyPlaneMacroColumns = 8;
+    constexpr const int kSkyPlaneMacroColumns = 32;
 
     auto thunk = [=]() mutable -> void {
       for (int i = 0; i < kSkyPlaneMacroColumns && i + x <= pl->maxx; i++)
