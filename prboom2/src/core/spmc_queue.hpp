@@ -29,9 +29,9 @@ namespace dsda
 template <typename T>
 class SpMcQueue
 {
-	struct dsdaBuff {
+	struct ringBuff {
 	public:
-		explicit dsdaBuff(int64_t cap) : _cap{cap}, _mask{cap - 1}
+		explicit ringBuff(int64_t cap) : _cap{cap}, _mask{cap - 1}
 		{
 			DSDA_ASSERT(cap && (!(cap & (cap - 1))) && "Capacity must be buf power of 2!");
 			_buff = std::unique_ptr<T[]>(new T[_cap]);
@@ -52,10 +52,10 @@ class SpMcQueue
 		}
 
 		// Allocates and returns a new ring buffer, copies elements in range [b, t) into the new buffer.
-		dsdaBuff* resize(std::int64_t b, std::int64_t t) const
+		ringBuff* resize(std::int64_t b, std::int64_t t) const
 		{
 			//ZoneScoped;
-			dsdaBuff* ptr = new dsdaBuff{2 * _cap};
+			ringBuff* ptr = new ringBuff{2 * _cap};
 			for (std::int64_t i = t; i != b; ++i) {
 				ptr->store(i, load(i));
 			}
@@ -71,12 +71,12 @@ class SpMcQueue
 
 	alignas(64) std::atomic<int64_t> bottom_;
 	alignas(64) std::atomic<int64_t> top_;
-	alignas(64) std::atomic<dsdaBuff*> buffer_;
+	alignas(64) std::atomic<ringBuff*> buffer_;
 
-	std::vector<std::unique_ptr<dsdaBuff>> garbage_;
+	std::vector<std::unique_ptr<ringBuff>> garbage_;
 
 public:
-	SpMcQueue(size_t capacity) : bottom_(0), top_(0), buffer_(new dsdaBuff(capacity))
+	SpMcQueue(size_t capacity) : bottom_(0), top_(0), buffer_(new ringBuff(capacity))
 	{
 		garbage_.reserve(32);
 	}
@@ -101,12 +101,12 @@ public:
 	{
 		int64_t bottom = bottom_.load(std::memory_order_relaxed);
 		int64_t top = top_.load(std::memory_order_acquire);
-		dsdaBuff* buf = buffer_.load(std::memory_order_relaxed);
+		ringBuff* buf = buffer_.load(std::memory_order_relaxed);
 
 		if (buf->capacity() < (bottom - top) + 1)
 		{
 			// Queue is full, build a new one
-			dsdaBuff* newbuf = buf->resize(bottom, top);
+			ringBuff* newbuf = buf->resize(bottom, top);
 			garbage_.emplace_back(buf);
 			buffer_.store(newbuf, std::memory_order_relaxed);
 			buf = newbuf;
@@ -123,7 +123,7 @@ public:
 	std::optional<T> pop() noexcept
 	{
 		int64_t bottom = bottom_.load(std::memory_order_relaxed) - 1;
-		dsdaBuff* buf = buffer_.load(std::memory_order_relaxed);
+		ringBuff* buf = buffer_.load(std::memory_order_relaxed);
 
 		bottom_.store(bottom, std::memory_order_relaxed);  // Stealers can no longer steal
 
