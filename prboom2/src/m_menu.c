@@ -2865,6 +2865,7 @@ setup_menu_t demos_options_settings[] =  // Demos Settings screen
   { "Text File Author", S_NAME, m_conf, DM_X, dsda_config_player_name },
   EMPTY_LINE,
   { "Playback Progress Bar", S_YESNO, m_conf, DM_X, dsda_config_hudadd_demoprogressbar },
+  { "Playback Mouse Controls", S_YESNO, m_conf, DM_X, dsda_config_playback_mouse_controls },
   { "Smooth Playback", S_YESNO, m_conf, DM_X, dsda_config_demo_smoothturns },
   { "Smooth Playback Factor", S_NUM, m_conf, DM_X, dsda_config_demo_smoothturnsfactor },
   { "Cycle Ghost Colors", S_YESNO, m_conf, DM_X, dsda_config_cycle_ghost_colors },
@@ -4208,7 +4209,7 @@ static void M_DrawExtHelp(void)
   namebfr[5] = extended_help_index%10 + '0';
   // CPhipps - patch drawing updated
   V_ClearBorder(); // Redraw background for every ext HELP screen. Fixes widescreen overdraw.
-  V_DrawNamePatch(0, 0, 0, namebfr, CR_DEFAULT, VPT_STRETCH);
+  V_DrawNamePatchFS(0, 0, 0, namebfr, CR_DEFAULT, VPT_STRETCH);
 }
 
 //
@@ -4379,7 +4380,7 @@ static void M_DrawHelp (void)
   M_ChangeMenu(NULL, mnact_full);
 
   V_ClearBorder();
-  V_DrawNamePatch(0, 0, 0, helplump, CR_DEFAULT, VPT_STRETCH);
+  V_DrawNamePatchFS(0, 0, 0, helplump, CR_DEFAULT, VPT_STRETCH);
 }
 
 //
@@ -4395,7 +4396,7 @@ static void M_DrawAd (void)
 
   V_ClearBorder();
   if (pwad_help2_check || gamemode == shareware)
-    V_DrawNamePatch(0, 0, 0, help2, CR_DEFAULT, VPT_STRETCH);
+    V_DrawNamePatchFS(0, 0, 0, help2, CR_DEFAULT, VPT_STRETCH);
   else
     M_DrawCredits();
 }
@@ -4432,7 +4433,7 @@ void M_DrawCredits(void)     // killough 10/98: credit screen
   if (PWADcredit || tc_game)
   {
     V_ClearBorder();
-    V_DrawNamePatch(0, 0, 0, credit, CR_DEFAULT, VPT_STRETCH);
+    V_DrawNamePatchFS(0, 0, 0, credit, CR_DEFAULT, VPT_STRETCH);
   }
   else
   {

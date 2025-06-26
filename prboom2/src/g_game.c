@@ -51,6 +51,7 @@
 #include "doomstat.h"
 #include "d_net.h"
 #include "f_finale.h"
+#include "i_video.h"
 #include "m_file.h"
 #include "m_misc.h"
 #include "m_menu.h"
@@ -408,6 +409,16 @@ static dboolean WeaponSelectable(weapontype_t weapon)
 
   // Can't select a weapon if we don't own it.
   if (!players[consoleplayer].weaponowned[weapon])
+  {
+    return false;
+  }
+
+  // Can't select the fist if we have the chainsaw, unless
+  // we also have the berserk pack.
+  if ((demo_compatibility)
+      && weapon == wp_fist
+      && players[consoleplayer].weaponowned[wp_chainsaw]
+      && !players[consoleplayer].powers[pw_strength])
   {
     return false;
   }
@@ -1298,6 +1309,22 @@ dboolean G_Responder (event_t* ev)
     )
   ) return true;
 
+  if (dsda_IntConfig(dsda_config_playback_mouse_controls) &&
+    demoplayback && !timingdemo && dsda_InputActivated(dsda_input_fire))
+  {
+    int x, y;
+
+    dsda_GetMousePosition(&x, &y);
+
+    y = y * ACTUALHEIGHT / viewport_rect.h;
+
+    if (x && y > (ACTUALHEIGHT - ST_SCALED_HEIGHT / 6))
+    {
+      dsda_JumpToLogicTic(demo_tics_count * x / viewport_rect.w);
+      return true;
+    }
+  }
+
   // allow spy mode changes even during the demo
   // killough 2/22/98: even during DM demo
   //
@@ -1535,8 +1562,13 @@ void G_Ticker (void)
   else {
     int buf = gametic % BACKUPTICS;
 
-    dsda_UpdateAutoKeyFrames();
-    dsda_UpdateAutoSaves();
+    if (!timingdemo) {
+      dsda_UpdateAutoKeyFrames();
+      dsda_UpdateAutoSaves();
+
+      if (demoplayback)
+        dsda_UpdatePlaybackKeyFrames();
+    }
 
     if (dsda_BruteForce())
     {
@@ -1776,7 +1808,9 @@ static void G_PlayerFinishLevel(int player)
   p->lookdir = 0;
   p->rain1 = NULL;
   p->rain2 = NULL;
-  playerkeys = 0;
+
+  if (!hexen || (hexen && dsda_MapCluster(gamemap) != dsda_MapCluster(leave_data.map)))
+    p->ravenkeys = 0;
 
   memset(p->powers, 0, sizeof p->powers);
   if (flb.flight_carryover)
@@ -3911,6 +3945,9 @@ void G_StartDemoPlayback(const byte *buffer, int length, int behaviour)
   demo_p = G_ReadDemoHeaderEx(demobuffer, demolength, RDH_SAFE);
   dsda_AttachPlaybackStream(demo_p, demolength, behaviour);
 
+  dsda_InitAutoKeyFrames();
+  dsda_InitPlaybackKeyFrames();
+
   R_SmoothPlaying_Reset(NULL); // e6y
 }
 
@@ -4007,13 +4044,29 @@ dboolean G_CheckDemoStatus (void)
     lprintf(LO_INFO, "Timed %u gametics in %u realtics = %-.1f frames per second\n",
              (unsigned) gametic,realtics,
              (unsigned) gametic * (double) TICRATE / realtics);
-    I_SafeExit(0);
+
+    if (dsda_IntConfig(dsda_config_demo_end_quit))
+      I_SafeExit(0);
+    else
+    {
+      timingdemo = false;
+      dsda_ClearPlaybackStream();
+      return false;
+    }
   }
 
   if (demoplayback)
   {
     if (userdemo)
-      I_SafeExit(0);  // killough
+    {
+      if (dsda_IntConfig(dsda_config_demo_end_quit))
+        I_SafeExit(0);  // killough
+      else
+      {
+        dsda_ClearPlaybackStream();
+        return false;
+      }
+    }
 
     G_ReloadDefaults();    // killough 3/1/98
     netgame = false;       // killough 3/29/98

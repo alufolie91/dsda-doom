@@ -11,7 +11,7 @@ Most notable stuff:
 - Usage of the "opengles2" SDL renderer backend on *nix, due to massive performance gains over the default (might not work on most configurations)
 - Alot of micro optimizations for the software renderer (replacing alot of things with memsets/std::fill, conditional changes, usage of custom faster qsort implementation and the likes)
 
-# dsda-doom v0.29.0
+# dsda-doom v0.29.1
 This is a successor of prboom+ with many new features, including:
 - Heretic, Hexen, MBF21, Doom-in-Hexen, UDMF, and MAPINFO support
 - In-game console and scripting

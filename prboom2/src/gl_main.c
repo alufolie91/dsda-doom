@@ -504,7 +504,7 @@ void gld_EndMenuDraw(void)
   glsl_PopNullShader();
 }
 
-void gld_DrawNumPatch_f(float x, float y, int lump, int cm, enum patch_translation_e flags)
+void gld_DrawNumPatch_f(float x, float y, int lump, dboolean center, int cm, enum patch_translation_e flags)
 {
   GLTexture *gltexture;
   float fU1,fU2,fV1,fV2;
@@ -544,8 +544,11 @@ void gld_DrawNumPatch_f(float x, float y, int lump, int cm, enum patch_translati
   }
 
   // [FG] automatically center wide patches without horizontal offset
-  if (gltexture->width > 320 && leftoffset == 0)
-    x -= (float)(gltexture->width - 320) / 2;
+  if (center)
+  {
+    if (gltexture->width > 320 && leftoffset == 0)
+      x -= (float)(gltexture->width - 320) / 2;
+  }
 
   if (flags & VPT_STRETCH_MASK)
   {
@@ -580,9 +583,9 @@ void gld_DrawNumPatch_f(float x, float y, int lump, int cm, enum patch_translati
   glEnd();
 }
 
-void gld_DrawNumPatch(int x, int y, int lump, int cm, enum patch_translation_e flags)
+void gld_DrawNumPatch(int x, int y, int lump, dboolean center, int cm, enum patch_translation_e flags)
 {
-  gld_DrawNumPatch_f((float)x, (float)y, lump, cm, flags);
+  gld_DrawNumPatch_f((float)x, (float)y, lump, center, cm, flags);
 }
 
 void gld_FillRaw(int lump, int x, int y, int src_width, int src_height, int dst_width, int dst_height, enum patch_translation_e flags)
@@ -908,8 +911,8 @@ unsigned char *gld_ReadScreen(void)
 
   int src_row, dest_row, size, pixels_per_row;
 
-  pixels_per_row = gl_window_width * 3;
-  size = pixels_per_row * gl_window_height;
+  pixels_per_row = window_rect.w * 3;
+  size = pixels_per_row * window_rect.h;
   if (!scr || size > scr_size)
   {
     scr_size = size;
@@ -924,12 +927,12 @@ unsigned char *gld_ReadScreen(void)
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
 
     glFlush();
-    glReadPixels(0, 0, gl_window_width, gl_window_height, GL_RGB, GL_UNSIGNED_BYTE, scr);
+    glReadPixels(0, 0, window_rect.w, window_rect.h, GL_RGB, GL_UNSIGNED_BYTE, scr);
 
     glPixelStorei(GL_PACK_ALIGNMENT, pack_aligment);
 
     // GL textures are bottom up, so copy the rows in reverse to flip vertically
-    for (src_row = gl_window_height - 1, dest_row = 0; src_row >= 0; --src_row, ++dest_row)
+    for (src_row = window_rect.h - 1, dest_row = 0; src_row >= 0; --src_row, ++dest_row)
     {
       memcpy(&buffer[dest_row * pixels_per_row],
               &scr[src_row * pixels_per_row],
@@ -1112,9 +1115,9 @@ void gld_EndDrawScene(void)
     glBegin(GL_TRIANGLE_STRIP);
     {
       glTexCoord2f(0.0f, 1.0f); glVertex2f(0.0f, 0.0f);
-      glTexCoord2f(0.0f, 0.0f); glVertex2f(0.0f, gl_window_height);
-      glTexCoord2f(1.0f, 1.0f); glVertex2f((float)gl_window_width, 0.0f);
-      glTexCoord2f(1.0f, 0.0f); glVertex2f((float)gl_window_width, (float)gl_window_height);
+      glTexCoord2f(0.0f, 0.0f); glVertex2f(0.0f, window_rect.h);
+      glTexCoord2f(1.0f, 1.0f); glVertex2f((float)window_rect.w, 0.0f);
+      glTexCoord2f(1.0f, 0.0f); glVertex2f((float)window_rect.w, (float)window_rect.h);
     }
     glEnd();
 
