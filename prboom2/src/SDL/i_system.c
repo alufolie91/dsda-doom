@@ -89,7 +89,23 @@
 
 void I_uSleep(unsigned long usecs)
 {
-    SDL_Delay(usecs/1000);
+#if defined (__unix__) || defined(__APPLE__) || defined (UNIXCOMMON)
+  struct timespec now, target;
+  clock_gettime(CLOCK_MONOTONIC, &now);
+  target.tv_sec = now.tv_sec + usecs / 1000000;
+  target.tv_nsec = now.tv_nsec + (usecs % 1000000) * 1000;
+
+  if (target.tv_nsec >= 1000000000L) {
+    target.tv_sec += 1;
+    target.tv_nsec -= 1000000000L;
+  }
+
+  int status;
+  do status = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &target, NULL);
+  while (status == EINTR);
+#else
+  SDL_Delay(usecs/1000);
+#endif
 }
 
 static dboolean InDisplay = false;

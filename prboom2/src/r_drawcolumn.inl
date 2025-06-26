@@ -151,7 +151,7 @@ static void R_DRAWCOLUMN_FUNCNAME(draw_column_vars_t *dcvars)
 #endif
 
 #if (R_DRAWCOLUMN_PIPELINE & RDC_TRANSLATED)
-    const byte          *__restrict translation = dcvars->translation;
+    const byte          * __restrict translation = dcvars->translation;
 #endif
 
     count++;
