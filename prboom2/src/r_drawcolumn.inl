@@ -52,12 +52,13 @@
 
 static void R_DRAWCOLUMN_FUNCNAME(draw_column_vars_t *dcvars)
 {
-  intptr_t          count;
+  intptr_t         count;
 
 #if (!(R_DRAWCOLUMN_PIPELINE & RDC_FUZZ))
-  byte*  __restrict dest;            // killough
-  intptr_t          frac;
-  const intptr_t    fracstep = dcvars->iscale;
+  byte* __restrict dest;            // killough
+  intptr_t         frac;
+  const intptr_t   fracstep = dcvars->iscale;
+  byte* __restrict tempbuf = temp_dcvars.buf.get();
 #endif
 
 #if (R_DRAWCOLUMN_PIPELINE & RDC_FUZZ)
@@ -123,7 +124,7 @@ static void R_DRAWCOLUMN_FUNCNAME(draw_column_vars_t *dcvars)
          R_FlushHTColumns    = R_FLUSHHEADTAIL_FUNCNAME;
          R_FlushQuadColumn   = R_FLUSHQUAD_FUNCNAME;
 #if (!(R_DRAWCOLUMN_PIPELINE & RDC_FUZZ))
-         dest = &temp_dcvars.buf[dcvars->yl << 2];
+         dest = &tempbuf[dcvars->yl << 2];
 #endif
       } else {
          temp_dcvars.yl[temp_dcvars.x] = dcvars->yl;
@@ -134,7 +135,7 @@ static void R_DRAWCOLUMN_FUNCNAME(draw_column_vars_t *dcvars)
          if(dcvars->yh < temp_dcvars.commonbot)
             temp_dcvars.commonbot = dcvars->yh;
 #if (!(R_DRAWCOLUMN_PIPELINE & RDC_FUZZ))
-         dest = &temp_dcvars.buf[(dcvars->yl << 2) + temp_dcvars.x];
+         dest = &tempbuf[(dcvars->yl << 2) + temp_dcvars.x];
 #endif
       }
       temp_dcvars.x += 1;

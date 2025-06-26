@@ -116,11 +116,12 @@ static void R_FLUSHWHOLE_FUNCNAME(void)
    byte* __restrict source;
    byte* __restrict dest;
    intptr_t  count, yl;
+   byte* __restrict tempbuf = dcvars->buf.get();
 
    while(--temp_dcvars.x >= 0)
    {
       yl     = temp_dcvars.yl[temp_dcvars.x];
-      source = &temp_dcvars.buf[temp_dcvars.x + (yl << 2)];
+      source = &tempbuf[dcvars->x + (yl << 2)];
       dest   = drawvars.topleft + yl*stride + temp_dcvars.startx + temp_dcvars.x;
       count  = temp_dcvars.yh[temp_dcvars.x] - yl + 1;
 
@@ -161,6 +162,7 @@ static void R_FLUSHHEADTAIL_FUNCNAME(void)
    #endif
 
    const __restrict intptr_t stride = drawvars.pitch;
+   byte* __restrict tempbuf = dcvars->buf.get();
 
    while(colnum < 4)
    {
@@ -170,7 +172,7 @@ static void R_FLUSHHEADTAIL_FUNCNAME(void)
       // flush column head
       if(yl < temp_dcvars.commontop)
       {
-         source = &temp_dcvars.buf[colnum + (yl << 2)];
+         source = &tempbuf[colnum + (yl << 2)];
          dest   = drawvars.topleft + yl*stride + temp_dcvars.startx + colnum;
          count  = temp_dcvars.commontop - yl;
 
@@ -224,8 +226,9 @@ static void R_FLUSHQUAD_FUNCNAME(void)
    #endif
 
    const __restrict intptr_t stride = drawvars.pitch;
+   byte* __restrict tempbuf = dcvars->buf.get();
 
-   source = &temp_dcvars.buf[temp_dcvars.commontop << 2];
+   source = &tempbuf[dcvars->commontop << 2];
    dest = drawvars.topleft + temp_dcvars.commontop*stride + temp_dcvars.startx;
    count = temp_dcvars.commonbot - temp_dcvars.commontop + 1;
 

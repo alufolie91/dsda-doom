@@ -96,7 +96,7 @@ typedef struct draw_column_temp_vars_s
   intptr_t    yl[4], yh[4];
 
   // e6y: resolution limitation is removed
-  byte        *buf;
+  std::unique_ptr<byte[]> buf;
 
   intptr_t    startx;
   intptr_t    type;
@@ -493,14 +493,12 @@ void R_InitBuffersRes(void)
   if (solidcol) Z_Free(solidcol);
   solidcol = static_cast<byte*>(Z_Calloc(1, SCREENWIDTH * sizeof(*solidcol)));
 
-  auto init_tempbuf = [] {
-    free(temp_dcvars.buf);
-    temp_dcvars.buf = static_cast<byte*>(calloc(1, (SCREENHEIGHT * 4) * sizeof(*temp_dcvars.buf)));
-    temp_dcvars.x = 0;
+  auto init_tempbuf = [](int size) {
+     temp_dcvars.buf = std::make_unique<byte[]>(size);
+     temp_dcvars.x = 0;
   };
-
-  init_tempbuf();
-  dsda::g_main_threadpool->for_each(std::move(init_tempbuf));
+  init_tempbuf((SCREENHEIGHT * 4) * sizeof(byte)); // allocate for main thread
+  dsda::g_main_threadpool->for_each([=] { init_tempbuf((SCREENHEIGHT * 4) * sizeof(byte)); });
 }
 
 //
