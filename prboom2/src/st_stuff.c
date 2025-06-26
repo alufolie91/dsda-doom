@@ -431,31 +431,22 @@ static void ST_refreshBackground(void)
   {
     flags = VPT_ALIGN_BOTTOM;
 
-    V_DrawNumPatch(ST_X, y, BG, stbarbg.lumpnum, CR_DEFAULT, flags);
+    V_DrawNumPatchFS(ST_X, y, BG, stbarbg.lumpnum, CR_DEFAULT, flags);
     if (!deathmatch)
     {
       V_DrawNumPatch(ST_ARMSBGX, y, BG, armsbg.lumpnum, CR_DEFAULT, flags);
     }
 
-      V_DrawNumPatchFS(ST_X, y, BG, stbarbg.lumpnum, CR_DEFAULT, flags);
-      if (!deathmatch)
-      {
-        V_DrawNumPatch(ST_ARMSBGX, y, BG, armsbg.lumpnum, CR_DEFAULT, flags);
-      }
-
-      // killough 3/7/98: make face background change with displayplayer
-      if (netgame)
-      {
-        V_DrawNumPatch(ST_FX, y, BG, faceback.lumpnum,
-           displayplayer ? CR_LIMIT+displayplayer : CR_DEFAULT,
-           displayplayer ? (VPT_TRANS | VPT_ALIGN_BOTTOM) : flags);
-      }
-      V_CopyRect(BG, FG, ST_X + ST_SCALED_OFFSETX, SCREENHEIGHT - ST_SCALED_HEIGHT, ST_SCALED_WIDTH, ST_SCALED_HEIGHT, VPT_NONE);
+    // killough 3/7/98: make face background change with displayplayer
+    if (netgame)
+    {
+      V_DrawNumPatch(ST_FX, y, BG, faceback.lumpnum,
+                     displayplayer ? CR_LIMIT+displayplayer : CR_DEFAULT,
+                     displayplayer ? (VPT_TRANS | VPT_ALIGN_BOTTOM) : flags);
     }
     V_CopyRect(BG, FG, ST_X + ST_SCALED_OFFSETX, SCREENHEIGHT - ST_SCALED_HEIGHT, ST_SCALED_WIDTH, ST_SCALED_HEIGHT, VPT_NONE);
   }
 }
-
 
 // Respond to keyboard input events,
 //  intercept cheats.
