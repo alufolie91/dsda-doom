@@ -224,7 +224,12 @@ void R_ResetColumnBuffer(void)
 
   if (drawsky && dsda_IntConfig(dsda_config_render_parallel))
   {
+    dsda::ThreadPool::Sema tp_sema;
+    dsda::g_main_threadpool->begin_sema();
     dsda::g_main_threadpool->for_each(std::move(flush_task)); // then all the columndata from the worker threads / skydraw
+    tp_sema = dsda::g_main_threadpool->end_sema();
+    dsda::g_main_threadpool->notify_sema(tp_sema);
+    dsda::g_main_threadpool->wait_sema(tp_sema);
     drawsky = false;
   }
 }
@@ -493,12 +498,19 @@ void R_InitBuffersRes(void)
   if (solidcol) Z_Free(solidcol);
   solidcol = static_cast<byte*>(Z_Calloc(1, SCREENWIDTH * sizeof(*solidcol)));
 
-  auto init_tempbuf = [](int size) {
-     temp_dcvars.buf = std::make_unique<byte[]>(size);
+  auto init_tempbuf = [] {
+     temp_dcvars.buf = std::make_unique<byte[]>((SCREENHEIGHT * 4) * sizeof(byte));
      temp_dcvars.x = 0;
   };
-  init_tempbuf((SCREENHEIGHT * 4) * sizeof(byte)); // allocate for main thread
-  dsda::g_main_threadpool->for_each([=] { init_tempbuf((SCREENHEIGHT * 4) * sizeof(byte)); });
+
+  init_tempbuf(); // allocate for main thread
+
+  //dsda::ThreadPool::Sema tp_sema;
+  //dsda::g_main_threadpool->begin_sema();
+  dsda::g_main_threadpool->for_each(std::move(init_tempbuf));
+  //tp_sema = dsda::g_main_threadpool->end_sema();
+  //dsda::g_main_threadpool->notify_sema(tp_sema);
+  //dsda::g_main_threadpool->wait_sema(tp_sema);
 }
 
 //

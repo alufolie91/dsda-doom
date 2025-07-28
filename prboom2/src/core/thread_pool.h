@@ -80,7 +80,7 @@ public:
 
 	/// Enqueue but don't notify
 	template <typename T> void schedule(T&& thunk);
-	template <typename F> void for_each(F&& task);
+	template <typename H> void for_each(H&& task);
 	/// Notify threads after several schedules
 	void notify();
 	void notify_sema(const Sema& sema);
@@ -144,58 +144,37 @@ void ThreadPool::schedule(T&& thunk)
 	}
 }
 
-template <typename F>
-void ThreadPool::for_each(F&& thunk)
+template <typename H>
+void ThreadPool::for_each(H&& thunk)
 {
-	static_assert(sizeof(std::decay_t<F>) <= sizeof(std::declval<Task>().raw));
+	static_assert(sizeof(H) <= sizeof(std::declval<Task>().raw));
 
 	if (immediate_mode_)
 	{
-		thunk();
 		return;
 	}
 
-	Sema sync_sema;
-	begin_sema();
-
-	auto counter = std::make_shared<std::atomic<uint32_t>>(threads_.size());
-
-	for (size_t i = 0; i < threads_.size(); i++) {
-		std::shared_ptr<Queue> q = work_queues_[i];
-		Task task;
-
-		struct TaskData {
-			std::decay_t<F> func;
-			std::shared_ptr<std::atomic<uint32_t>> counter;
-			Sema sema;
-			ThreadPool* pool;
-		};
-		static_assert(sizeof(TaskData) <= sizeof(task.raw));
-
-		new (task.raw.data()) TaskData{
-			std::forward<F>(thunk),
-			counter,
-			sync_sema,
-			this
-		};
-
-		task.thunk = [](void* ptr) {
-			auto* data = static_cast<TaskData*>(ptr);
-			data->func();
-			if (--(*data->counter) == 0) {
-				data->pool->notify_sema(data->sema);
-			}
-		};
-
-		task.deleter = [](void* ptr) {
-			static_cast<TaskData*>(ptr)->~TaskData();
-		};
-
-		task.pseudosema = cur_sema_;
-		q->push(std::move(task));
+	if (sema_begun_ && cur_sema_ == nullptr)
+	{
+		cur_sema_ = std::make_shared<std::atomic<uint32_t>>(0);
 	}
 
-	wait_sema(sync_sema);
+	for (size_t i = 0; i < threads_.size(); i++)
+	{
+		if (sema_begun_ && cur_sema_ != nullptr)
+		{
+			cur_sema_->fetch_add(1, std::memory_order_relaxed);
+		}
+
+		std::shared_ptr<Queue> q = work_queues_[i];
+		Task task;
+		task.thunk = reinterpret_cast<void(*)(void*)>(callable_caller<H>);
+		task.deleter = reinterpret_cast<void(*)(void*)>(callable_destroyer<H>);
+		task.pseudosema = cur_sema_;
+		new (reinterpret_cast<H*>(task.raw.data())) H(std::move(thunk));
+
+		q->push(std::move(task));
+	}
 }
 
 } // namespace dsda
