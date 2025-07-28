@@ -908,7 +908,6 @@ static void R_SetupFrame (player_t *player)
   dboolean HU_CrosshairEnabled(void);
 
   int i, cm;
-  int extra_brightness;
 
   int FocalTangent = finetangent[FINEANGLES/4 + FieldOfView/2];
   int extra_brightness = dsda_IntConfig(dsda_config_extra_level_brightness);
