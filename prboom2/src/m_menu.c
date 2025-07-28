@@ -833,7 +833,7 @@ static void M_DeleteSaveGame(int slot)
   if (dsda_LastSaveSlot() == slot)
     dsda_ResetLastSaveSlot();
 
-  name = dsda_SaveGameName(slot + current_page * g_menu_save_page_size, false);
+  name = dsda_SaveGameName(slot, false);
   remove(name);
   Z_Free(name);
 
@@ -1099,7 +1099,7 @@ static void M_DrawSave(void)
   for (i = 0 ; i < load_end ; i++)
     {
     M_DrawSaveLoadBorder(LoadDef.x,LoadDef.y+LINEHEIGHT*i);
-    M_WriteText(LoadDef.x,LoadDef.y+LINEHEIGHT*i,savegamestrings[i], CR_DEFAULT);
+    M_WriteText(LoadDef.x,LoadDef.y+LINEHEIGHT*i,savegamestrings[i], current_page == 0 ? CR_DARKEN : CR_DEFAULT);
     }
 
   M_DrawTabs(saves_pages, 5, 145);
@@ -1117,9 +1117,9 @@ static void M_DrawSave(void)
 //
 // M_Responder calls this when user is finished
 //
-static void M_DoSave(int slot)
+static void M_DoSave(int choice)
 {
-  G_SaveGame(slot + current_page * g_menu_save_page_size, savegamestrings[slot]);
+  G_SaveGame(choice + current_page * g_menu_save_page_size, savegamestrings[choice]);
   M_ClearMenus();
 }
 
@@ -1147,6 +1147,9 @@ static inline dboolean IsMapName(char *str)
 
 static void M_SaveSelect(int choice)
 {
+  if (current_save_page == 0)
+    return;
+
   // we are going to be intercepting all chars
   saveStringEnter = 1;
 
@@ -3489,11 +3492,13 @@ setup_menu_t comp_options_settings[] = {
   { "Default compatibility level", S_CHOICE, m_conf, G2_X, dsda_config_default_complevel, 0, &gen_compstrings[1] },
   EMPTY_LINE,
   { "Casual Play", S_SKIP | S_TITLE, m_conf, G2_X},
-  { "Automatic Pistol Start", S_YESNO, m_conf, G2_X, dsda_config_pistol_start },
+  { "Pistol Start", S_YESNO, m_conf, G2_X, dsda_config_pistol_start },
   { "Respawn Monsters", S_YESNO, m_conf, G2_X, dsda_config_respawn_monsters },
   { "Fast Monsters", S_YESNO, m_conf, G2_X, dsda_config_fast_monsters },
   { "No Monsters", S_YESNO, m_conf, G2_X, dsda_config_no_monsters },
   { "Coop Spawns", S_YESNO, m_conf, G2_X, dsda_config_coop_spawns },
+  EMPTY_LINE,
+  { "Always Pistol Start", S_YESNO, m_conf, G2_X, dsda_config_always_pistol_start },
   { "Allow Jumping", S_YESNO, m_conf, G2_X, dsda_config_allow_jumping },
 
   NEXT_PAGE(comp_emulation_settings),
@@ -5715,7 +5720,7 @@ static dboolean M_SaveResponder(int ch, int action, event_t* ev)
     switch (M_EventToConfirmation(ch, action, ev))
     {
       case confirmation_yes:
-        M_DeleteSaveGame(itemOn);
+        M_DeleteSaveGame(itemOn + current_page * g_menu_save_page_size);
         S_StartVoidSound(g_sfx_itemup);
         delete_verify = false;
         break;

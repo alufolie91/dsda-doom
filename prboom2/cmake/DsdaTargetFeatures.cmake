@@ -1,12 +1,8 @@
 include_guard()
 
-# Internal functions, these should not be called from outside this module
+include(DsdaHelpers)
 
-function(dsda_internal_fail_if_invalid_target tgt)
-  if(NOT TARGET ${tgt})
-    message(FATAL_ERROR "${tgt} is not a valid CMake target.")
-  endif()
-endfunction()
+# Internal functions, these should not be called from outside this module
 
 function(dsda_internal_setup_warnings_msvc result_var)
   set(${result_var}
@@ -26,7 +22,6 @@ function(dsda_internal_setup_warnings_gnu result_var)
     "-Wno-unused-function"
     "-Wno-switch"
     "-Wno-sign-compare"
-    "-Wno-format-truncation"
     "-Wno-missing-field-initializers"
   )
   set(GNU_C_WARNINGS
@@ -36,6 +31,13 @@ function(dsda_internal_setup_warnings_gnu result_var)
     -Wbad-function-cast
   )
   set(GNU_WARNINGS_SET ${GNU_WARNINGS} ${GNU_C_WARNINGS})
+
+  if(CMAKE_C_COMPILER_ID STREQUAL "GNU"
+    OR (CMAKE_C_COMPILER_ID STREQUAL "Clang" AND CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 18)
+    OR (CMAKE_C_COMPILER_ID STREQUAL "AppleClang" AND CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 17)
+  )
+    list(APPEND GNU_WARNINGS_SET "-Wno-format-truncation")
+  endif()
 
   include(CheckCCompilerFlag)
   check_c_compiler_flag("${GNU_WARNINGS_SET}" DSDA_SUPPORTS_GNU_WARNINGS)
@@ -102,8 +104,8 @@ endfunction()
 # Public functions
 
 function(dsda_target_set_warnings tgt)
-  dsda_internal_fail_if_invalid_target(${tgt})
-  
+  dsda_fail_if_invalid_target(${tgt})
+
   if(NOT DEFINED CACHE{DSDA_ENABLED_WARNINGS})
     dsda_internal_setup_warnings()
   endif()
@@ -115,7 +117,7 @@ function(dsda_target_set_warnings tgt)
 endfunction()
 
 function(dsda_target_silence_deprecation tgt)
-  dsda_internal_fail_if_invalid_target(${tgt})
+  dsda_fail_if_invalid_target(${tgt})
 
   if(WIN32)
     target_compile_definitions(${tgt}
@@ -132,7 +134,7 @@ function(dsda_target_silence_deprecation tgt)
 endfunction()
 
 function(dsda_target_enable_fast_math tgt)
-  dsda_internal_fail_if_invalid_target(${tgt})
+  dsda_fail_if_invalid_target(${tgt})
 
   if(NOT DEFINED CACHE{DSDA_FAST_MATH_FLAG})
     dsda_internal_check_fast_math_flag()

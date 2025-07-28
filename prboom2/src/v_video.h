@@ -41,6 +41,8 @@
 extern "C" {
 #endif
 
+#include "SDL.h"
+
 #include "doomtype.h"
 #include "doomdef.h"
 // Needed because we are refering to patches.
@@ -230,7 +232,7 @@ typedef void (*V_DrawNumPatchGenPrecise_f)(float x, float y, int scrn,
                                  enum patch_translation_e flags);
 extern V_DrawNumPatchGenPrecise_f V_DrawNumPatchGenPrecise;
 
-// V_DrawNumPatch - Draws the patch from lump "num"Add commentMore actions
+// V_DrawNumPatch - Draws the patch from lump "num"
 #define V_DrawNumPatch(x,y,s,n,t,f) V_DrawNumPatchGen(x,y,s,n,false,t,f)
 #define V_DrawNumPatchPrecise(x,y,s,n,t,f) V_DrawNumPatchGenPrecise(x,y,s,n,false,t,f)
 
@@ -319,6 +321,8 @@ void V_FreePlaypal(void);
 
 // [XA] get number of palettes in the current playpal
 int V_GetPlaypalCount(void);
+
+SDL_Color V_GetPatchColor (int lumpnum);
 
 // e6y: wide-res
 void V_ClearBorder(void);

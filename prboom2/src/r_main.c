@@ -910,13 +910,13 @@ static void R_SetupFrame (player_t *player)
   int i, cm;
   int extra_brightness;
 
-  const int FocalTangent = finetangent[FINEANGLES/4 + FieldOfView/2];
+  int FocalTangent = finetangent[FINEANGLES/4 + FieldOfView/2];
+  int extra_brightness = dsda_IntConfig(dsda_config_extra_level_brightness);
 
   viewplayer = player;
 
   extralight = player->extralight;
 
-  extra_brightness = dsda_IntConfig(dsda_config_extra_level_brightness);
   if (extra_brightness < 0 || extra_brightness > 4) {
     extra_brightness = 0;
   }

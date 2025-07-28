@@ -29,7 +29,6 @@ jobs:
               -A x64
               -DCMAKE_TOOLCHAIN_FILE="${env:VCPKG_INSTALLATION_ROOT}\scripts\buildsystems\vcpkg.cmake"
               -DVCPKG_TARGET_TRIPLET=x64-windows-static-release
-              -DCMAKE_POLICY_DEFAULT_CMP0091=NEW
               -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
               -DCMAKE_IGNORE_PATH="C:/Strawberry/perl/bin;C:/Strawberry/c/lib"
 
@@ -83,7 +82,7 @@ jobs:
             ${{ matrix.config.msys-env }}-cmake
             ${{ matrix.config.msys-env }}-ninja
             ${{ matrix.config.msys-env }}-pkgconf
-            ${{ matrix.config.msys-env }}-libopenmpt
+            ${{ matrix.config.msys-env }}-libxmp
             ${{ matrix.config.msys-env }}-fluidsynth
             ${{ matrix.config.msys-env }}-libmad
             ${{ matrix.config.msys-env }}-libvorbis
@@ -91,6 +90,7 @@ jobs:
             ${{ matrix.config.msys-env }}-SDL2
             ${{ matrix.config.msys-env }}-SDL2_image
             ${{ matrix.config.msys-env }}-SDL2_mixer
+            ${{ matrix.config.msys-env }}-libsndfile
             ${{ matrix.config.msys-env }}-libzip
 
       - name: Install Dependencies (Linux)
@@ -102,7 +102,7 @@ jobs:
             gcc \
             ninja-build \
             pkg-config \
-            libopenmpt-dev \
+            libxmp-dev \
             libfluidsynth-dev \
             fluidsynth \
             libgl-dev \
@@ -113,6 +113,7 @@ jobs:
             libsdl2-image-dev \
             libsdl2-mixer-dev \
             libvorbis-dev \
+            libsndfile1-dev \
             libzip-dev \
             zipcmp \
             zipmerge \
@@ -127,7 +128,7 @@ jobs:
               python \
               ninja \
               pkg-config \
-              libopenmpt \
+              libxmp \
               fluid-synth \
               libvorbis \
               libzip \
@@ -136,6 +137,7 @@ jobs:
               sdl2 \
               sdl2_image \
               sdl2_mixer \
+              libsndfile \
               dylibbundler
 
       - name: Generate vcpkg cache key
@@ -156,6 +158,7 @@ jobs:
           cmake -S prboom2
           -B build
           -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }}
+          -DSTRICT_FIND=ON
           ${{ matrix.config.extra_options }}
 
       - name: Build

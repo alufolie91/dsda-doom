@@ -448,12 +448,16 @@ set(MUS2MID_SRC
 set(SDLDOOM_SOURCES
     SDL/i_main.c
     SDL/i_sound.c
+    SDL/i_sndfile.c
+    SDL/i_sndfile.h
     SDL/i_sshot.c
     SDL/i_system.c
     SDL/i_video.c
 )
 
 set(DOOMMUSIC_SOURCES
+    MUSIC/xmpplayer.c
+    MUSIC/xmpplayer.h
     MUSIC/flplayer.c
     MUSIC/flplayer.h
     MUSIC/madplayer.c
@@ -473,8 +477,6 @@ set(DOOMMUSIC_SOURCES
     MUSIC/portmidiplayer.h
     MUSIC/vorbisplayer.c
     MUSIC/vorbisplayer.h
-    MUSIC/libopenmptplayer.c
-    MUSIC/libopenmptplayer.h
 )
 
 set(EXTRA_FILES
@@ -542,68 +544,24 @@ function(AddGameExecutable TARGET SOURCES)
     dsda_target_set_warnings(${TARGET})
     dsda_target_silence_deprecation(${TARGET})
     dsda_target_enable_fast_math(${TARGET})
+    dsda_target_use_config_h(${TARGET})
 
     target_compile_options(${TARGET} PRIVATE -g)
 
-    #target_compile_options(${TARGET} PRIVATE -fsanitize=address)
-    #target_link_options(${TARGET} PRIVATE -fsanitize=address)
-
-    target_compile_definitions(${TARGET}
+    target_include_directories(${TARGET}
         PRIVATE
-        HAVE_CONFIG_H
-        $<$<NOT:$<BOOL:${HAVE_STRICMP}>>:stricmp=strcasecmp>
-        $<$<NOT:$<BOOL:${HAVE_STRNICMP}>>:strnicmp=strncasecmp>
-    )
-
-    target_include_directories(${TARGET} PRIVATE
-        ${SDL2_INCLUDE_DIRS}
-        ${CMAKE_BINARY_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}
     )
 
-    target_link_libraries(${TARGET} PRIVATE
-        libzip::zip
-        ${SDL2_LIBRARIES}
-        SDL2_mixer::SDL2_mixer
-        ZLIB::ZLIB
+    target_link_libraries(${TARGET}
+        PRIVATE
+        dsda::dependencies
     )
-
-    if(WIN32)
-        target_link_libraries(${TARGET} PRIVATE
-            winmm
-            comctl32
-        )
-    endif()
 
     set_target_properties(${TARGET} PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${DSDA_OUTPUT_PATH}
-        INTERPROCEDURAL_OPTIMIZATION ${ENABLE_LTO}
         C_STANDARD 99
     )
-
-    if(HAVE_LIBSDL2_IMAGE)
-        target_link_libraries(${TARGET} PRIVATE SDL2_image::SDL2_image)
-    endif()
-
-    if(HAVE_LIBMAD)
-        target_link_libraries(${TARGET} PRIVATE LibMad::libmad)
-    endif()
-
-    if(HAVE_LIBFLUIDSYNTH)
-        target_link_libraries(${TARGET} PRIVATE FluidSynth::libfluidsynth)
-    endif()
-
-    if(HAVE_LIBVORBISFILE)
-        target_link_libraries(${TARGET} PRIVATE Vorbis::vorbisfile)
-    endif()
-
-    if(HAVE_LIBPORTMIDI)
-        target_link_libraries(${TARGET} PRIVATE PortMidi::portmidi)
-    endif()
-
-    if(HAVE_LIBOPENMPT)
-        target_link_libraries(${TARGET} PRIVATE libopenmpt::libopenmpt)
-    endif()
 
     add_dependencies(${TARGET} dsda-doom-wad)
 
@@ -621,12 +579,6 @@ function(AddGameExecutable TARGET SOURCES)
         )
     endif()
 
-    if(WIN32)
-        set(DSDA_BINARY_INSTALL_DIR ".")
-    else()
-        set(DSDA_BINARY_INSTALL_DIR "${CMAKE_INSTALL_BINDIR}")
-    endif()
-
     if(CMAKE_VERSION VERSION_GREATER 3.20
         AND WIN32
         AND NOT VCPKG_TOOLCHAIN
@@ -637,16 +589,11 @@ function(AddGameExecutable TARGET SOURCES)
                 PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-"
                 POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
                 DIRECTORIES $<TARGET_FILE_DIR:${TARGET}> $ENV{PATH}
-            RUNTIME DESTINATION "${DSDA_BINARY_INSTALL_DIR}"
+            RUNTIME DESTINATION "${DSDA_INSTALL_BINDIR}"
         )
     else()
-        install(TARGETS ${TARGET} RUNTIME DESTINATION "${DSDA_BINARY_INSTALL_DIR}")
+        install(TARGETS ${TARGET} RUNTIME DESTINATION "${DSDA_INSTALL_BINDIR}")
     endif()
-
-    target_link_libraries(${TARGET} PRIVATE
-        ${OPENGL_gl_LIBRARY}
-        ${OPENGL_glu_LIBRARY}
-    )
 endfunction()
 
 AddGameExecutable(dsda-doom "${DSDA_SOURCES}")

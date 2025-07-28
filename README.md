@@ -5,13 +5,7 @@ so you probably shouldnt take any notes here :3
 
 some of this is quite hacky as a result
 
-Most notable stuff:
-- Threaded span drawing (mostly ported from RR https://git.do.srb2.org/KartKrew/RingRacers.git)
-- Threaded sky "plane" drawing (really hacky due to all the shared stuff and column flushing system)
-- Usage of the "opengles2" SDL renderer backend on *nix, due to massive performance gains over the default (might not work on most configurations)
-- Alot of micro optimizations for the software renderer (replacing alot of things with memsets/std::fill, conditional changes, usage of custom faster qsort implementation and the likes)
-
-# dsda-doom v0.29.2
+# dsda-doom v0.29.3
 This is a successor of prboom+ with many new features, including:
 - Heretic, Hexen, MBF21, Doom-in-Hexen, UDMF, and MAPINFO support
 - In-game console and scripting
