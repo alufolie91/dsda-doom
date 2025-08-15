@@ -150,8 +150,7 @@ extern int          usegamma;
 // The available bit-depth modes
 typedef enum {
   VID_MODESW,
-  VID_MODEGL,
-  VID_MODEMAX
+  VID_MODEGL
 } video_mode_t;
 
 extern video_mode_t current_videomode;
