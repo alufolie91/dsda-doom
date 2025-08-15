@@ -1074,12 +1074,12 @@ static void R_DrawPSprite (pspdef_t *psp)
 
       psp_sx = FRACUNIT;
 
-      if (psp->state->action != A_Lower && psp->state->action != A_Raise)
+      if (psp->state->action != (actionf_t)A_Lower && psp->state->action != (actionf_t)A_Raise)
       {
         last_sy = psp->sy;
         psp_sy = 32 * FRACUNIT;
       }
-      else if (psp->state->action == A_Lower)
+      else if (psp->state->action == (actionf_t)A_Lower)
       {
         // We want to move smoothly from where we were
         psp_sy -= (last_sy - 32 * FRACUNIT);
@@ -1091,17 +1091,17 @@ static void R_DrawPSprite (pspdef_t *psp)
 
       // [crispy] don't center vertically during lowering and raising states
       if (weapon_attack_alignment >= CENTERWEAPON_HORVER &&
-          psp->state->action != A_Lower && psp->state->action != A_Raise && !swiping_weapon)
+          psp->state->action != (actionf_t)A_Lower && psp->state->action != (actionf_t)A_Raise && !swiping_weapon)
       {
           R_ApplyWeaponBob(NULL, false, &psp_sy, weapon_attack_alignment == CENTERWEAPON_BOB);
       }
     }
-    else if (psp->state->action == A_WeaponReady && psp->state->tics > 1 && movement_smooth)
+    else if (psp->state->action == (actionf_t)A_WeaponReady && psp->state->tics > 1 && movement_smooth)
     {
       // Interpolate bobbing for animated weapons (Chainsaw)
       R_ApplyWeaponBob(&psp_sx, true, &psp_sy, true);
     }
-    else if (psp->state->action == A_WeaponReady && dsda_WeaponBob() < 4)
+    else if (psp->state->action == (actionf_t)A_WeaponReady && dsda_WeaponBob() < 4)
     {
       // Always apply Weaponbob when using bobbing increments
       R_ApplyWeaponBob(&psp_sx, true, &psp_sy, true);
