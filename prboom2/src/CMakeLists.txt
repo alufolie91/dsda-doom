@@ -547,6 +547,10 @@ function(AddGameExecutable TARGET SOURCES)
     dsda_target_use_config_h(${TARGET})
 
     target_compile_options(${TARGET} PRIVATE -g)
+    target_compile_features(${TARGET}
+        PRIVATE
+        cxx_std_11
+    )
 
     target_include_directories(${TARGET}
         PRIVATE
@@ -564,6 +568,11 @@ function(AddGameExecutable TARGET SOURCES)
     )
 
     add_dependencies(${TARGET} dsda-doom-wad)
+    add_custom_command(TARGET ${TARGET}
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E echo "Copying ${WAD_DATA_PATH} to $<TARGET_FILE_DIR:dsda-doom>"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${WAD_DATA_PATH} $<TARGET_FILE_DIR:dsda-doom>
+    )
 
     if(MSVC)
         set_target_properties(${TARGET} PROPERTIES
@@ -571,7 +580,6 @@ function(AddGameExecutable TARGET SOURCES)
         )
         add_custom_command(TARGET ${TARGET} POST_BUILD
             COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\..\\ICONS\\dsda-doom.exe.manifest\" -outputresource:\"$<TARGET_FILE:dsda-doom>\"\;\#1
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${WAD_DATA_PATH} $<TARGET_FILE_DIR:dsda-doom>
         )
     elseif(WIN32)
         set_target_properties(${TARGET} PROPERTIES
