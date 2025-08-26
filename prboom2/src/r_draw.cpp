@@ -50,8 +50,6 @@
 
 #include "core/thread_pool.h"
 
-bool drawsky = false;
-
 //
 // All drawing to the view buffer is accomplished in this file.
 // The other refresh files only know about ccordinates,
