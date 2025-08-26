@@ -96,7 +96,7 @@ typedef struct draw_column_temp_vars_s
   intptr_t    yl[4], yh[4];
 
   // e6y: resolution limitation is removed
-  std::unique_ptr<byte[]> buf;
+  byte *buf;
 
   intptr_t    startx;
   intptr_t    type;
@@ -106,7 +106,7 @@ typedef struct draw_column_temp_vars_s
   const byte *fuzzmap;
 } draw_column_temp_vars_t;
 
-thread_local draw_column_temp_vars_t temp_dcvars = {};
+draw_column_temp_vars_t temp_dcvars = {};
 
 //
 // Spectre/Invisibility.
@@ -207,31 +207,15 @@ static void R_FlushColumns(void)
 //
 void R_ResetColumnBuffer(void)
 {
-  auto flush_task = [] {
-    // haleyjd 10/06/05: this must not be done if x == 0!
-    if (temp_dcvars.x) {
-      R_FlushColumns();
-    }
-
-    temp_dcvars.type    = COL_NONE;
-    R_FlushWholeColumns = R_FlushWholeError;
-    R_FlushHTColumns    = R_FlushHTError;
-    R_FlushQuadColumn   = R_QuadFlushError;
-  };
-
-  // flush main threads column data
-  flush_task();
-
-  if (drawsky && dsda_IntConfig(dsda_config_render_parallel))
-  {
-    dsda::ThreadPool::Sema tp_sema;
-    dsda::g_main_threadpool->begin_sema();
-    dsda::g_main_threadpool->for_each(std::move(flush_task)); // then all the columndata from the worker threads / skydraw
-    tp_sema = dsda::g_main_threadpool->end_sema();
-    dsda::g_main_threadpool->notify_sema(tp_sema);
-    dsda::g_main_threadpool->wait_sema(tp_sema);
-    drawsky = false;
+  // haleyjd 10/06/05: this must not be done if x == 0!
+  if (temp_dcvars.x) {
+    R_FlushColumns();
   }
+
+  temp_dcvars.type    = COL_NONE;
+  R_FlushWholeColumns = R_FlushWholeError;
+  R_FlushHTColumns    = R_FlushHTError;
+  R_FlushQuadColumn   = R_QuadFlushError;
 }
 
 #define R_DRAWCOLUMN_PIPELINE RDC_STANDARD
@@ -444,6 +428,112 @@ void R_InitTranslationTables (void)
       translationtables[i]=translationtables[i+256]=translationtables[i+512]=i;
 }
 
+void R_DrawSkyColumn(draw_column_vars_t *dcvars)
+{
+  intptr_t         count;
+
+  byte* __restrict dest;            // killough
+  intptr_t         frac;
+  const intptr_t   fracstep = dcvars->iscale;
+  const intptr_t   stride = drawvars.pitch;
+
+  // leban 1/17/99:
+  // removed the + 1 here, adjusted the if test, and added an increment
+  // later.  this helps a compiler pipeline a bit better.  the x86
+  // assembler also does this.
+
+  count = dcvars->yh - dcvars->yl;
+
+  // leban 1/17/99:
+  // this case isn't executed too often.  depending on how many instructions
+  // there are between here and the second if test below, this case could
+  // be moved down and might save instructions overall.  since there are
+  // probably different wads that favor one way or the other, i'll leave
+  // this alone for now.
+  if (count < 0)    // Zero length, column does not exceed a pixel.
+    return;
+
+#ifdef RANGECHECK
+  if (dcvars->x >= SCREENWIDTH
+      || dcvars->yl < 0
+      || dcvars->yh >= SCREENHEIGHT)
+    I_Error("R_DrawColumn: %i to %i at %i", dcvars->yl, dcvars->yh, dcvars->x);
+#endif
+
+  dest = drawvars.topleft + dcvars->yl*SCREENWIDTH + dcvars->x;
+
+  if (dcvars->flags & DRAW_COLUMN_ISPATCH)
+    frac = ((dcvars->yl - dcvars->dy) * fracstep) & 0xFFFF;
+  else
+    frac = dcvars->texturemid + (dcvars->yl-centery)*fracstep;
+
+  {
+    const byte          * __restrict source = dcvars->source;
+
+    const lighttable_t  * __restrict colormap = dcvars->colormap;
+
+    count++;
+
+    // Inner loop that does the actual texture mapping,
+    //  e.g. a DDA-lile scaling.
+    // This is as fast as it gets.       (Yeah, right!!! -- killough)
+    //
+    // killough 2/1/98: more performance tuning
+
+    if (dcvars->texheight == 128) {
+      #define FIXEDT_128MASK ((127<<FRACBITS)|0xffff)
+      while(count--) {
+        *dest = colormap[(source[((frac & FIXEDT_128MASK))>>FRACBITS])];
+        dest += stride;
+        frac += fracstep;
+      }
+    } else if (dcvars->texheight == 0) {
+      /* cph - another special case */
+      while (count--) {
+        *dest = colormap[(source[((frac))>>FRACBITS])];
+        dest += stride;
+        frac += fracstep;
+      }
+    } else {
+      uintptr_t heightmask = dcvars->texheight-1; // CPhipps - specify type
+      if (! (dcvars->texheight & heightmask) ) { // power of 2 -- killough
+        intptr_t fixedt_heightmask = (heightmask<<FRACBITS)|0xffff;
+        while ((count-=2)>=0) { // texture height is a power of 2 -- killough
+          *dest = colormap[(source[((frac & fixedt_heightmask))>>FRACBITS])];
+          dest += stride;
+          frac += fracstep;
+          *dest = colormap[(source[((frac & fixedt_heightmask))>>FRACBITS])];
+          dest += stride;
+          frac += fracstep;
+        }
+        if (count & 1)
+          *dest = colormap[(source[((frac & fixedt_heightmask))>>FRACBITS])];
+      } else {
+        heightmask++;
+        heightmask <<= FRACBITS;
+
+        if (frac < 0)
+          while ((frac += heightmask) <  0);
+        else
+          while (frac >= (intptr_t)heightmask)
+            frac -= heightmask;
+
+        while (count--) {
+          // Re-map color indices from wall texture column
+          //  using a lighting/special effects LUT.
+
+          // heightmask is the Tutti-Frutti fix -- killough
+
+          *dest = colormap[(source[((frac))>>FRACBITS])];
+          dest += stride;
+          if ((frac += fracstep) >= (intptr_t)heightmask)
+            frac -= heightmask;
+        }
+      }
+    }
+  }
+}
+
 //
 // R_DrawSpan
 // With DOOM style restrictions on view orientation,
@@ -496,21 +586,12 @@ void R_InitBuffersRes(void)
   extern byte *solidcol;
 
   if (solidcol) Z_Free(solidcol);
+  if (temp_dcvars.buf) Z_Free(temp_dcvars.buf);
+
   solidcol = static_cast<byte*>(Z_Calloc(1, SCREENWIDTH * sizeof(*solidcol)));
+  temp_dcvars.buf = static_cast<byte*>(Z_Calloc(1, (SCREENHEIGHT * 4) * sizeof(*temp_dcvars.buf)));
 
-  auto init_tempbuf = [] {
-     temp_dcvars.buf = std::make_unique<byte[]>((SCREENHEIGHT * 4) * sizeof(byte));
-     temp_dcvars.x = 0;
-  };
-
-  init_tempbuf(); // allocate for main thread
-
-  //dsda::ThreadPool::Sema tp_sema;
-  //dsda::g_main_threadpool->begin_sema();
-  dsda::g_main_threadpool->for_each(std::move(init_tempbuf));
-  //tp_sema = dsda::g_main_threadpool->end_sema();
-  //dsda::g_main_threadpool->notify_sema(tp_sema);
-  //dsda::g_main_threadpool->wait_sema(tp_sema);
+  temp_dcvars.x = 0;
 }
 
 //

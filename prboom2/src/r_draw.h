@@ -125,6 +125,8 @@ extern byte       *translationtables;
 
 R_DrawColumn_f R_GetDrawColumnFunc(enum column_pipeline_e type, enum draw_filter_type_e filterz);
 
+void R_DrawSkyColumn(draw_column_vars_t *dcvars);
+
 // Span blitting for rows, floor/ceiling. No Spectre effect needed.
 void R_DrawSpan(draw_span_vars_t *dsvars);
 

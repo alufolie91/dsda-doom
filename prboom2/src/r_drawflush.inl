@@ -116,7 +116,7 @@ static void R_FLUSHWHOLE_FUNCNAME(void)
    byte* __restrict source;
    byte* __restrict dest;
    intptr_t  count, yl;
-   byte* __restrict tempbuf = temp_dcvars.buf.get();
+   byte* __restrict tempbuf = temp_dcvars.buf;
 
    while(--temp_dcvars.x >= 0)
    {
@@ -162,7 +162,7 @@ static void R_FLUSHHEADTAIL_FUNCNAME(void)
    #endif
 
    const __restrict intptr_t stride = drawvars.pitch;
-   byte* __restrict tempbuf = temp_dcvars.buf.get();
+   byte* __restrict tempbuf = temp_dcvars.buf;
 
    while(colnum < 4)
    {
@@ -226,7 +226,7 @@ static void R_FLUSHQUAD_FUNCNAME(void)
    #endif
 
    const __restrict intptr_t stride = drawvars.pitch;
-   byte* __restrict tempbuf = temp_dcvars.buf.get();
+   byte* __restrict tempbuf = temp_dcvars.buf;
 
    source = &tempbuf[temp_dcvars.commontop << 2];
    dest = drawvars.topleft + temp_dcvars.commontop*stride + temp_dcvars.startx;

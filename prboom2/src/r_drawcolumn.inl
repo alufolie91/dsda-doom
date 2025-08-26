@@ -58,7 +58,7 @@ static void R_DRAWCOLUMN_FUNCNAME(draw_column_vars_t *dcvars)
   byte* __restrict dest;            // killough
   intptr_t         frac;
   const intptr_t   fracstep = dcvars->iscale;
-  byte* __restrict tempbuf = temp_dcvars.buf.get();
+  byte* __restrict tempbuf = temp_dcvars.buf;
 #endif
 
 #if (R_DRAWCOLUMN_PIPELINE & RDC_FUZZ)
@@ -223,3 +223,4 @@ static void R_DRAWCOLUMN_FUNCNAME(draw_column_vars_t *dcvars)
 #undef COLTYPE
 #undef R_DRAWCOLUMN_FUNCNAME
 #undef R_DRAWCOLUMN_PIPELINE
+

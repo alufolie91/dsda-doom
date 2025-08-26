@@ -80,7 +80,6 @@ public:
 
 	/// Enqueue but don't notify
 	template <typename T> void schedule(T&& thunk);
-	template <typename H> void for_each(H&& task);
 	/// Notify threads after several schedules
 	void notify();
 	void notify_sema(const Sema& sema);
@@ -143,40 +142,6 @@ void ThreadPool::schedule(T&& thunk)
 		next_queue_index_ = 0;
 	}
 }
-
-template <typename H>
-void ThreadPool::for_each(H&& thunk)
-{
-	static_assert(sizeof(H) <= sizeof(std::declval<Task>().raw));
-
-	if (immediate_mode_)
-	{
-		return;
-	}
-
-	if (sema_begun_ && cur_sema_ == nullptr)
-	{
-		cur_sema_ = std::make_shared<std::atomic<uint32_t>>(0);
-	}
-
-	for (size_t i = 0; i < threads_.size(); i++)
-	{
-		if (sema_begun_ && cur_sema_ != nullptr)
-		{
-			cur_sema_->fetch_add(1, std::memory_order_relaxed);
-		}
-
-		std::shared_ptr<Queue> q = work_queues_[i];
-		Task task;
-		task.thunk = reinterpret_cast<void(*)(void*)>(callable_caller<H>);
-		task.deleter = reinterpret_cast<void(*)(void*)>(callable_destroyer<H>);
-		task.pseudosema = cur_sema_;
-		new (reinterpret_cast<H*>(task.raw.data())) H(std::move(thunk));
-
-		q->push(std::move(task));
-	}
-}
-
 } // namespace dsda
 
 extern "C" {

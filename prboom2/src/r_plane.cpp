@@ -594,7 +594,7 @@ template <SkyPlaneType Type>
 static void R_DoDrawSkyPlane(visplane_t *pl, draw_column_vars_t dcvars, const rpatch_t *patch, angle_t an, angle_t flip, dboolean allow_parallel)
 {
   int x;
-  const R_DrawColumn_f colfunc = R_GetDrawColumnFunc(RDC_PIPELINE_STANDARD, RDRAW_FILTER_POINT);
+  //const R_DrawColumn_f colfunc = R_GetDrawColumnFunc(RDC_PIPELINE_STANDARD, RDRAW_FILTER_POINT);
 
   if constexpr (Type == SkyPlaneType::kHeretic)
   {
@@ -629,7 +629,7 @@ static void R_DoDrawSkyPlane(visplane_t *pl, draw_column_vars_t dcvars, const rp
             dcvars.nextsource = R_GetTextureColumn(patch, ((an + xtoskyangle[(x + i)+1])^flip) >> ANGLETOSKYSHIFT);
           }
 
-          colfunc(&dcvars);
+          R_DrawSkyColumn(&dcvars);
         }
       }
     };
