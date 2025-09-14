@@ -1,10 +1,3 @@
-this is mostly just me messing around with code, 
-learning code things,
-trying to make things faster,
-so you probably shouldnt take any notes here :3
-
-some of this is quite hacky as a result
-
 # dsda-doom v0.29.3
 This is a successor of prboom+ with many new features, including:
 - Heretic, Hexen, MBF21, Doom-in-Hexen, UDMF, and MAPINFO support
