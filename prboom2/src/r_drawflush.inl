@@ -216,8 +216,10 @@ static void R_FLUSHHEADTAIL_FUNCNAME(void)
 
 static void R_FLUSHQUAD_FUNCNAME(void)
 {
+#if (R_DRAWCOLUMN_PIPELINE & RDC_TRANSLUCENT)
     byte* __restrict source;
     byte* __restrict dest;
+#endif
     int count;
 
    #if (R_DRAWCOLUMN_PIPELINE & RDC_FUZZ)
@@ -228,8 +230,11 @@ static void R_FLUSHQUAD_FUNCNAME(void)
     const int stride = drawvars.pitch;
     byte* __restrict tempbuf = temp_dcvars.buf;
 
+#if (R_DRAWCOLUMN_PIPELINE & RDC_TRANSLUCENT)
     source = &tempbuf[temp_dcvars.commontop << 2];
     dest = drawvars.topleft + temp_dcvars.commontop*stride + temp_dcvars.startx;
+#endif
+
     count = temp_dcvars.commonbot - temp_dcvars.commontop + 1;
 
 #if (R_DRAWCOLUMN_PIPELINE & RDC_TRANSLUCENT)
@@ -243,24 +248,15 @@ static void R_FLUSHQUAD_FUNCNAME(void)
       dest += stride * sizeof(byte);
    }
 #else
-   if ((sizeof(int) == 4) && (((intptr_t)source % 4) == 0) && (((intptr_t)dest % 4) == 0)) {
-      while(--count >= 0)
-      {
-         *(int *)dest =   *(int *)source;
-         source += 4      * sizeof(byte);
-         dest   += stride * sizeof(byte);
-      }
-   } else {
-      while(--count >= 0)
-      {
-         dest[0] = source[0];
-         dest[1] = source[1];
-         dest[2] = source[2];
-         dest[3] = source[3];
-         source += 4      * sizeof(byte);
-         dest   += stride * sizeof(byte);
-      }
-   }
+    const int *source = reinterpret_cast<const int *>(tempbuf + (temp_dcvars.commontop << 2));
+    int *dest = reinterpret_cast<int *>(drawvars.topleft + temp_dcvars.commontop*stride + temp_dcvars.startx);
+    const int deststep = stride / 4;
+
+    while (--count >= 0)
+    {
+        *dest = *source++;
+        dest += deststep;
+    }
 #endif
 }
 
