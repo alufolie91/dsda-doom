@@ -43,12 +43,12 @@
 //
 static void R_FLUSHWHOLE_FUNCNAME(void)
 {
-    const __restrict intptr_t stride = drawvars.pitch;
+    const int stride = drawvars.pitch;
 
    // Scaled software fuzz algorithm
 #if (R_DRAWCOLUMN_PIPELINE & RDC_FUZZ)
 {
-    intptr_t yl, yh, count, lines;
+    int yl, yh, count, lines;
     byte * __restrict dest;
 
     if ((temp_dcvars.x + temp_dcvars.startx) % fuzzcellsize)
@@ -81,7 +81,7 @@ static void R_FLUSHWHOLE_FUNCNAME(void)
 
     do
     {
-        intptr_t mask;
+        int mask;
         byte fuzz;
 
         count -= lines;
@@ -115,7 +115,7 @@ static void R_FLUSHWHOLE_FUNCNAME(void)
 {
    byte* __restrict source;
    byte* __restrict dest;
-   intptr_t  count, yl;
+   int  count, yl;
    byte* __restrict tempbuf = temp_dcvars.buf;
 
    while(--temp_dcvars.x >= 0)
@@ -152,8 +152,8 @@ static void R_FLUSHHEADTAIL_FUNCNAME(void)
 {
     byte* __restrict source;
     byte* __restrict dest;
-    intptr_t count, colnum = 0;
-    intptr_t yl, yh;
+    int count, colnum = 0;
+    int yl, yh;
 
    #if (R_DRAWCOLUMN_PIPELINE & RDC_FUZZ)
       // Only whole flushes are supported for fuzz
@@ -161,7 +161,7 @@ static void R_FLUSHHEADTAIL_FUNCNAME(void)
       return;
    #endif
 
-   const __restrict intptr_t stride = drawvars.pitch;
+   const int stride = drawvars.pitch;
    byte* __restrict tempbuf = temp_dcvars.buf;
 
    while(colnum < 4)
@@ -218,19 +218,19 @@ static void R_FLUSHQUAD_FUNCNAME(void)
 {
     byte* __restrict source;
     byte* __restrict dest;
-    intptr_t count;
+    int count;
 
    #if (R_DRAWCOLUMN_PIPELINE & RDC_FUZZ)
       // Only whole flushes are supported for fuzz
       return;
    #endif
 
-   const __restrict intptr_t stride = drawvars.pitch;
-   byte* __restrict tempbuf = temp_dcvars.buf;
+    const int stride = drawvars.pitch;
+    byte* __restrict tempbuf = temp_dcvars.buf;
 
-   source = &tempbuf[temp_dcvars.commontop << 2];
-   dest = drawvars.topleft + temp_dcvars.commontop*stride + temp_dcvars.startx;
-   count = temp_dcvars.commonbot - temp_dcvars.commontop + 1;
+    source = &tempbuf[temp_dcvars.commontop << 2];
+    dest = drawvars.topleft + temp_dcvars.commontop*stride + temp_dcvars.startx;
+    count = temp_dcvars.commonbot - temp_dcvars.commontop + 1;
 
 #if (R_DRAWCOLUMN_PIPELINE & RDC_TRANSLUCENT)
    while(--count >= 0)
