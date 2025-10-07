@@ -91,7 +91,7 @@ typedef enum
 typedef struct draw_column_temp_vars_s
 {
   intptr_t    x;
-  intptr_t    yl[4], yh[4];
+  intptr_t    yl[8], yh[8];
 
   // e6y: resolution limitation is removed
   byte *buf;
@@ -186,7 +186,7 @@ static void (*R_FlushQuadColumn)(void)   = R_QuadFlushError;
 
 static void R_FlushColumns(void)
 {
-   if (temp_dcvars.x != 4 || temp_dcvars.commontop >= temp_dcvars.commonbot)
+   if (temp_dcvars.x != 8 || temp_dcvars.commontop >= temp_dcvars.commonbot)
       R_FlushWholeColumns();
    else
    {
@@ -587,7 +587,7 @@ void R_InitBuffersRes(void)
   if (temp_dcvars.buf) Z_Free(temp_dcvars.buf);
 
   solidcol = static_cast<byte*>(Z_Calloc(1, SCREENWIDTH * sizeof(*solidcol)));
-  temp_dcvars.buf = static_cast<byte*>(Z_Calloc(1, (SCREENHEIGHT * 4) * sizeof(*temp_dcvars.buf)));
+  temp_dcvars.buf = static_cast<byte*>(Z_Calloc(1, (SCREENHEIGHT * 8) * sizeof(*temp_dcvars.buf)));
 
   temp_dcvars.x = 0;
 }

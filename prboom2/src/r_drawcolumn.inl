@@ -105,7 +105,7 @@ static void R_DRAWCOLUMN_FUNCNAME(draw_column_vars_t *dcvars)
    // SoM: MAGIC
    {
       // haleyjd: reordered predicates
-      if(temp_dcvars.x == 4 ||
+      if(temp_dcvars.x == 8 ||
          (temp_dcvars.x && (temp_dcvars.type != COLTYPE || temp_dcvars.x + temp_dcvars.startx != dcvars->x)))
          R_FlushColumns();
 
@@ -124,7 +124,7 @@ static void R_DRAWCOLUMN_FUNCNAME(draw_column_vars_t *dcvars)
          R_FlushHTColumns    = R_FLUSHHEADTAIL_FUNCNAME;
          R_FlushQuadColumn   = R_FLUSHQUAD_FUNCNAME;
 #if (!(R_DRAWCOLUMN_PIPELINE & RDC_FUZZ))
-         dest = &tempbuf[dcvars->yl << 2];
+         dest = &tempbuf[dcvars->yl << 3];
 #endif
       } else {
          temp_dcvars.yl[temp_dcvars.x] = dcvars->yl;
@@ -135,7 +135,7 @@ static void R_DRAWCOLUMN_FUNCNAME(draw_column_vars_t *dcvars)
          if(dcvars->yh < temp_dcvars.commonbot)
             temp_dcvars.commonbot = dcvars->yh;
 #if (!(R_DRAWCOLUMN_PIPELINE & RDC_FUZZ))
-         dest = &tempbuf[(dcvars->yl << 2) + temp_dcvars.x];
+         dest = &tempbuf[(dcvars->yl << 3) + temp_dcvars.x];
 #endif
       }
       temp_dcvars.x += 1;
@@ -166,14 +166,14 @@ static void R_DRAWCOLUMN_FUNCNAME(draw_column_vars_t *dcvars)
       #define FIXEDT_128MASK ((127<<FRACBITS)|0xffff)
       while(count--) {
         *dest = GETCOL(frac & FIXEDT_128MASK);
-        dest += 4;
+        dest += 8;
         frac += fracstep;
       }
     } else if (dcvars->texheight == 0) {
       /* cph - another special case */
       while (count--) {
         *dest = GETCOL(frac);
-        dest += 4;
+        dest += 8;
         frac += fracstep;
       }
     } else {
@@ -182,10 +182,10 @@ static void R_DRAWCOLUMN_FUNCNAME(draw_column_vars_t *dcvars)
         intptr_t fixedt_heightmask = (heightmask<<FRACBITS)|0xffff;
         while ((count-=2)>=0) { // texture height is a power of 2 -- killough
           *dest = GETCOL(frac & fixedt_heightmask);
-          dest += 4;
+          dest += 8;
           frac += fracstep;
           *dest = GETCOL(frac & fixedt_heightmask);
-          dest += 4;
+          dest += 8;
           frac += fracstep;
         }
         if (count & 1)
@@ -207,7 +207,7 @@ static void R_DRAWCOLUMN_FUNCNAME(draw_column_vars_t *dcvars)
           // heightmask is the Tutti-Frutti fix -- killough
 
           *dest = GETCOL(frac);
-          dest += 4;
+          dest += 8;
           if ((frac += fracstep) >= (intptr_t)heightmask)
             frac -= heightmask;
         }

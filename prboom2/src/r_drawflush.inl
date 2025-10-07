@@ -121,7 +121,7 @@ static void R_FLUSHWHOLE_FUNCNAME(void)
    while(--temp_dcvars.x >= 0)
    {
       yl     = temp_dcvars.yl[temp_dcvars.x];
-      source = &tempbuf[temp_dcvars.x + (yl << 2)];
+      source = &tempbuf[temp_dcvars.x + (yl << 3)];
       dest   = drawvars.topleft + yl*stride + temp_dcvars.startx + temp_dcvars.x;
       count  = temp_dcvars.yh[temp_dcvars.x] - yl + 1;
 
@@ -133,7 +133,7 @@ static void R_FLUSHWHOLE_FUNCNAME(void)
          *dest = *source;
 #endif
 
-         source += 4;
+         source += 8;
          dest += stride;
       }
    }
@@ -164,7 +164,7 @@ static void R_FLUSHHEADTAIL_FUNCNAME(void)
    const int stride = drawvars.pitch;
    byte* __restrict tempbuf = temp_dcvars.buf;
 
-   while(colnum < 4)
+   while(colnum < 8)
    {
       yl = temp_dcvars.yl[colnum];
       yh = temp_dcvars.yh[colnum];
@@ -172,7 +172,7 @@ static void R_FLUSHHEADTAIL_FUNCNAME(void)
       // flush column head
       if(yl < temp_dcvars.commontop)
       {
-         source = &tempbuf[colnum + (yl << 2)];
+         source = &tempbuf[colnum + (yl << 3)];
          dest   = drawvars.topleft + yl*stride + temp_dcvars.startx + colnum;
          count  = temp_dcvars.commontop - yl;
 
@@ -185,7 +185,7 @@ static void R_FLUSHHEADTAIL_FUNCNAME(void)
             *dest = *source;
 #endif
 
-            source += 4;
+            source += 8;
             dest += stride;
          }
       }
@@ -193,7 +193,7 @@ static void R_FLUSHHEADTAIL_FUNCNAME(void)
       // flush column tail
       if(yh > temp_dcvars.commonbot)
       {
-         source = &temp_dcvars.buf[colnum + ((temp_dcvars.commonbot + 1) << 2)];
+         source = &temp_dcvars.buf[colnum + ((temp_dcvars.commonbot + 1) << 3)];
          dest   = drawvars.topleft + (temp_dcvars.commonbot + 1)*stride + temp_dcvars.startx + colnum;
          count  = yh - temp_dcvars.commonbot;
 
@@ -206,7 +206,7 @@ static void R_FLUSHHEADTAIL_FUNCNAME(void)
             *dest = *source;
 #endif
 
-            source += 4;
+            source += 8;
             dest += stride;
          }
       }
@@ -231,7 +231,7 @@ static void R_FLUSHQUAD_FUNCNAME(void)
     byte* __restrict tempbuf = temp_dcvars.buf;
 
 #if (R_DRAWCOLUMN_PIPELINE & RDC_TRANSLUCENT)
-    source = &tempbuf[temp_dcvars.commontop << 2];
+    source = &tempbuf[temp_dcvars.commontop << 3];
     dest = drawvars.topleft + temp_dcvars.commontop*stride + temp_dcvars.startx;
 #endif
 
@@ -240,17 +240,21 @@ static void R_FLUSHQUAD_FUNCNAME(void)
 #if (R_DRAWCOLUMN_PIPELINE & RDC_TRANSLUCENT)
    while(--count >= 0)
    {
-      dest[0] = GETDESTCOLOR(dest[0], source[0]);
+      *dest = GETDESTCOLOR((*dest), *source);
       dest[1] = GETDESTCOLOR(dest[1], source[1]);
       dest[2] = GETDESTCOLOR(dest[2], source[2]);
       dest[3] = GETDESTCOLOR(dest[3], source[3]);
-      source += 4    * sizeof(byte);
-      dest += stride * sizeof(byte);
+      dest[4] = GETDESTCOLOR(dest[4], source[4]);
+      dest[5] = GETDESTCOLOR(dest[5], source[5]);
+      dest[6] = GETDESTCOLOR(dest[6], source[6]);
+      dest[7] = GETDESTCOLOR(dest[7], source[7]);
+      source += 8;
+      dest += stride;
    }
 #else
-    const int *source = reinterpret_cast<const int *>(tempbuf + (temp_dcvars.commontop << 2));
-    int *dest = reinterpret_cast<int *>(drawvars.topleft + temp_dcvars.commontop*stride + temp_dcvars.startx);
-    const int deststep = stride / 4;
+    const int64_t *source = reinterpret_cast<const int64_t *>(tempbuf + (temp_dcvars.commontop << 3));
+    int64_t *dest = reinterpret_cast<int64_t *>(drawvars.topleft + temp_dcvars.commontop*stride + temp_dcvars.startx);
+    const int64_t deststep = stride / 8;
 
     while (--count >= 0)
     {

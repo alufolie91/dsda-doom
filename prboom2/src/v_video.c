@@ -424,7 +424,14 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch,
               dest += screens[scrn].pitch*2;
               s0 = source[2];
               s1 = source[3];
-              source += 4;
+              s0 = source[4];
+              s1 = source[5];
+              dest[0] = s0;
+              dest[screens[scrn].pitch] = s1;
+              dest += screens[scrn].pitch*2;
+              s0 = source[6];
+              s1 = source[7];
+              source += 8;
               dest[0] = s0;
               dest[screens[scrn].pitch] = s1;
               dest += screens[scrn].pitch*2;
@@ -450,7 +457,18 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch,
               s1 = source[3];
               s0 = trans[s0];
               s1 = trans[s1];
-              source += 4;
+              s0 = source[4];
+              s1 = source[5];
+              s0 = trans[s0];
+              s1 = trans[s1];
+              dest[0] = s0;
+              dest[screens[scrn].pitch] = s1;
+              dest += screens[scrn].pitch*2;
+              s0 = source[6];
+              s1 = source[7];
+              s0 = trans[s0];
+              s1 = trans[s1];
+              source += 8;
               dest[0] = s0;
               dest[screens[scrn].pitch] = s1;
               dest += screens[scrn].pitch*2;
@@ -1593,7 +1611,7 @@ void V_DrawRawScreenSection(const char *lump_name, int source_offset, int dest_y
       // Don't draw pixels outside screen
       if ((x_pos < 0) || (x_pos > SCREENWIDTH - width))
         continue;
-      
+
       V_FillRect(0, x_pos, y, width, height, *raw);
     }
 }
