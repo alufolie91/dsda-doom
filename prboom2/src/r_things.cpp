@@ -1589,6 +1589,9 @@ void R_DrawMasked(void)
         drawsegs_xranges[0].count++;
       }
     }
+
+    // haleyjd: terminate with a nullptr user for faster loop - adds ~3 FPS
+    drawsegs_xranges[0].items[drawsegs_xranges[0].count].user = nullptr;
   }
 
   // draw all vissprites back to front
