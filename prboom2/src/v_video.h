@@ -310,6 +310,18 @@ extern V_DrawLineWu_f V_DrawLineWu;
 typedef void (*V_PlotPixelWu_f)(int scrn, int x, int y, byte color, int weight);
 extern V_PlotPixelWu_f V_PlotPixelWu;
 
+#if defined(__SSE__)
+#ifdef _WIN32
+#include <malloc.h>
+#define aligned_alloc(align, size) _aligned_malloc(size, align)
+#define aligned_free(ptr) _aligned_free(ptr)
+#else
+#define aligned_free(ptr) free(ptr)
+#endif
+
+#include <immintrin.h>
+#endif
+
 void V_AllocScreen(screeninfo_t *scrn);
 void V_AllocScreens();
 void V_FreeScreen(screeninfo_t *scrn);

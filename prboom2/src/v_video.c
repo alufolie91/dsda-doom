@@ -62,6 +62,8 @@
 #include "dsda/stretch.h"
 #include "dsda/text_color.h"
 
+#include <stdlib.h> // aligned_alloc
+
 // DWF 2012-05-10
 // SetRatio sets the following global variables based on window geometry and
 // user preferences. The integer ratio is hardly used anymore, so further
@@ -917,9 +919,18 @@ void V_CopyScreen(int srcscrn, int destscrn)
 //
 void V_AllocScreen(screeninfo_t *scrn) {
   if (!scrn->not_on_heap)
-    if ((scrn->pitch * scrn->height) > 0)
+    if ((scrn->pitch * scrn->height) > 0){
+      int screensize = scrn->pitch*scrn->height;
+#if defined(__SSE__)
+      while (screensize & 15)
+        screensize++;
+      scrn->data = aligned_alloc(16, screensize);
+#else
+      scrn->data = Z_Calloc(screensize, 1);
+#endif
       //e6y: Clear the screen to black.
-      scrn->data = Z_Calloc(scrn->pitch*scrn->height, 1);
+      memset(scrn->data , 0, screensize);
+    }
 }
 
 //
@@ -937,7 +948,11 @@ void V_AllocScreens(void) {
 //
 void V_FreeScreen(screeninfo_t *scrn) {
   if (!scrn->not_on_heap) {
+#if defined(__SSE__)
+    aligned_free(scrn->data);
+#else
     Z_Free(scrn->data);
+#endif
     scrn->data = NULL;
   }
 }

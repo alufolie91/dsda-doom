@@ -584,10 +584,24 @@ void R_InitBuffersRes(void)
   extern byte *solidcol;
 
   if (solidcol) Z_Free(solidcol);
+
+#if defined(__SSE__)
+  if (temp_dcvars.buf) aligned_free(temp_dcvars.buf);
+#else
   if (temp_dcvars.buf) Z_Free(temp_dcvars.buf);
+#endif
 
   solidcol = static_cast<byte*>(Z_Calloc(1, SCREENWIDTH * sizeof(*solidcol)));
-  temp_dcvars.buf = static_cast<byte*>(Z_Calloc(1, (SCREENHEIGHT * 8) * sizeof(*temp_dcvars.buf)));
+
+  int size = (SCREENHEIGHT * 8) * sizeof(*temp_dcvars.buf);
+
+#if defined(__SSE__)
+  while (size & 15)
+      size++;
+  temp_dcvars.buf = static_cast<byte*>(aligned_alloc(16, size));
+#else
+  temp_dcvars.buf = static_cast<byte*>(Z_Calloc(1, size));
+#endif
 
   temp_dcvars.x = 0;
 }
