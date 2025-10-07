@@ -686,9 +686,10 @@ static void R_MarkSegBounds(void)
       int yh = (int)(bottomfrac>>HEIGHTBITS);
       int yl = (int)((topfrac+HEIGHTUNIT-1)>>HEIGHTBITS);
 
-      // no space above wall?
+      // Mark ceiling
       int bottom,top = ceilingclip[rw_x]+1;
 
+      // no space above wall?
       if (yl < top)
         yl = top;
 
@@ -708,7 +709,10 @@ static void R_MarkSegBounds(void)
         ceilingclip[rw_x] = bottom;
       }
 
+      // Mark floor
       bottom = floorclip[rw_x]-1;
+
+      // no space below floor?
       if (yh > bottom)
         yh = bottom;
 
@@ -730,13 +734,6 @@ static void R_MarkSegBounds(void)
 
       if (markfloor) // no bottom wall
         floorclip[rw_x] = yh+1;
-
-      // cph - if we completely blocked further sight through this column,
-      // add this info to the solid columns array for r_bsp.c
-      if (floorclip[rw_x] <= ceilingclip[rw_x] + 1)
-      {
-        solidcol[rw_x] = 1; didsolidcol = 1;
-      }
 
       rw_scale += rw_scalestep;
       topfrac += topstep;
