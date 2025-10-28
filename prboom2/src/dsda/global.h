@@ -107,8 +107,6 @@ extern int g_mf_shadow;
 
 extern const char* g_skyflatname;
 
-extern dboolean heretic;
-
 void dsda_InitGlobal(void);
 
 #ifdef __cplusplus
