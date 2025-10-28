@@ -230,15 +230,13 @@ static void R_FLUSHQUAD_FUNCNAME(void)
     const int stride = drawvars.pitch;
     byte* __restrict tempbuf = temp_dcvars.buf;
 
-#if (R_DRAWCOLUMN_PIPELINE & RDC_TRANSLUCENT)
     source = &tempbuf[temp_dcvars.commontop << 3];
     dest = drawvars.topleft + temp_dcvars.commontop*stride + temp_dcvars.startx;
-#endif
 
     count = temp_dcvars.commonbot - temp_dcvars.commontop + 1;
 
 #if (R_DRAWCOLUMN_PIPELINE & RDC_TRANSLUCENT)
-   while(--count >= 0)
+   while (--count >= 0)
    {
       *dest = GETDESTCOLOR((*dest), *source);
       dest[1] = GETDESTCOLOR(dest[1], source[1]);
@@ -252,14 +250,36 @@ static void R_FLUSHQUAD_FUNCNAME(void)
       dest += stride;
    }
 #else
-    const int64_t *source = reinterpret_cast<const int64_t *>(tempbuf + (temp_dcvars.commontop << 3));
-    int64_t *dest = reinterpret_cast<int64_t *>(drawvars.topleft + temp_dcvars.commontop*stride + temp_dcvars.startx);
-    const int64_t deststep = stride / 8;
-
-    while (--count >= 0)
+#if __SIZEOF_POINTER__ >= 8 // does not make much sense on 32bit targets
+    // 8 byte aligned copy -- make sure our dest ptr, source ptr AND stride are a multiple of 8!
+    if ((((uintptr_t)dest | (uintptr_t)source | stride) & 7) == 0)
     {
-        *dest = *source++;
-        dest += deststep;
+        const int64_t *source64 = reinterpret_cast<const int64_t *>(source);
+        int64_t *dest64 = reinterpret_cast<int64_t *>(dest);
+        const int deststep = stride / 8;
+
+        while (--count >= 0)
+        {
+            *dest64 = *source64++;
+            dest64 += deststep;
+        }
+    }
+    else
+#endif
+    {
+        while (--count >= 0)
+        {
+            dest[0] = source[0];
+            dest[1] = source[1];
+            dest[2] = source[2];
+            dest[3] = source[3];
+            dest[4] = source[4];
+            dest[5] = source[5];
+            dest[6] = source[6];
+            dest[7] = source[7];
+            source += 8 * sizeof(byte);
+            dest   += stride * sizeof(byte);
+        }
     }
 #endif
 }
