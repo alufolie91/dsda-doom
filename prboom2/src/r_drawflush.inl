@@ -216,10 +216,8 @@ static void R_FLUSHHEADTAIL_FUNCNAME(void)
 
 static void R_FLUSHQUAD_FUNCNAME(void)
 {
-#if (R_DRAWCOLUMN_PIPELINE & RDC_TRANSLUCENT)
     byte* __restrict source;
     byte* __restrict dest;
-#endif
     int count;
 
    #if (R_DRAWCOLUMN_PIPELINE & RDC_FUZZ)
