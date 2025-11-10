@@ -82,7 +82,7 @@ static dboolean registered_non_rw = false;
 //  mixing buffer, and the samplerate of the raw data.
 
 // The actual output device.
-int audio_fd;
+int audio_fd = 0;
 
 typedef struct
 {
@@ -111,10 +111,10 @@ typedef struct
   dboolean loop;
 } channel_info_t;
 
-channel_info_t channelinfo[MAX_CHANNELS];
+channel_info_t channelinfo[MAX_CHANNELS] = {0};
 
 // Pitch to stepping lookup.
-int   steptable[256];
+int   steptable[256] = {0};
 
 // Volume lookups.
 //int   vol_lookup[128 * 256];
@@ -124,15 +124,15 @@ static int dumping_sound = 0;
 
 
 // lock for updating any params related to sfx
-SDL_mutex *sfxmutex;
+SDL_mutex *sfxmutex = NULL;
 // lock for updating any params related to music
-SDL_mutex *musmutex;
+SDL_mutex *musmutex = NULL;
 
-static int pitched_sounds;
-int snd_samplerate; // samples per second
-static int snd_samplecount;
+static int pitched_sounds = 0;
+int snd_samplerate = 0; // samples per second
+static int snd_samplecount = 0;
 
-static const char *snd_midiplayer;
+static const char *snd_midiplayer = NULL;
 
 void I_InitSoundParams(void)
 {

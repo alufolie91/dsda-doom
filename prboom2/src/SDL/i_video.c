@@ -98,7 +98,7 @@
 //e6y: new mouse code
 static SDL_Cursor* cursors[2] = {NULL, NULL};
 
-dboolean window_focused;
+dboolean window_focused = false;
 
 // Window resize state.
 static void ApplyWindowResize(SDL_Event *resize_event);
@@ -114,12 +114,12 @@ extern const int gl_colorbuffer_bits;
 extern const int gl_depthbuffer_bits;
 
 extern void M_QuitDOOM(int choice);
-int desired_fullscreen;
-int exclusive_fullscreen;
-SDL_Window *sdl_window;
-SDL_Renderer *sdl_renderer;
-SDL_Texture *sdl_texture;
-static SDL_GLContext sdl_glcontext;
+int desired_fullscreen = 0;
+int exclusive_fullscreen = 0;
+SDL_Window *sdl_window = NULL;
+SDL_Renderer *sdl_renderer = NULL;
+SDL_Texture *sdl_texture = NULL;
+static SDL_GLContext sdl_glcontext = NULL;
 unsigned int windowid = 0;
 SDL_Rect src_rect = { 0, 0, 0, 0 };       // Drawn pixels, independent of window size
 SDL_Rect window_rect = { 0, 0, 0, 0 };    // Physical window
@@ -596,34 +596,35 @@ static int newpal = 0;
 
 void I_FinishUpdate (void)
 {
-  if (V_IsOpenGLMode()) {
+  if (V_IsOpenGLMode())
+  {
     // proff 04/05/2000: swap OpenGL buffers
     gld_Finish();
     return;
   }
 
-  const screeninfo_t *screen = &screens[0];
-
   /* Update the display buffer (flipping video pages if supported)
    * If we need to change palette, that implicitely does a flip */
-  if (newpal != NO_PALETTE_CHANGE) {
+  if (newpal != NO_PALETTE_CHANGE)
+  {
     I_UploadNewPalette(newpal, false);
     newpal = NO_PALETTE_CHANGE;
   }
+
+  const screeninfo_t *screen = &screens[0];
 
   if (screen->data)
   {
     void *pixels;
     int pitch;
-    int step;
     SDL_LockTexture(sdl_texture, NULL, &pixels, &pitch);
-    step = pitch / 4 - screen->pitch;
+    const int step = pitch / 4 - screen->pitch;
     uint32_t *restrict dst = pixels;
-    uint8_t *restrict src = screen->data;
-    uint32_t *restrict palette = screenpalette;
+    const uint8_t *restrict src = screen->data;
+    const uint32_t *restrict palette = screenpalette;
     for (int32_t y = 0; y < screen->height; y++)
     {
-      uint8_t *restrict end = src + screen->pitch;
+      const uint8_t *restrict end = src + screen->pitch;
       do *dst++ = palette[*src++];
       while (src < end);
       dst += step;
