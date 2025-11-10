@@ -89,20 +89,25 @@
 
 void I_uSleep(unsigned long usecs)
 {
-#if defined (__unix__) || defined(__APPLE__) || defined (UNIXCOMMON)
-  int status;
-  struct timespec now, target;
-  clock_gettime(CLOCK_MONOTONIC, &now);
-  target.tv_sec = now.tv_sec + usecs / 1000000;
-  target.tv_nsec = now.tv_nsec + (usecs % 1000000) * 1000;
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__HAIKU__)
+  uint64_t precision = SDL_GetPerformanceFrequency();
+  uint64_t duration = usecs * precision / 1000000;
+  uint64_t dest = SDL_GetPerformanceCounter() + duration;
+  uint64_t slack = (precision / 5000); // 0.2 ms slack
 
-  if (target.tv_nsec >= 1000000000L) {
-    target.tv_sec += 1;
-    target.tv_nsec -= 1000000000L;
+  if (duration > slack)
+  {
+    duration -= slack;
+    struct timespec ts = {
+      .tv_sec = (__time_t)(duration / precision),
+      .tv_nsec = (__syscall_slong_t)(duration * 1000000000 / precision % 1000000000),
+    };
+    int status;
+    do status = clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, &ts);
+    while (status == EINTR);
   }
-
-  do status = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &target, NULL);
-  while (status == EINTR);
+  // busy-wait the rest
+  while (((int64_t)dest - (int64_t)SDL_GetPerformanceCounter()) > 0);
 #else
   SDL_Delay(usecs/1000);
 #endif
