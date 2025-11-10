@@ -68,19 +68,19 @@
 // SetRatio sets the following global variables based on window geometry and
 // user preferences. The integer ratio is hardly used anymore, so further
 // simplification may be in order.
-dboolean tallscreen;
-unsigned int ratio_multiplier, ratio_scale;
-float gl_ratio;
-int psprite_offset; // Needed for "tallscreen" modes
+dboolean tallscreen = false;
+unsigned int ratio_multiplier = 0, ratio_scale = 0;
+float gl_ratio = 0.0f;
+int psprite_offset = 0; // Needed for "tallscreen" modes
 
 
 // Each screen is [SCREENWIDTH*SCREENHEIGHT];
-screeninfo_t screens[NUM_SCREENS];
+screeninfo_t screens[NUM_SCREENS] = {NULL};
 
 /* jff 4/24/98 initialize this at runtime */
-const byte *colrngs[CR_LIMIT];
+const byte *colrngs[CR_LIMIT] = {0};
 
-int usegamma;
+int usegamma = 0;
 
 int V_BloodColor(int blood)
 {
@@ -101,8 +101,8 @@ int V_BloodColor(int blood)
 // so it can be considered GPL as used here, rather than BSD. But,
 // I don't care either way. It is effectively dual-licensed I suppose.
 
-unsigned int Col2RGB8[65][256];
-byte RGB32k[32][32][32];
+unsigned int Col2RGB8[65][256] = {0};
+byte RGB32k[32][32][32] = {0};
 
 #define MAKECOLOR(a) (((a)<<3)|((a)>>2))
 
