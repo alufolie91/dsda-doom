@@ -617,8 +617,9 @@ void R_InitBuffersRes(void)
       bufsize++;
   temp_dcvars.buf = static_cast<byte*>(aligned_alloc(16, bufsize));
 #else
-  temp_dcvars.buf = static_cast<byte*>(Z_Calloc(1, bufsize));
+  temp_dcvars.buf = static_cast<byte*>(Z_Malloc(1, bufsize));
 #endif
+  memset(temp_dcvars.buf, 0, bufsize);
 }
 
 //
