@@ -227,11 +227,11 @@ static void FUNC_V_CopyRect(int srcscrn, int destscrn,
   dest = screens[destscrn].data + screens[destscrn].pitch * y + x;
 
   for ( ; height>0 ; height--)
-    {
-      memcpy (dest, src, width);
-      src += screens[srcscrn].pitch;
-      dest += screens[destscrn].pitch;
-    }
+  {
+    memcpy (dest, src, width);
+    src += screens[srcscrn].pitch;
+    dest += screens[destscrn].pitch;
+  }
 }
 
 #define FILL_FLAT(dest_type, dest_pitch, pal_func)\
@@ -347,7 +347,7 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch,
         dboolean center, int cm, enum patch_translation_e flags)
 {
   const byte *trans;
-
+  const int pitch = screens[scrn].pitch;
   stretch_param_t *params;
 
   if (cm == CR_DEFAULT)
@@ -382,12 +382,14 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch,
       x -= (patch->width - 320) / 2;
   }
 
-  if (!(flags & VPT_STRETCH_MASK)) {
+  if (!(flags & VPT_STRETCH_MASK))
+  {
     int             col;
-    byte           *desttop = screens[scrn].data+y*screens[scrn].pitch+x;
-    int    w = patch->width;
+    byte           *desttop = screens[scrn].data+y*pitch+x;
+    int             w = patch->width;
 
-    if (y<0 || y+patch->height > ((flags & VPT_STRETCH) ? 200 :  SCREENHEIGHT)) {
+    if (y < 0 || y+patch->height > ((flags & VPT_STRETCH) ? 200 :  SCREENHEIGHT))
+    {
       // killough 1/19/98: improved error message:
       lprintf(LO_WARN, "V_DrawMemPatch8: Patch (%d,%d)-(%d,%d) exceeds LFB in vertical direction (horizontal is clipped)\n"
               "Bad V_DrawMemPatch8 (flags=%u)", x, y, x+patch->width, y+patch->height, flags);
@@ -396,7 +398,8 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch,
 
     w--; // CPhipps - note: w = width-1 now, speeds up flipping
 
-    for (col=0 ; col<=w ; desttop++, col++, x++) {
+    for (col = 0 ; col<=w ; desttop++, col++, x++)
+    {
       int i;
       const int colindex = (flags & VPT_FLIP) ? (w - col) : (col);
       const rcolumn_t *column = R_GetPatchColumn(patch, colindex);
@@ -407,54 +410,66 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch,
         break;
 
       // step through the posts in a column
-      for (i=0; i<column->numPosts; i++) {
+      for (i = 0; i < column->numPosts; i++)
+      {
         const rpost_t *post = &column->posts[i];
         // killough 2/21/98: Unrolled and performance-tuned
 
         const byte *source = column->pixels + post->topdelta;
-        byte *dest = desttop + post->topdelta*screens[scrn].pitch;
+        byte *dest = desttop + post->topdelta*pitch;
         int count = post->length;
 
-        if (!(flags & VPT_TRANS)) {
-          if ((count-=4)>=0)
-            do {
+        if (!(flags & VPT_TRANS))
+        {
+          if ((count -= 4) >= 0)
+          {
+            do
+            {
               register byte s0,s1;
               s0 = source[0];
               s1 = source[1];
               dest[0] = s0;
-              dest[screens[scrn].pitch] = s1;
-              dest += screens[scrn].pitch*2;
+              dest[pitch] = s1;
+              dest += pitch*2;
               s0 = source[2];
               s1 = source[3];
               s0 = source[4];
               s1 = source[5];
               dest[0] = s0;
-              dest[screens[scrn].pitch] = s1;
-              dest += screens[scrn].pitch*2;
+              dest[pitch] = s1;
+              dest += pitch*2;
               s0 = source[6];
               s1 = source[7];
               source += 8;
               dest[0] = s0;
-              dest[screens[scrn].pitch] = s1;
-              dest += screens[scrn].pitch*2;
-            } while ((count-=4)>=0);
-          if (count+=4)
-            do {
+              dest[pitch] = s1;
+              dest += pitch*2;
+            } while ((count -= 4) >= 0);
+          }
+          if (count += 4)
+          {
+            do
+            {
               *dest = *source++;
-              dest += screens[scrn].pitch;
+              dest += pitch;
             } while (--count);
-        } else {
+          }
+        }
+        else
+        {
           // CPhipps - merged translation code here
-          if ((count-=4)>=0)
-            do {
+          if ((count -= 4) >= 0)
+          {
+            do
+            {
               register byte s0,s1;
               s0 = source[0];
               s1 = source[1];
               s0 = trans[s0];
               s1 = trans[s1];
               dest[0] = s0;
-              dest[screens[scrn].pitch] = s1;
-              dest += screens[scrn].pitch*2;
+              dest[pitch] = s1;
+              dest += pitch*2;
               s0 = source[2];
               s1 = source[3];
               s0 = trans[s0];
@@ -464,27 +479,32 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch,
               s0 = trans[s0];
               s1 = trans[s1];
               dest[0] = s0;
-              dest[screens[scrn].pitch] = s1;
-              dest += screens[scrn].pitch*2;
+              dest[pitch] = s1;
+              dest += pitch*2;
               s0 = source[6];
               s1 = source[7];
               s0 = trans[s0];
               s1 = trans[s1];
               source += 8;
               dest[0] = s0;
-              dest[screens[scrn].pitch] = s1;
-              dest += screens[scrn].pitch*2;
+              dest[pitch] = s1;
+              dest += pitch*2;
             } while ((count-=4)>=0);
-          if (count+=4)
-            do {
+          }
+          if (count += 4)
+          {
+            do
+            {
               *dest = trans[*source++];
-              dest += screens[scrn].pitch;
+              dest += pitch;
             } while (--count);
+          }
         }
       }
     }
   }
-  else {
+  else
+  {
     // CPhipps - move stretched patch drawing code here
     //         - reformat initialisers, move variables into inner blocks
 
@@ -500,12 +520,15 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch,
     R_SetDefaultDrawColumnVars(&dcvars);
 
     drawvars.topleft = screens[scrn].data;
-    drawvars.pitch = screens[scrn].pitch;
+    drawvars.pitch = pitch;
 
-    if (flags & VPT_TRANS) {
+    if (flags & VPT_TRANS)
+    {
       colfunc = R_GetDrawColumnFunc(RDC_PIPELINE_TRANSLATED, RDRAW_FILTER_NONE);
       dcvars.translation = trans;
-    } else {
+    }
+    else
+    {
       colfunc = R_GetDrawColumnFunc(RDC_PIPELINE_STANDARD, RDRAW_FILTER_NONE);
     }
 
@@ -541,7 +564,8 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch,
 
     col = 0;
 
-    for (dcvars.x=left; dcvars.x<=right; dcvars.x++, col+=DXI) {
+    for (dcvars.x = left; dcvars.x <= right; dcvars.x++, col += DXI)
+    {
       int i;
       const int colindex = (flags & VPT_FLIP) ? ((w - col)>>16): (col>>16);
       const rcolumn_t *column = R_GetPatchColumn(patch, colindex);
@@ -555,7 +579,8 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch,
         break;
 
       // step through the posts in a column
-      for (i=0; i<column->numPosts; i++) {
+      for (i = 0; i < column->numPosts; i++)
+      {
         const rpost_t *post = &column->posts[i];
         int yoffset = 0;
 
@@ -593,21 +618,27 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch,
         if ((dcvars.yl >= SCREENHEIGHT) || (dcvars.yl >= bottom))
           continue;
 
-        if (dcvars.yh >= bottom) {
+        if (dcvars.yh >= bottom)
+        {
           //dcvars.yh = bottom-1;
           dcvars.edgeslope &= ~RDRAW_EDGESLOPE_BOT_MASK;
         }
-        if (dcvars.yh >= SCREENHEIGHT) {
+
+        if (dcvars.yh >= SCREENHEIGHT)
+        {
           dcvars.yh = SCREENHEIGHT-1;
           dcvars.edgeslope &= ~RDRAW_EDGESLOPE_BOT_MASK;
         }
 
-        if (dcvars.yl < 0) {
+        if (dcvars.yl < 0)
+        {
           yoffset = (0-dcvars.yl) * 200/params->video->height;
           dcvars.yl = 0;
           dcvars.edgeslope &= ~RDRAW_EDGESLOPE_TOP_MASK;
         }
-        if (dcvars.yl < top) {
+
+        if (dcvars.yl < top)
+        {
           yoffset = (top-dcvars.yl) * 200/params->video->height;
           dcvars.yl = top;
           dcvars.edgeslope &= ~RDRAW_EDGESLOPE_TOP_MASK;
@@ -726,7 +757,8 @@ void V_SetPlayPal(int playpal_index)
 static void V_FillRect8(int scrn, int x, int y, int width, int height, byte colour)
 {
   byte* dest = screens[scrn].data + x + y*screens[scrn].pitch;
-  while (height--) {
+  while (height--)
+  {
     memset(dest, colour, width);
     dest += screens[scrn].pitch;
   }
