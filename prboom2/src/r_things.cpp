@@ -1425,10 +1425,8 @@ static void R_DrawSprite (vissprite_t* spr)
 
     while (++curr <= last)
     {
-      __builtin_prefetch(curr + 1, 0, 3);
-
       // determine if the drawseg obscures the sprite
-      if (!((curr->x1 <= spr_x2) & (curr->x2 >= spr_x1)))
+      if (curr->x1 > spr_x2 || curr->x2 < spr_x1)
         continue;      // does not cover sprite
 
       ds = curr->user;
