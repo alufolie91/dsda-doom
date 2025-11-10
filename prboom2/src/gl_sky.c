@@ -78,15 +78,15 @@ typedef struct
   vbo_vertex_t *data;
 } GLSkyVBO;
 
-int gl_drawskys;
+int gl_drawskys = 0;
 // Sky stretching is rather pointless with the GL renderer
 // now that it can handle all sky heights.
 int gl_stretchsky = false;
 
 static PalEntry_t *SkyColor;
 
-SkyBoxParams_t SkyBox;
-float y_offset_saved;
+SkyBoxParams_t SkyBox = {0};
+float y_offset_saved = 0.0f;
 
 void gld_InitSky(void)
 {

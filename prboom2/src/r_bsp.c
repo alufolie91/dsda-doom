@@ -56,23 +56,23 @@
 // Same, but for ceiling
 #define CEILING_BLEED_THRESHOLD 400
 
-int currentsubsectornum;
+int currentsubsectornum = 0;
 
-seg_t     *curline;
-side_t    *sidedef;
-line_t    *linedef;
-sector_t  *frontsector;
-sector_t  *backsector;
-sector_t  *poly_frontsector;
-dboolean   poly_add_line;
-drawseg_t *ds_p;
+seg_t     *curline = NULL;
+side_t    *sidedef = NULL;
+line_t    *linedef = NULL;
+sector_t  *frontsector = NULL;
+sector_t  *backsector = NULL;
+sector_t  *poly_frontsector = NULL;
+dboolean   poly_add_line = false;
+drawseg_t *ds_p = NULL;
 
 // killough 4/7/98: indicates doors closed wrt automap bugfix:
 // cph - replaced by linedef rendering flags - int      doorclosed;
 
 // killough: New code which removes 2s linedef limit
-drawseg_t *drawsegs;
-unsigned  maxdrawsegs;
+drawseg_t *drawsegs = NULL;
+unsigned  maxdrawsegs = 0;
 // drawseg_t drawsegs[MAXDRAWSEGS];       // old code -- killough
 
 //
@@ -89,7 +89,7 @@ void R_ClearDrawSegs(void)
 // indicating whether it's blocked by a solid wall yet or not.
 
 // e6y: resolution limitation is removed
-byte *solidcol;
+byte *solidcol = NULL;
 
 // CPhipps -
 // R_ClipWallSegment
@@ -100,17 +100,25 @@ byte *solidcol;
 static void R_ClipWallSegment(int first, int last, dboolean solid)
 {
   byte *p;
-  while (first < last) {
-    if (solidcol[first]) {
-      if (!(p = memchr(solidcol+first, 0, last-first))) return; // All solid
+  while (first < last)
+  {
+    if (solidcol[first])
+    {
+      if (!(p = memchr(solidcol+first, 0, last-first)))
+        return; // All solid
       first = p - solidcol;
-    } else {
+    }
+    else
+    {
       int to;
-      if (!(p = memchr(solidcol+first, 1, last-first))) to = last;
-      else to = p - solidcol;
+      if (!(p = memchr(solidcol+first, 1, last-first)))
+        to = last;
+      else
+        to = p - solidcol;
       R_StoreWallRange(first, to-1);
-      if (solid) {
-      memset(solidcol+first,1,to-first);
+      if (solid)
+      {
+        memset(solidcol+first, 1, to-first);
       }
       first = to;
     }
@@ -121,7 +129,7 @@ static void R_ClipWallSegment(int first, int last, dboolean solid)
 // R_ClearClipSegs
 //
 
-void R_ClearClipSegs (void)
+void R_ClearClipSegs(void)
 {
   memset(solidcol, 0, SCREENWIDTH);
 }
@@ -157,7 +165,8 @@ static void R_RecalcLineFlags(line_t *linedef)
     )
       )
     linedef->r_flags = RF_CLOSED;
-  else {
+  else
+  {
     // Reject empty lines used for triggers
     //  and special events.
     // Identical floor and ceiling on both sides,
@@ -169,10 +178,12 @@ static void R_RecalcLineFlags(line_t *linedef)
       || curline->sidedef->midtexture
       || P_FloorPlanesDiffer(frontsector, backsector)
       || P_CeilingPlanesDiffer(frontsector, backsector)
-    ) {
+    )
+    {
       linedef->r_flags = 0;
       return;
-    } else
+    }
+    else
       linedef->r_flags = RF_IGNORE;
   }
 
@@ -181,7 +192,8 @@ static void R_RecalcLineFlags(line_t *linedef)
     return;
 
   /* Now decide on texture tiling */
-  if (linedef->flags & ML_TWOSIDED) {
+  if (linedef->flags & ML_TWOSIDED)
+  {
     int c;
 
     /* Does top texture need tiling */
@@ -200,7 +212,8 @@ static void R_RecalcLineFlags(line_t *linedef)
       )
         linedef->r_flags |= RF_BOT_TILE;
   }
-  else {
+  else
+  {
     int c;
 
     /* Does middle texture need tiling */

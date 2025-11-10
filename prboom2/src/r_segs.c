@@ -61,47 +61,47 @@
 // killough 1/6/98: replaced globals with statics where appropriate
 
 // True if any of the segs textures might be visible.
-static dboolean  segtextured;
-static dboolean  markfloor;      // False if the back side is the same plane.
-static dboolean  markceiling;
-static dboolean  maskedtexture;
-static int      toptexture;
-static int      bottomtexture;
-static int      midtexture;
+static dboolean  segtextured = false;
+static dboolean  markfloor = false;      // False if the back side is the same plane.
+static dboolean  markceiling = false;
+static dboolean  maskedtexture = false;
+static int      toptexture = 0;
+static int      bottomtexture = 0;
+static int      midtexture = 0;
 
-static fixed_t  toptexheight, midtexheight, bottomtexheight; // cph
+static fixed_t  toptexheight = 0, midtexheight = 0, bottomtexheight = 0; // cph
 
-angle_t         rw_normalangle; // angle to line origin
-int             rw_angle1;
-fixed_t         rw_distance;
-const lighttable_t    **walllights;
+angle_t         rw_normalangle = 0; // angle to line origin
+int             rw_angle1 = 0;
+fixed_t         rw_distance = 0;
+const lighttable_t    **walllights = NULL;
 
 //
 // regular wall
 //
-static int      rw_x;
-static int      rw_stopx;
-static angle_t  rw_centerangle;
-static fixed_t  rw_offset;
-static fixed_t  rw_scale;
-static fixed_t  rw_scalestep;
-static fixed_t  rw_midtexturemid;
-static fixed_t  rw_toptexturemid;
-static fixed_t  rw_bottomtexturemid;
-static int      rw_lightlevel;
-static int      worldtop;
-static int      worldbottom;
-static int      worldhigh;
-static int      worldlow;
-static int64_t  pixhigh; // R_WiggleFix
-static int64_t  pixlow; // R_WiggleFix
-static fixed_t  pixhighstep;
-static fixed_t  pixlowstep;
-static int64_t  topfrac; // R_WiggleFix
-static fixed_t  topstep;
-static int64_t  bottomfrac; // R_WiggleFix
-static fixed_t  bottomstep;
-static int      *maskedtexturecol; // dropoff overflow
+static int      rw_x = 0;
+static int      rw_stopx = 0;
+static angle_t  rw_centerangle = 0;
+static fixed_t  rw_offset = 0;
+static fixed_t  rw_scale = 0;
+static fixed_t  rw_scalestep = 0;
+static fixed_t  rw_midtexturemid = 0;
+static fixed_t  rw_toptexturemid = 0;
+static fixed_t  rw_bottomtexturemid = 0;
+static int      rw_lightlevel = 0;
+static int      worldtop = 0;
+static int      worldbottom = 0;
+static int      worldhigh = 0;
+static int      worldlow = 0;
+static int64_t  pixhigh = 0; // R_WiggleFix
+static int64_t  pixlow = 0; // R_WiggleFix
+static fixed_t  pixhighstep = 0;
+static fixed_t  pixlowstep = 0;
+static int64_t  topfrac = 0; // R_WiggleFix
+static fixed_t  topstep = 0;
+static int64_t  bottomfrac = 0; // R_WiggleFix
+static fixed_t  bottomstep = 0;
+static int      *maskedtexturecol = NULL; // dropoff overflow
 
 static int	max_rwscale = 64 * FRACUNIT;
 static int	HEIGHTBITS = 12;
@@ -109,7 +109,7 @@ static int	HEIGHTUNIT = (1 << 12);
 static int	invhgtbits = 4;
 
 /* cph - allow crappy fake contrast to be disabled */
-fake_contrast_mode_t fake_contrast_mode;
+fake_contrast_mode_t fake_contrast_mode = {0};
 
 //
 // R_FixWiggle()

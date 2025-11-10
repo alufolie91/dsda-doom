@@ -59,9 +59,9 @@
 //  and the total size == width*height*depth/8.,
 //
 
-byte *viewimage;
-int  viewwidth;
-int  viewheight;
+byte *viewimage = NULL;
+int  viewwidth = 0;
+int  viewheight = 0;
 
 // Color tables for different players,
 //  translate a limited part to another
@@ -69,8 +69,8 @@ int  viewheight;
 //
 
 // CPhipps - made const*'s
-const byte *tranmap;          // translucency filter maps 256x256   // phares
-const byte *main_tranmap;     // killough 4/11/98
+const byte *tranmap = NULL;          // translucency filter maps 256x256   // phares
+const byte *main_tranmap = NULL;     // killough 4/11/98
 
 //
 // R_DrawColumn
@@ -206,7 +206,8 @@ static void R_FlushColumns(void)
 void R_ResetColumnBuffer(void)
 {
   // haleyjd 10/06/05: this must not be done if x == 0!
-  if (temp_dcvars.x) {
+  if (temp_dcvars.x)
+  {
     R_FlushColumns();
   }
 
@@ -246,7 +247,7 @@ void R_ResetColumnBuffer(void)
 //  be used. It has also been used with Wolfenstein 3D.
 //
 
-byte *translationtables;
+byte *translationtables = NULL;
 
 #define R_DRAWCOLUMN_PIPELINE_TYPE RDC_PIPELINE_STANDARD
 #define R_DRAWCOLUMN_PIPELINE_BASE RDC_STANDARD
@@ -342,14 +343,16 @@ static R_DrawColumn_f drawcolumnfuncs[RDRAW_FILTER_MAXFILTERS][RDC_PIPELINE_MAXP
   },
 };
 
-R_DrawColumn_f R_GetDrawColumnFunc(enum column_pipeline_e type, enum draw_filter_type_e filterz) {
+R_DrawColumn_f R_GetDrawColumnFunc(enum column_pipeline_e type, enum draw_filter_type_e filterz)
+{
   R_DrawColumn_f result = drawcolumnfuncs[filterz][type];
   if (result == NULL)
     I_Error("R_GetDrawColumnFunc: undefined function (%d, %d)", type, filterz);
   return result;
 }
 
-void R_SetDefaultDrawColumnVars(draw_column_vars_t *dcvars) {
+void R_SetDefaultDrawColumnVars(draw_column_vars_t *dcvars)
+{
   memset(dcvars, 0, sizeof(*dcvars));
   dcvars->colormap = colormaps[0];
 
@@ -365,7 +368,7 @@ void R_SetDefaultDrawColumnVars(draw_column_vars_t *dcvars) {
 // Could be read from a lump instead.
 //
 
-byte playernumtotrans[MAX_MAXPLAYERS];
+byte playernumtotrans[MAX_MAXPLAYERS] = {0};
 
 // HERETIC_TODO: player colors
 const byte player_colors[] = { 0x70, 0x60, 0x40, 0x20 };
@@ -399,22 +402,29 @@ void R_InitTranslationTables (void)
   if (translationtables == NULL) // CPhipps - allow multiple calls
     translationtables = static_cast<byte*>(Z_Malloc(256*MAXTRANS));
 
-  for (i=0; i<MAXTRANS; i++) transtocolour[i] = 255;
+  memset(transtocolour, 255, MAXTRANS);
 
-  for (i = 0; i < g_maxplayers; i++) {
+  for (i = 0; i < g_maxplayers; i++)
+  {
     byte wantcolour = player_colors[i];
     playernumtotrans[i] = 0;
     if (wantcolour != 0x70) // Not green, would like translation
+    {
       for (j = 0; j < MAXTRANS; j++)
-        if (transtocolour[j] == 255) {
+      {
+        if (transtocolour[j] == 255)
+        {
           transtocolour[j] = wantcolour;
           playernumtotrans[i] = j + 1;
           break;
         }
+      }
+    }
   }
 
   // translate just the 16 green colors
-  for (i=0; i<256; i++)
+  for (i = 0; i < 256; i++)
+  {
     if (i >= 0x70 && i<= 0x7f)
     {
       // CPhipps - configurable player colours
@@ -424,6 +434,7 @@ void R_InitTranslationTables (void)
     }
     else  // Keep all other colors as is.
       translationtables[i]=translationtables[i+256]=translationtables[i+512]=i;
+  }
 }
 
 void R_DrawSkyColumn(draw_column_vars_t *dcvars)
@@ -582,28 +593,32 @@ void R_DrawSpan(draw_span_vars_t *dsvars) {
 void R_InitBuffersRes(void)
 {
   extern byte *solidcol;
+  int bufsize;
 
-  if (solidcol) Z_Free(solidcol);
+  if (solidcol)
+    Z_Free(solidcol);
 
   solidcol = static_cast<byte*>(Z_Calloc(1, SCREENWIDTH * sizeof(*solidcol)));
 
 #if defined(__SSE__)
-  if (temp_dcvars.buf) aligned_free(temp_dcvars.buf);
+  if (temp_dcvars.buf)
+    aligned_free(temp_dcvars.buf);
 #else
-  if (temp_dcvars.buf) Z_Free(temp_dcvars.buf);
+  if (temp_dcvars.buf)
+    Z_Free(temp_dcvars.buf);
 #endif
 
-  int size = (SCREENHEIGHT * 8) * sizeof(*temp_dcvars.buf);
+  memset(&temp_dcvars, 0, sizeof(temp_dcvars));
+
+  bufsize = (SCREENHEIGHT * 8) * sizeof(*temp_dcvars.buf);
 
 #if defined(__SSE__)
-  while (size & 15)
-      size++;
-  temp_dcvars.buf = static_cast<byte*>(aligned_alloc(16, size));
+  while (bufsize & 15)
+      bufsize++;
+  temp_dcvars.buf = static_cast<byte*>(aligned_alloc(16, bufsize));
 #else
-  temp_dcvars.buf = static_cast<byte*>(Z_Calloc(1, size));
+  temp_dcvars.buf = static_cast<byte*>(Z_Calloc(1, bufsize));
 #endif
-
-  temp_dcvars.x = 0;
 }
 
 //
@@ -621,7 +636,7 @@ void R_InitBuffer(int width, int height)
   drawvars.topleft = screens[0].data;
   drawvars.pitch = screens[0].pitch;
 
-  for (i=0; i<FUZZTABLE; i++)
+  for (i = 0; i < FUZZTABLE; i++)
     fuzzoffset[i] = fuzzoffset_org[i]*screens[0].pitch;
 
   if (!tallscreen)

@@ -50,6 +50,7 @@ GLuint glSceneImageFBOTexID = 0;
 GLuint glDepthBufferFBOTexID = 0;
 GLuint glSceneImageTextureFBOTexID = 0;
 int SceneInTexture = false;
+
 static dboolean gld_CreateScreenSizeFBO(void);
 
 void gld_InitFBO(void)

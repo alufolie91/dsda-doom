@@ -52,7 +52,7 @@
 
 #include "hexen/a_action.h"
 
-int movement_smooth;
+int movement_smooth = 0;
 dboolean isExtraDDisplay = false;
 
 typedef enum
@@ -72,7 +72,7 @@ typedef struct
 
 static int numinterpolations = 0;
 
-tic_vars_t tic_vars;
+tic_vars_t tic_vars = {0};
 
 static void R_DoAnInterpolation (int i, fixed_t smoothratio);
 
@@ -87,15 +87,16 @@ void M_ChangeUncappedFrameRate(void)
 }
 
 typedef fixed_t fixed2_t[2];
-static fixed2_t *oldipos;
-static fixed2_t *bakipos;
-static interpolation_t *curipos;
+static fixed2_t *oldipos = NULL;
+static fixed2_t *bakipos = NULL;
+static interpolation_t *curipos = NULL;
 
 static dboolean NoInterpolateView;
 static dboolean didInterp;
-dboolean WasRenderedInTryRunTics;
+dboolean WasRenderedInTryRunTics = false;
 
-dboolean R_ViewInterpolation(void) {
+dboolean R_ViewInterpolation(void)
+{
   return !dsda_Paused() && movement_smooth;
 }
 

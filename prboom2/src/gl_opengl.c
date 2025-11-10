@@ -50,7 +50,7 @@
 
 int gl_max_texture_size = 0;
 
-SDL_PixelFormat RGBAFormat;
+SDL_PixelFormat RGBAFormat = {0};
 
 dboolean gl_ext_texture_filter_anisotropic = false;
 dboolean gl_arb_texture_compression = false;
@@ -62,8 +62,8 @@ dboolean gl_ext_arb_vertex_buffer_object = false;
 dboolean gl_arb_pixel_buffer_object = false;
 dboolean gl_arb_shader_objects = false;
 
-int active_texture_enabled[32];
-int clieant_active_texture_enabled[32];
+int active_texture_enabled[32] = {0};
+int clieant_active_texture_enabled[32] = {0};
 
 /* EXT_framebuffer_object */
 PFNGLBINDFRAMEBUFFEREXTPROC         GLEXT_glBindFramebufferEXT         = NULL;
@@ -125,8 +125,8 @@ PFNGLGETUNIFORMLOCATIONARBPROC   GLEXT_glGetUniformLocationARB = NULL;
 PFNGLGETACTIVEUNIFORMARBPROC     GLEXT_glGetActiveUniformARB = NULL;
 PFNGLGETUNIFORMFVARBPROC         GLEXT_glGetUniformfvARB = NULL;
 
-int gl_major_version;
-int gl_minor_version;
+int gl_major_version = 0;
+int gl_minor_version = 0;
 
 void gld_InitOpenGLVersion(void)
 {

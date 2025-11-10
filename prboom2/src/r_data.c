@@ -91,21 +91,22 @@ typedef struct
 // of one or more mappatch_t structures that arrange graphic patches.
 
 // killough 4/17/98: make firstcolormaplump,lastcolormaplump external
-int firstcolormaplump, lastcolormaplump;      // killough 4/17/98
+int firstcolormaplump = 0, lastcolormaplump = 0;      // killough 4/17/98
 
-int       firstflat, lastflat, numflats;
-int       firstspritelump, lastspritelump, numspritelumps;
-int       numtextures;
-texture_t **textures; // proff - 04/05/2000 removed static for OpenGL
-fixed_t   *textureheight; //needed for texture pegging (and TFE fix - killough)
-int       *flattranslation;             // for global animation
-int       *texturetranslation;
+int       firstflat = 0, lastflat = 0, numflats = 0;
+int       firstspritelump = 0, lastspritelump = 0, numspritelumps = 0;
+int       numtextures = 0;
+texture_t **textures = NULL; // proff - 04/05/2000 removed static for OpenGL
+fixed_t   *textureheight = NULL; //needed for texture pegging (and TFE fix - killough)
+int       *flattranslation = NULL;             // for global animation
+int       *texturetranslation = NULL;
 
 //
 // R_GetTextureColumn
 //
 
-const byte *R_GetTextureColumn(const rpatch_t *texpatch, int col) {
+const byte *R_GetTextureColumn(const rpatch_t *texpatch, int col)
+{
   const int width = texpatch->width;
   const unsigned int mask = texpatch->widthmask;
 
@@ -175,25 +176,25 @@ static void R_InitTextures (void)
   name_p = names+4;
   patchlookup = Z_Malloc(nummappatches*sizeof(*patchlookup));  // killough
 
-  for (i=0 ; i<nummappatches ; i++)
+  for (i = 0 ; i < nummappatches ; i++)
+  {
+    strncpy (name,name_p+i*8, 8);
+    patchlookup[i] = W_CheckNumForName(name);
+    if (patchlookup[i] == LUMP_NOT_FOUND)
     {
-      strncpy (name,name_p+i*8, 8);
-      patchlookup[i] = W_CheckNumForName(name);
-      if (patchlookup[i] == LUMP_NOT_FOUND)
-        {
-          // killough 4/17/98:
-          // Some wads use sprites as wall patches, so repeat check and
-          // look for sprites this time, but only if there were no wall
-          // patches found. This is the same as allowing for both, except
-          // that wall patches always win over sprites, even when they
-          // appear first in a wad. This is a kludgy solution to the wad
-          // lump namespace problem.
+      // killough 4/17/98:
+      // Some wads use sprites as wall patches, so repeat check and
+      // look for sprites this time, but only if there were no wall
+      // patches found. This is the same as allowing for both, except
+      // that wall patches always win over sprites, even when they
+      // appear first in a wad. This is a kludgy solution to the wad
+      // lump namespace problem.
 
-          patchlookup[i] = W_CheckNumForName2(name, ns_sprites);
-        }
-
-      patchlookup[i] = R_FilterValidPatch(patchlookup[i], name);
+      patchlookup[i] = W_CheckNumForName2(name, ns_sprites);
     }
+
+    patchlookup[i] = R_FilterValidPatch(patchlookup[i], name);
+  }
 
   // Load the map texture definitions from textures.lmp.
   // The data is contained in one or two lumps,
@@ -205,17 +206,17 @@ static void R_InitTextures (void)
   directory = maptex+1;
 
   if (W_LumpNameExists("TEXTURE2"))
-    {
-      maptex2 = W_LumpByNum(maptex_lump[1] = W_GetNumForName("TEXTURE2"));
-      numtextures2 = LittleLong(*maptex2);
-      maxoff2 = W_LumpLength(maptex_lump[1]);
-    }
+  {
+    maptex2 = W_LumpByNum(maptex_lump[1] = W_GetNumForName("TEXTURE2"));
+    numtextures2 = LittleLong(*maptex2);
+    maxoff2 = W_LumpLength(maptex_lump[1]);
+  }
   else
-    {
-      maptex2 = NULL;
-      numtextures2 = 0;
-      maxoff2 = 0;
-    }
+  {
+    maptex2 = NULL;
+    numtextures2 = 0;
+    maxoff2 = 0;
+  }
   numtextures = numtextures1 + numtextures2;
 
   // killough 4/9/98: make column offsets 32-bit;
@@ -224,89 +225,92 @@ static void R_InitTextures (void)
   textures = Z_Malloc(numtextures*sizeof*textures);
   textureheight = Z_Malloc(numtextures*sizeof*textureheight);
 
-  for (i=0 ; i<numtextures ; i++, directory++)
+  for (i = 0 ; i < numtextures ; i++, directory++)
+  {
+    if (i == numtextures1)
     {
-      if (i == numtextures1)
-        {
-          // Start looking in second texture file.
-          maptex = maptex2;
-          maxoff = maxoff2;
-          directory = maptex+1;
-        }
+      // Start looking in second texture file.
+      maptex = maptex2;
+      maxoff = maxoff2;
+      directory = maptex+1;
+    }
 
-      offset = LittleLong(*directory);
+    offset = LittleLong(*directory);
 
-      if (offset > maxoff)
-        I_Error("R_InitTextures: Bad texture directory");
+    if (offset > maxoff)
+      I_Error("R_InitTextures: Bad texture directory");
 
-      mtexture = (const maptexture_t *) ( (const byte *)maptex + offset);
+    mtexture = (const maptexture_t *) ( (const byte *)maptex + offset);
 
-      texture = textures[i] =
-        Z_Malloc(sizeof(texture_t) + sizeof(texpatch_t)*(LittleShort(mtexture->patchcount)-1));
+    texture = textures[i] =
+      Z_Malloc(sizeof(texture_t) + sizeof(texpatch_t)*(LittleShort(mtexture->patchcount)-1));
 
-      texture->width = LittleShort(mtexture->width);
-      texture->height = LittleShort(mtexture->height);
-      texture->patchcount = LittleShort(mtexture->patchcount);
+    texture->width = LittleShort(mtexture->width);
+    texture->height = LittleShort(mtexture->height);
+    texture->patchcount = LittleShort(mtexture->patchcount);
 
-        /* Mattias Engdeg�rd emailed me of the following explenation of
-         * why memcpy doesnt work on some systems:
-         * "I suppose it is the mad unaligned allocation
-         * going on (and which gcc in some way manages to cope with
-         * through the __attribute__ ((packed))), and which it forgets
-         * when optimizing memcpy (to a single word move) since it appears
-         * to be aligned. Technically a gcc bug, but I can't blame it when
-         * it's stressed with that amount of
-         * non-standard nonsense."
-   * So in short the unaligned struct confuses gcc's optimizer so
-   * i took the memcpy out alltogether to avoid future problems-Jess
-         */
+      /* Mattias Engdeg�rd emailed me of the following explenation of
+      * why memcpy doesnt work on some systems:
+      * "I suppose it is the mad unaligned allocation
+      * going on (and which gcc in some way manages to cope with
+      * through the __attribute__ ((packed))), and which it forgets
+      * when optimizing memcpy (to a single word move) since it appears
+      * to be aligned. Technically a gcc bug, but I can't blame it when
+      * it's stressed with that amount of
+      * non-standard nonsense."
+      * So in short the unaligned struct confuses gcc's optimizer so
+      * i took the memcpy out alltogether to avoid future problems-Jess
+      */
+
       /* The above was #ifndef SPARC, but i got a mail from
-       * Putera Joseph F NPRI <PuteraJF@Npt.NUWC.Navy.Mil> containing:
-       *   I had to use the memcpy function on a sparc machine.  The
-       *   other one would give me a core dump.
-       * cph - I find it hard to believe that sparc memcpy is broken,
-       * but I don't believe the pointers to memcpy have to be aligned
-       * either. Use fast memcpy on other machines anyway.
-       */
-/*
-  proff - I took this out, because Oli Kraus (olikraus@yahoo.com) told
-  me the memcpy produced a buserror. Since this function isn't time-
-  critical I'm using the for loop now.
-*/
+      * Putera Joseph F NPRI <PuteraJF@Npt.NUWC.Navy.Mil> containing:
+      *   I had to use the memcpy function on a sparc machine.  The
+      *   other one would give me a core dump.
+      * cph - I find it hard to believe that sparc memcpy is broken,
+      * but I don't believe the pointers to memcpy have to be aligned
+      * either. Use fast memcpy on other machines anyway.
+      */
+
+      /*
+        proff - I took this out, because Oli Kraus (olikraus@yahoo.com) told
+        me the memcpy produced a buserror. Since this function isn't time-
+        critical I'm using the for loop now.
+      */
 /*
 #ifndef GCC
-      memcpy(texture->name, mtexture->name, sizeof(texture->name));
+    memcpy(texture->name, mtexture->name, sizeof(texture->name));
 #else
 */
-      {
-        size_t j;
-        for(j=0;j<sizeof(texture->name);j++)
-          texture->name[j]=mtexture->name[j];
-      }
+    {
+      size_t j;
+      for(j = 0; j < sizeof(texture->name); j++)
+        texture->name[j]=mtexture->name[j];
+    }
 /* #endif */
 
-      mpatch = mtexture->patches;
-      patch = texture->patches;
+    mpatch = mtexture->patches;
+    patch = texture->patches;
 
-      for (j=0 ; j<texture->patchcount ; j++, mpatch++, patch++)
-        {
-          patch->originx = LittleShort(mpatch->originx);
-          patch->originy = LittleShort(mpatch->originy);
-          patch->patch = patchlookup[LittleShort(mpatch->patch)];
-          if (patch->patch == -1)
-            {
-              //jff 8/3/98 use logical output routine
-              lprintf(LO_ERROR,"\nR_InitTextures: Missing patch %d in texture %.8s",
-                     LittleShort(mpatch->patch), texture->name); // killough 4/17/98
-              ++errors;
-            }
-        }
-
-      for (j=1; j*2 <= texture->width; j<<=1)
-        ;
-      texture->widthmask = j-1;
-      textureheight[i] = texture->height<<FRACBITS;
+    for (j = 0 ; j<texture->patchcount ; j++, mpatch++, patch++)
+    {
+      patch->originx = LittleShort(mpatch->originx);
+      patch->originy = LittleShort(mpatch->originy);
+      patch->patch = patchlookup[LittleShort(mpatch->patch)];
+      if (patch->patch == -1)
+      {
+        //jff 8/3/98 use logical output routine
+        lprintf(LO_ERROR,"\nR_InitTextures: Missing patch %d in texture %.8s",
+                LittleShort(mpatch->patch), texture->name); // killough 4/17/98
+        ++errors;
+      }
     }
+
+    for (j = 1; j*2 <= texture->width; j<<=1)
+      ;
+
+    texture->widthmask = j-1;
+    textureheight[i] = texture->height<<FRACBITS;
+  }
 
   Z_Free(patchlookup);         // killough
 
@@ -326,18 +330,19 @@ static void R_InitTextures (void)
 
   texturetranslation = Z_Malloc((numtextures+1)*sizeof*texturetranslation);
 
-  for (i=0 ; i<numtextures ; i++)
+  for (i=0 ; i < numtextures ; i++)
     texturetranslation[i] = i;
 
   // killough 1/31/98: Initialize texture hash table
-  for (i = 0; i<numtextures; i++)
+  for (i = 0; i < numtextures; i++)
     textures[i]->index = -1;
+
   while (--i >= 0)
-    {
-      int j = W_LumpNameHash(textures[i]->name) % (unsigned) numtextures;
-      textures[i]->next = textures[j]->index;   // Prepend to chain
-      textures[j]->index = i;
-    }
+  {
+    int j = W_LumpNameHash(textures[i]->name) % (unsigned) numtextures;
+    textures[i]->next = textures[j]->index;   // Prepend to chain
+    textures[j]->index = i;
+  }
 }
 
 //
@@ -357,7 +362,7 @@ static void R_InitFlats(void)
 
   flattranslation = Z_Malloc((numflats+1)*sizeof(*flattranslation));
 
-  for (i=0 ; i<numflats ; i++)
+  for (i = 0 ; i<numflats ; i++)
     flattranslation[i] = i;
 }
 
@@ -403,7 +408,7 @@ static void R_InitColormaps(void)
   colormaps = Z_Malloc(sizeof(*colormaps) * numcolormaps);
   colormap_lump = W_LumpByName("COLORMAP");
   colormaps[0] = (const lighttable_t *)colormap_lump;
-  for (i=1; i<numcolormaps; i++)
+  for (i = 1; i<numcolormaps; i++)
     colormaps[i] = (const lighttable_t *)W_LumpByNum(i+firstcolormaplump);
   // cph - always lock
 }

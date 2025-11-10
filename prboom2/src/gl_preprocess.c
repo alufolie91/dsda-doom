@@ -63,11 +63,11 @@ static int gld_num_vertexes = 0;
 static int triangulate_subsectors = 0;
 
 // this is the list for all sectors to the loops
-GLSector *sectorloops;
+GLSector *sectorloops = NULL;
 
 // this is the list for all subsectors to the loops
 // uses by textured automap
-GLMapSubsector *subsectorloops;
+GLMapSubsector *subsectorloops = NULL;
 
 static void gld_AddGlobalVertexes(int count)
 {

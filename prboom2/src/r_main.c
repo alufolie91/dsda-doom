@@ -92,35 +92,35 @@ int r_frame_count;
 
 int validcount = 1;         // increment every time a check is made
 int validcount2 = 1;
-const lighttable_t *fixedcolormap;
-int      centerx, centery;
+const lighttable_t *fixedcolormap = NULL;
+int      centerx = 0, centery = 0;
 // e6y: wide-res
 int wide_centerx;
 
-fixed_t  focallength;
-fixed_t  focallengthy;
-fixed_t  globaluclip, globaldclip;
-fixed_t  centerxfrac, centeryfrac;
-fixed_t  yaspectmul;
-fixed_t  viewheightfrac; //e6y: for correct cliping of things
-fixed_t  projection;
+fixed_t  focallength = 0;
+fixed_t  focallengthy = 0;
+fixed_t  globaluclip = 0, globaldclip = 0;
+fixed_t  centerxfrac = 0, centeryfrac = 0;
+fixed_t  yaspectmul = 0;
+fixed_t  viewheightfrac = 0; //e6y: for correct cliping of things
+fixed_t  projection = 0;
 // proff 11/06/98: Added for high-res
-fixed_t  projectiony;
-fixed_t  skyiscale;
-fixed_t  viewx, viewy, viewz;
-angle_t  viewangle;
-fixed_t  viewcos, viewsin;
-fixed_t  viewtancos, viewtansin;
-player_t *viewplayer;
+fixed_t  projectiony = 0;
+fixed_t  skyiscale = 0;
+fixed_t  viewx = 0, viewy = 0, viewz = 0;
+angle_t  viewangle = 0;
+fixed_t  viewcos = 0, viewsin = 0;
+fixed_t  viewtancos = 0, viewtansin = 0;
+player_t *viewplayer = NULL;
 // e6y: Added for more precise flats drawing
 fixed_t viewfocratio;
 
 int r_nearclip = 5;
 
-int FieldOfView;
-int viewport[4];
-float modelMatrix[16];
-float projMatrix[16];
+int FieldOfView = 0;
+int viewport[4] = {0};
+float modelMatrix[16] = {0};
+float projMatrix[16] = {0};
 
 extern const lighttable_t **walllights;
 
@@ -128,46 +128,46 @@ extern const lighttable_t **walllights;
 // precalculated math tables
 //
 
-angle_t clipangle;
+angle_t clipangle = 0;
 
 // The viewangletox[viewangle + FINEANGLES/4] lookup
 // maps the visible view angles to screen X coordinates,
 // flattening the arc to a flat projection plane.
 // There will be many angles mapped to the same X.
 
-int viewangletox[FINEANGLES/2];
+int viewangletox[FINEANGLES/2] = {0};
 
 // The xtoviewangleangle[] table maps a screen pixel
 // to the lowest viewangle that maps back to x ranges
 // from clipangle to -clipangle.
 
 // e6y: resolution limitation is removed
-angle_t *xtoviewangle;   // killough 2/8/98
+angle_t *xtoviewangle = NULL;   // killough 2/8/98
 
 // [FG] linear horizontal sky scrolling
-angle_t *linearskyangle;
+angle_t *linearskyangle = NULL;
 
 // killough 3/20/98: Support dynamic colormaps, e.g. deep water
 // killough 4/4/98: support dynamic number of them as well
 
-int numcolormaps;
-const lighttable_t *(*c_scalelight)[LIGHTLEVELS_MAX][MAXLIGHTSCALE];
-const lighttable_t *(*c_zlight)[LIGHTLEVELS_MAX][MAXLIGHTZ];
-const lighttable_t *(*scalelight)[MAXLIGHTSCALE];
-const lighttable_t *(*zlight)[MAXLIGHTZ];
-const lighttable_t *fullcolormap;
-const lighttable_t **colormaps;
+int numcolormaps = 0;
+const lighttable_t *(*c_scalelight)[LIGHTLEVELS_MAX][MAXLIGHTSCALE] = {0};
+const lighttable_t *(*c_zlight)[LIGHTLEVELS_MAX][MAXLIGHTZ] = {0};
+const lighttable_t *(*scalelight)[MAXLIGHTSCALE] = {0};
+const lighttable_t *(*zlight)[MAXLIGHTZ] = {0};
+const lighttable_t *fullcolormap = NULL;
+const lighttable_t **colormaps = NULL;
 
-const byte* colormap_lump;
+const byte* colormap_lump = NULL;
 
 // killough 3/20/98, 4/4/98: end dynamic colormaps
 
 //e6y: for Boom colormaps in OpenGL mode
-dboolean use_boom_cm;
-int boom_cm;         // current colormap
+dboolean use_boom_cm = 0;
+int boom_cm = 0;         // current colormap
 int frame_fixedcolormap = 0;
 
-int extralight;                           // bumped light from gun blasts
+int extralight = 0;                           // bumped light from gun blasts
 
 //
 // R_PointOnSide

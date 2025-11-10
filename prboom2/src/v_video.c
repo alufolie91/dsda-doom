@@ -325,7 +325,7 @@ static void FUNC_V_DrawBackground(const char* flatname, int scrn)
 // No return
 //
 
-void V_Init (void)
+void V_Init(void)
 {
   // reset the all
   memset(screens, 0, NUM_SCREENS * sizeof(screeninfo_t));

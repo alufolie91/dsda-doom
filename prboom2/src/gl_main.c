@@ -81,28 +81,28 @@
 
 int gl_preprocessed = false;
 
-int gl_spriteindex;
-int scene_has_overlapped_sprites;
+int gl_spriteindex = 0;
+int scene_has_overlapped_sprites = 0;
 
-float gldepthmin, gldepthmax;
+float gldepthmin = 0.0f, gldepthmax = 0.0f;
 
-dboolean invul_cm;
+dboolean invul_cm = false;
 float bw_red = 0.3f;
 float bw_green = 0.59f;
 float bw_blue = 0.11f;
 
 const int tran_filter_pct = 66;
 
-GLfloat gl_texture_filter_anisotropic;
+GLfloat gl_texture_filter_anisotropic = 0.0f;
 
 extern int gld_paletteIndex;
 
 //sprites
 const float gl_spriteclip_threshold_f = 10.f / MAP_COEFF;
 
-GLfloat gl_whitecolor[4]={1.0f,1.0f,1.0f,1.0f};
+GLfloat gl_whitecolor[4]={1.0f, 1.0f, 1.0f, 1.0f};
 
-float xCamera,yCamera,zCamera;
+float xCamera = 0.0f, yCamera = 0.0f, zCamera = 0.0f;
 TAnimItemParam *anim_flats = NULL;
 TAnimItemParam *anim_textures = NULL;
 

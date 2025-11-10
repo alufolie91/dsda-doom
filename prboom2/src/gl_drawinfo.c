@@ -38,7 +38,7 @@
 #include "gl_intern.h"
 #include "lprintf.h"
 
-GLDrawInfo gld_drawinfo;
+GLDrawInfo gld_drawinfo = {NULL};
 
 //
 // gld_FreeDrawInfo

@@ -63,17 +63,17 @@ static int *cliptop = NULL; // change to MAX_*  // dropoff overflow
 // There was a lot of stuff grabbed wrong, so I changed it...
 //
 
-fixed_t pspriteiscale;
+fixed_t pspriteiscale = 0;
 // proff 11/06/98: Added for high-res
-fixed_t pspritexscale;
-fixed_t pspriteyscale;
-fixed_t pspriteiyscale;
+fixed_t pspritexscale = 0;
+fixed_t pspriteyscale = 0;
+fixed_t pspriteiyscale = 0;
 
-static const lighttable_t **spritelights;        // killough 1/25/98 made static
+static const lighttable_t **spritelights = NULL;        // killough 1/25/98 made static
 
 //e6y: added for GL
-float pspriteyscale_f;
-float pspritexscale_f;
+float pspriteyscale_f = 0;
+float pspritexscale_f = 0;
 
 typedef struct drawseg_xrange_item_s
 {
@@ -98,8 +98,8 @@ static int drawsegs_xrange_count = 0;
 //  used for psprite clipping and initializing clipping
 
 // e6y: resolution limitation is removed
-int *negonearray;        // killough 2/8/98: // dropoff overflow
-int *screenheightarray;  // change to MAX_* // dropoff overflow
+int *negonearray = NULL;        // killough 2/8/98: // dropoff overflow
+int *screenheightarray = NULL;  // change to MAX_* // dropoff overflow
 
 //
 // INITIALIZATION FUNCTIONS
@@ -107,12 +107,12 @@ int *screenheightarray;  // change to MAX_* // dropoff overflow
 
 // variables used to look up and range check thing_t sprites patches
 
-spritedef_t *sprites;
+spritedef_t *sprites = NULL;
 
 #define MAX_SPRITE_FRAMES 30          /* Macroized -- killough 1/25/98 */
 
 static spriteframe_t sprtemp[MAX_SPRITE_FRAMES];
-static int maxframe;
+static int maxframe = 0;
 
 void R_InitSpritesRes(void)
 {

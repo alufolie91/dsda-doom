@@ -69,18 +69,18 @@
 
 #include "core/thread_pool.h"
 
-int Sky1Texture;
-int Sky2Texture;
-fixed_t Sky1ColumnOffset;
-fixed_t Sky2ColumnOffset;
-dboolean DoubleSky;
+int Sky1Texture = 0;
+int Sky2Texture = 0;
+fixed_t Sky1ColumnOffset = 0;
+fixed_t Sky2ColumnOffset = 0;
+dboolean DoubleSky = false;
 
 #define MAXVISPLANES 256    /* must be a power of 2 */
 
 static visplane_t *visplanes[MAXVISPLANES];   // killough
 static visplane_t *freetail;                  // killough
 static visplane_t **freehead = &freetail;     // killough
-visplane_t *floorplane, *ceilingplane;
+visplane_t *floorplane = NULL, *ceilingplane = NULL;
 
 // [FG] linear horizontal sky scrolling
 static angle_t *xtoskyangle;
@@ -91,8 +91,8 @@ static angle_t *xtoskyangle;
 #define visplane_hash(picnum,lightlevel,height) \
   ((unsigned)((picnum)*3+(lightlevel)+(height)*7) & (MAXVISPLANES-1))
 
-size_t maxopenings;
-int *openings,*lastopening; // dropoff overflow
+size_t maxopenings = 0;
+int *openings = NULL, *lastopening = NULL; // dropoff overflow
 
 // Clip values are the solid pixel bounding the range.
 //  floorclip starts out SCREENHEIGHT
@@ -875,15 +875,15 @@ static void R_DoDrawPlane(visplane_t *pl, dboolean allow_parallel)
   dsvars.planeheight = D_abs(pl->height-viewz);
 
   // SoM 10/19/02: deep water colormap fix
-  if(fixedcolormap)
+  if (fixedcolormap)
     light = (255  >> LIGHTSEGSHIFT);
   else
     light = (pl->lightlevel >> LIGHTSEGSHIFT) + (extralight * LIGHTBRIGHT);
 
-  if(light >= LIGHTLEVELS)
+  if (light >= LIGHTLEVELS)
     light = LIGHTLEVELS-1;
 
-  if(light < 0)
+  if (light < 0)
     light = 0;
 
   stop = pl->maxx + 1;
@@ -909,13 +909,15 @@ void R_DrawPlanes (void)
 
   dsda::ThreadPool::Sema tp_sema;
   dsda::g_main_threadpool->begin_sema();
-  for (i=0;i<MAXVISPLANES;i++)
-    for (pl=visplanes[i]; pl; pl=pl->next)
+  for (i = 0; i < MAXVISPLANES; i++)
+  {
+    for (pl = visplanes[i]; pl; pl = pl->next)
     {
       dsda_RecordVisPlane();
 
       R_DoDrawPlane(pl, r_parallel);
     }
+  }
   tp_sema = dsda::g_main_threadpool->end_sema();
   dsda::g_main_threadpool->notify_sema(tp_sema);
   dsda::g_main_threadpool->wait_sema(tp_sema);

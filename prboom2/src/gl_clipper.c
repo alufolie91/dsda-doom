@@ -75,7 +75,7 @@
 #include "r_main.h"
 #include "e6y.h"
 
-float frustum[6][4];
+float frustum[6][4] = {0};
 
 typedef struct clipnode_s
 {
@@ -83,9 +83,9 @@ typedef struct clipnode_s
   angle_t start, end;
 } clipnode_t;
 
-clipnode_t *freelist;
-clipnode_t *clipnodes;
-clipnode_t *cliphead;
+clipnode_t *freelist = NULL;
+clipnode_t *clipnodes = NULL;
+clipnode_t *cliphead = NULL;
 
 static clipnode_t * gld_clipnode_GetNew(void);
 static clipnode_t * gld_clipnode_NewRange(angle_t start, angle_t end);

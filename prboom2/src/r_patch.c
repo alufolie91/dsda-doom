@@ -109,11 +109,11 @@ static rpatch_t *patches = 0;
 static rpatch_t *texture_composites = 0;
 
 // indices of two duplicate PLAYPAL entries, second is -1 if none found
-static int playpal_transparent, playpal_duplicate;
+static int playpal_transparent = 0, playpal_duplicate = 0;
 
 // indices of darkest and lightest colors
-int playpal_darkest;
-int playpal_lightest;
+int playpal_darkest = 0;
+int playpal_lightest = 0;
 
 //---------------------------------------------------------------------------
 void R_InitPatches(void) {

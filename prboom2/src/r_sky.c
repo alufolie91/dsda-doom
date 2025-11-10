@@ -46,12 +46,12 @@
 //
 // sky mapping
 //
-int skyflatnum;
-int skytexture;
-int skytexturemid;
+int skyflatnum = 0;
+int skytexture = 0;
+int skytexturemid = 0;
 
-int skystretch;
-fixed_t freelookviewheight;
+int skystretch = 0;
+fixed_t freelookviewheight = 0;
 
 //
 // R_InitSkyMap
