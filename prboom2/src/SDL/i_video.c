@@ -126,6 +126,8 @@ SDL_Rect window_rect = { 0, 0, 0, 0 };    // Physical window
 SDL_Rect renderer_rect = { 0, 0, 0, 0 };  // The window, but with HiDPI accounted
 SDL_Rect viewport_rect = { 0, 0, 0, 0 };  // The renderer, but without the black bars
 
+uint32_t* screenpalette = NULL;
+
 ////////////////////////////////////////////////////////////////////////////
 // Input code
 int             leds_always_off = 0; // Expected by m_misc, not relevant
@@ -504,7 +506,8 @@ static void I_UploadNewPalette(int pal, int force)
 
   playpal_data = dsda_PlayPalData();
 
-  if ((playpal_data->colours == NULL) || (cachedgamma != usegamma) || force) {
+  if ((playpal_data->colours == NULL) || (cachedgamma != usegamma) || force)
+  {
     int pplump;
     int gtlump;
     register const byte * palette;
@@ -545,6 +548,7 @@ static void I_UploadNewPalette(int pal, int force)
       pal, num_pals);
 #endif
 
+   screenpalette = playpal_data->colours + 256 * pal;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -616,8 +620,7 @@ void I_FinishUpdate (void)
     step = pitch / 4 - screen->pitch;
     uint32_t *restrict dst = pixels;
     uint8_t *restrict src = screen->data;
-    const dsda_playpal_t* playpal_data = dsda_PlayPalData();
-    uint32_t *restrict palette = playpal_data->colours;
+    uint32_t *restrict palette = screenpalette;
     for (int32_t y = 0; y < screen->height; y++)
     {
       uint8_t *restrict end = src + screen->pitch;
