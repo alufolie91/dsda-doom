@@ -1079,6 +1079,10 @@ void R_RenderPlayerView (player_t* player)
   R_RenderBSPNodes();
   DSDA_REMOVE_CONTEXT(sf_bsp_nodes);
 
+  DSDA_ADD_CONTEXT(sf_reset_column_buffer);
+  R_ResetColumnBuffer();
+  DSDA_REMOVE_CONTEXT(sf_reset_column_buffer);
+
   FakeNetUpdate();
 
   if (V_IsSoftwareMode())
@@ -1087,10 +1091,6 @@ void R_RenderPlayerView (player_t* player)
     R_DrawPlanes();
     DSDA_REMOVE_CONTEXT(sf_draw_planes);
   }
-
-  DSDA_ADD_CONTEXT(sf_reset_column_buffer);
-  R_ResetColumnBuffer();
-  DSDA_REMOVE_CONTEXT(sf_reset_column_buffer);
 
   FakeNetUpdate();
 
