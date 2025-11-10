@@ -458,7 +458,7 @@ void R_DrawSkyColumn(draw_column_vars_t *dcvars)
     I_Error("R_DrawColumn: %i to %i at %i", dcvars->yl, dcvars->yh, dcvars->x);
 #endif
 
-  dest = drawvars.topleft + dcvars->yl*SCREENWIDTH + dcvars->x;
+  dest = drawvars.topleft + dcvars->yl*drawvars.pitch + dcvars->x;
 
   if (dcvars->flags & DRAW_COLUMN_ISPATCH)
     frac = ((dcvars->yl - dcvars->dy) * fracstep) & 0xFFFF;
@@ -585,13 +585,13 @@ void R_InitBuffersRes(void)
 
   if (solidcol) Z_Free(solidcol);
 
+  solidcol = static_cast<byte*>(Z_Calloc(1, SCREENWIDTH * sizeof(*solidcol)));
+
 #if defined(__SSE__)
   if (temp_dcvars.buf) aligned_free(temp_dcvars.buf);
 #else
   if (temp_dcvars.buf) Z_Free(temp_dcvars.buf);
 #endif
-
-  solidcol = static_cast<byte*>(Z_Calloc(1, SCREENWIDTH * sizeof(*solidcol)));
 
   int size = (SCREENHEIGHT * 8) * sizeof(*temp_dcvars.buf);
 
