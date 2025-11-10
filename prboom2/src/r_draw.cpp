@@ -458,7 +458,7 @@ void R_DrawSkyColumn(draw_column_vars_t *dcvars)
     I_Error("R_DrawColumn: %i to %i at %i", dcvars->yl, dcvars->yh, dcvars->x);
 #endif
 
-  dest = drawvars.topleft + dcvars->yl*drawvars.pitch + dcvars->x;
+  dest = drawvars.topleft + dcvars->yl*stride + dcvars->x;
 
   if (dcvars->flags & DRAW_COLUMN_ISPATCH)
     frac = ((dcvars->yl - dcvars->dy) * fracstep) & 0xFFFF;

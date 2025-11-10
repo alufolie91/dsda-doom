@@ -47,7 +47,7 @@ typedef struct playpal_data_s {
   int lightest;
 
   // Array of SDL_Color structs used for setting the 256-colour palette
-  SDL_Color* colours;
+  uint32_t *colours;
 } dsda_playpal_t;
 
 double dsda_PaletteEntryLightness(const byte *playpal, int i);

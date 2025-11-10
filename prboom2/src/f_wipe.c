@@ -198,7 +198,6 @@ int wipe_StartScreen(void)
   if (!(wipe_scr_start.pitch % 1024))
     wipe_scr_start.pitch += 32;
 
-  wipe_scr_start.not_on_heap = false;
   V_AllocScreen(&wipe_scr_start);
   screens[SRC_SCR] = wipe_scr_start;
   V_CopyScreen(0, SRC_SCR); // Copy start screen to buffer
@@ -224,7 +223,6 @@ int wipe_EndScreen(void)
   if (!(wipe_scr_end.pitch % 1024))
     wipe_scr_end.pitch += 32;
 
-  wipe_scr_end.not_on_heap = false;
   V_AllocScreen(&wipe_scr_end);
   screens[DEST_SCR] = wipe_scr_end;
   V_CopyScreen(0, DEST_SCR); // Copy end screen to buffer

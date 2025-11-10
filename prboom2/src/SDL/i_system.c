@@ -90,6 +90,7 @@
 void I_uSleep(unsigned long usecs)
 {
 #if defined (__unix__) || defined(__APPLE__) || defined (UNIXCOMMON)
+  int status;
   struct timespec now, target;
   clock_gettime(CLOCK_MONOTONIC, &now);
   target.tv_sec = now.tv_sec + usecs / 1000000;
@@ -100,7 +101,6 @@ void I_uSleep(unsigned long usecs)
     target.tv_nsec -= 1000000000L;
   }
 
-  int status;
   do status = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &target, NULL);
   while (status == EINTR);
 #else

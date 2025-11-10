@@ -897,15 +897,18 @@ void V_InitMode(video_mode_t mode) {
   }
 }
 
-dboolean V_IsUILightmodeIndexed(void) {
+dboolean V_IsUILightmodeIndexed(void)
+{
   return gl_ui_lightmode_indexed;
 }
 
-dboolean V_IsAutomapLightmodeIndexed(void) {
+dboolean V_IsAutomapLightmodeIndexed(void)
+{
   return gl_automap_lightmode_indexed;
 }
 
-dboolean V_IsMenuLightmodeIndexed(void) {
+dboolean V_IsMenuLightmodeIndexed(void)
+{
   return gl_menu_lightmode_indexed;
 }
 
@@ -917,9 +920,12 @@ void V_CopyScreen(int srcscrn, int destscrn)
 //
 // V_AllocScreen
 //
-void V_AllocScreen(screeninfo_t *scrn) {
-  if (!scrn->not_on_heap)
-    if ((scrn->pitch * scrn->height) > 0){
+void V_AllocScreen(screeninfo_t *scrn)
+{
+  if (!scrn->data)
+  {
+    if ((scrn->pitch * scrn->height) > 0)
+    {
       int screensize = scrn->pitch*scrn->height;
 #if defined(__SSE__)
       while (screensize & 15)
@@ -931,23 +937,27 @@ void V_AllocScreen(screeninfo_t *scrn) {
       //e6y: Clear the screen to black.
       memset(scrn->data , 0, screensize);
     }
+  }
 }
 
 //
 // V_AllocScreens
 //
-void V_AllocScreens(void) {
+void V_AllocScreens(void)
+{
   int i;
 
-  for (i=0; i<NUM_SCREENS; i++)
+  for (i = 0; i<NUM_SCREENS; i++)
     V_AllocScreen(&screens[i]);
 }
 
 //
 // V_FreeScreen
 //
-void V_FreeScreen(screeninfo_t *scrn) {
-  if (!scrn->not_on_heap) {
+void V_FreeScreen(screeninfo_t *scrn)
+{
+  if (scrn->data)
+  {
 #if defined(__SSE__)
     aligned_free(scrn->data);
 #else
@@ -960,14 +970,16 @@ void V_FreeScreen(screeninfo_t *scrn) {
 //
 // V_FreeScreens
 //
-void V_FreeScreens(void) {
+void V_FreeScreens(void)
+{
   int i;
 
-  for (i=0; i<NUM_SCREENS; i++)
+  for (i = 0; i<NUM_SCREENS; i++)
     V_FreeScreen(&screens[i]);
 }
 
-static void V_PlotPixel8(int scrn, int x, int y, byte color) {
+static void V_PlotPixel8(int scrn, int x, int y, byte color)
+{
   screens[scrn].data[x+screens[scrn].pitch*y] = color;
 }
 
