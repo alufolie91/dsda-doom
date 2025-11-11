@@ -824,7 +824,7 @@ void R_StoreWallRange(const int start, const int stop)
       //    were already stored in drawsegs.
       for (ds = drawsegs; ds < ds_p; ds++)
       {
-#define ADJUST(p) if (ds->p && ds->p + ds->x1 >= oldopenings && ds->p + ds->x1 <= oldlast)\
+#define ADJUST(p) if (ds && ds->p && ds->p + ds->x1 >= oldopenings && ds->p + ds->x1 <= oldlast)\
                     ds->p = ds->p - oldopenings + openings;
         ADJUST (maskedtexturecol);
         ADJUST (sprtopclip);
