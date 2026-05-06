@@ -1711,12 +1711,13 @@ mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
   {
     mobj = mobjcache;
     mobjcache = mobjcache->snext; // repurposing this for savegame compat lel
-    memset (mobj, 0, sizeof (*mobj));
   }
   else
   {
-    mobj = Z_CallocLevel (1, sizeof(*mobj));
+    mobj = Z_MallocLevel (sizeof(*mobj));
   }
+
+  memset (mobj, 0, sizeof (*mobj));
 
   info = &mobjinfo[type];
   mobj->type = type;

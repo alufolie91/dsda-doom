@@ -1747,6 +1747,8 @@ static void RemoveAllThinkers(void)
         nextThinker = thinker->next;
         if (SV_IsMobjThinker(thinker))
         {
+            // make sure things get removed here
+            thinker->cachable = false;
             P_RemoveMobj((mobj_t *) thinker);
             P_RemoveThinkerDelayed(thinker); // fix mobj leak
         }
@@ -1756,6 +1758,8 @@ static void RemoveAllThinkers(void)
         }
         thinker = nextThinker;
     }
+
+    mobjcache = NULL;
     P_InitThinkers();
 }
 

@@ -1169,6 +1169,8 @@ void P_UnArchiveThinkers(void) {
     thinker_t *next = th->next;
     if (P_IsMobjThinker(th))
     {
+      // make sure things get removed here
+      th->cachable = false;
       P_RemoveMobj ((mobj_t *) th);
       P_RemoveThinkerDelayed(th); // fix mobj leak
     }
@@ -1176,6 +1178,8 @@ void P_UnArchiveThinkers(void) {
       Z_Free (th);
     th = next;
   }
+
+  mobjcache = NULL;
   P_InitThinkers ();
 
   // killough 2/14/98: count number of thinkers by skipping through them
