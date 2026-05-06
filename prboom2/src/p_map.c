@@ -1282,15 +1282,11 @@ dboolean P_CheckPosition (mobj_t* thing,fixed_t x,fixed_t y)
   tmbbox[BOXRIGHT] = x + tmthing->radius;
   tmbbox[BOXLEFT] = x - tmthing->radius;
 
-  if (luggy_compat) // this might break compat
-  {
-    newsec = thing->subsector->sector;
-
-    if (thing->x != x || thing->y != y)
-      newsec = R_PointInSector (x,y);
-  }
-  else
+  // this "might" desync demos
+  if (!luggy_compat || !thing->subsector || !thing->subsector->sector || thing->x != x || thing->y != y)
     newsec = R_PointInSector (x,y);
+  else
+    newsec = thing->subsector->sector;
 
   floorline = blockline = ceilingline = NULL; // killough 8/1/98
 
