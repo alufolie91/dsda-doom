@@ -596,6 +596,8 @@ static int newpal = 0;
 
 void I_FinishUpdate (void)
 {
+  screeninfo_t *screen;
+
   if (V_IsOpenGLMode())
   {
     // proff 04/05/2000: swap OpenGL buffers
@@ -611,17 +613,19 @@ void I_FinishUpdate (void)
     newpal = NO_PALETTE_CHANGE;
   }
 
-  const screeninfo_t *screen = &screens[0];
+  screen = &screens[0];
 
   if (screen->data)
   {
     void *pixels;
     int pitch;
-    SDL_LockTexture(sdl_texture, NULL, &pixels, &pitch);
-    const int step = pitch / 4 - screen->pitch;
-    uint32_t *restrict dst = pixels;
+    int step;
+    uint32_t *restrict dst;
     const uint8_t *restrict src = screen->data;
     const uint32_t *restrict palette = screenpalette;
+    SDL_LockTexture(sdl_texture, NULL, &pixels, &pitch);
+    step = pitch / 4 - screen->pitch;
+    dst = pixels;
     for (int32_t y = 0; y < screen->height; y++)
     {
       const uint8_t *restrict end = src + screen->pitch;

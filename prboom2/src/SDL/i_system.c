@@ -90,6 +90,8 @@
 void I_uSleep(unsigned long usecs)
 {
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__HAIKU__)
+  int status;
+  struct timespec ts;
   uint64_t precision = SDL_GetPerformanceFrequency();
   uint64_t duration = usecs * precision / 1000000;
   uint64_t dest = SDL_GetPerformanceCounter() + duration;
@@ -98,11 +100,8 @@ void I_uSleep(unsigned long usecs)
   if (duration > slack)
   {
     duration -= slack;
-    struct timespec ts = {
-      .tv_sec = (__time_t)(duration / precision),
-      .tv_nsec = (__syscall_slong_t)(duration * 1000000000 / precision % 1000000000),
-    };
-    int status;
+    ts.tv_sec = (__time_t)(duration / precision);
+    ts.tv_nsec = (__syscall_slong_t)(duration * 1000000000 / precision % 1000000000);
     do status = clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, &ts);
     while (status == EINTR);
   }

@@ -67,6 +67,7 @@ static dboolean P_IsMapSpot(mobj_t *mo)
 static mobj_t* P_TeleportDestination(short thing_id, int tag)
 {
   const int *id_p;
+  int class;
 
   if (thing_id)
   {
@@ -142,7 +143,7 @@ static mobj_t* P_TeleportDestination(short thing_id, int tag)
     return NULL;
   }
 
-  const int class = (luggy_compat ? th_teleport : th_misc);
+  class = (luggy_compat ? th_teleport : th_misc);
 
   FIND_SECTORS(id_p, tag)
   {

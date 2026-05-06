@@ -52,9 +52,9 @@ static inline void swapbytes(void *a0, void *b0, size_t n)
 
 static inline void swapdword(void *a0, void *b0, size_t n)
 {
-	(void)n;
 	DWORD *a = a0, *b = b0, t;
 	ASWAP(*a, *b, t);
+	(void)n;
 }
 
 static inline void swapdwords(void *a0, void *b0, size_t n)
@@ -65,9 +65,9 @@ static inline void swapdwords(void *a0, void *b0, size_t n)
 
 static inline void swapword(void *a0, void *b0, size_t n)
 {
-	(void)n;
 	WORD *a = a0, *b = b0, t;
 	ASWAP(*a, *b, t);
+	(void)n;
 }
 
 static inline void swapwords(void *a0, void *b0, size_t n)
@@ -87,12 +87,6 @@ static inline char *med3(char *a, char *b, char *c, int (*compar)(const void *, 
 
 void qs22j(void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *))
 {
-	// we have nothing to sort
-	if (__builtin_expect(!!(nmemb <= 1), 0) ) //UNLIKELY - thx windoze
-	{
-		return;
-	}
-
 	char *stack[2*8*sizeof(size_t)], **sp = stack;	// stack and stack pointer
 	char *left = base;								// set up char * base pointer
 	char *limit = left + nmemb * size;				// pointer past end of array
@@ -100,6 +94,17 @@ void qs22j(void *base, size_t nmemb, size_t size, int (*compar)(const void *, co
 	int ki = 0, kj = 0;
 	int swap_type = 1;
 	swapf_typ swapf, vecswapf;
+
+	ptrdiff_t lessthan;
+	ptrdiff_t morethan;
+
+	size_t k;
+
+	// we have nothing to sort
+	if (__builtin_expect(!!(nmemb <= 1), 0) ) //UNLIKELY - thx windoze
+	{
+		return;
+	}
 
 	vecswapf = swapf = swapbytes;
 	if ((ptr_to_int(left) | size) % sizeof(WORD))
@@ -221,13 +226,13 @@ void qs22j(void *base, size_t nmemb, size_t size, int (*compar)(const void *, co
                 SWAP(p, i);
 			}
 
-			ptrdiff_t lessthan = i - ii;
-			size_t k = min(lessthan, ii - left);
+			lessthan = i - ii;
+			k = min(lessthan, ii - left);
 
 			if (k)
 				vecswapf(left, i - k, k);
 
-			ptrdiff_t morethan = jj - i;
+			morethan = jj - i;
 			k = min(morethan, right - jj);
 
 			if (k)
