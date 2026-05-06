@@ -59,7 +59,7 @@ static void R_FLUSHWHOLE_FUNCNAME(void)
     yl = temp_dcvars.yl[temp_dcvars.x - 1];
     yh = temp_dcvars.yh[temp_dcvars.x - 1];
 
-    count = yh - yl + 1;
+    count = yh - yl;
 
     if (count < 0)
     {
@@ -110,6 +110,14 @@ static void R_FLUSHWHOLE_FUNCNAME(void)
 
         lines = fuzzcellsize;
     } while (count);
+
+   // [crispy] if the line at the bottom had to be cut off,
+   // draw one extra line using only pixels of that line and the one above
+   if (fuzz_cutoff)
+   {
+      const byte fuzz = fullcolormap[6 * 256 + dest[(fuzzoffset[fuzzpos] - drawvars.pitch) / 2]];
+      memset(dest, fuzz, fuzzcellsize);
+   }
 }
 #else
 {

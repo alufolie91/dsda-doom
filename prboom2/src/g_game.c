@@ -35,6 +35,7 @@
  *-----------------------------------------------------------------------------
  */
 
+#include <math.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -93,6 +94,7 @@
 #include "dsda/build.h"
 #include "dsda/configuration.h"
 #include "dsda/console.h"
+#include "dsda/death.h"
 #include "dsda/demo.h"
 #include "dsda/excmd.h"
 #include "dsda/exdemo.h"
@@ -837,7 +839,8 @@ void G_BuildTiccmd(ticcmd_t* cmd)
 
   if (dsda_InputActive(dsda_input_use) || dsda_InputTickActivated(dsda_input_use))
   {
-    cmd->buttons |= BT_USE;
+    if (!dsda_DeathUseNothingInDemo())
+      cmd->buttons |= BT_USE;
     // clear double clicks if hit use button
     dclicks = 0;
   }
@@ -980,7 +983,8 @@ void G_BuildTiccmd(ticcmd_t* cmd)
         dclicks++;
       if (dclicks == 2)
         {
-          cmd->buttons |= BT_USE;
+          if (!dsda_DeathUseNothingInDemo())
+            cmd->buttons |= BT_USE;
           dclicks = 0;
         }
       else
@@ -1002,7 +1006,8 @@ void G_BuildTiccmd(ticcmd_t* cmd)
         dclicks2++;
       if (dclicks2 == 2)
         {
-          cmd->buttons |= BT_USE;
+          if (!dsda_DeathUseNothingInDemo())
+            cmd->buttons |= BT_USE;
           dclicks2 = 0;
         }
       else
@@ -1435,7 +1440,7 @@ dboolean G_Responder (event_t* ev)
     case ev_move_analog:
       dsda_WatchGameControllerEvent();
 
-      left_analog_x = ev->data1.f;
+      left_analog_x = dsda_StrictMode() ? lroundf(ev->data1.f * 0.5f) * 2 : ev->data1.f;
       left_analog_y = ev->data2.f;
       return true;    // eat events
 
