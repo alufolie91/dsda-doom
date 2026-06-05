@@ -896,6 +896,13 @@ static void R_Subsector(int num)
 //
 // killough 5/2/98: reformatted, removed tail recursion
 
+static inline PUREFUNC int32_t R_PointOnSideRender(fixed_t x, fixed_t y, const node_t* restrict node)
+{
+  // use cross product to determine side quickly
+  int64_t v = ((int64_t)y - node->y) * node->dx - ((int64_t)x - node->x) * node->dy;
+  return v > 0;
+}
+
 void R_RenderBSPNode(int bspnum)
 {
   while (!(bspnum & NF_SUBSECTOR))  // Found a subsector?
@@ -903,7 +910,7 @@ void R_RenderBSPNode(int bspnum)
       const node_t *bsp = &nodes[bspnum];
 
       // Decide which side the view point is on.
-      int side = R_PointOnSide(viewx, viewy, bsp);
+      int side = R_PointOnSideRender(viewx, viewy, bsp);
       // Recursively divide front space.
       R_RenderBSPNode(bsp->children[side]);
 
