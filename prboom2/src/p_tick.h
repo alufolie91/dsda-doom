@@ -59,7 +59,6 @@ typedef enum {
   th_misc,
   th_friends,
   th_enemies,
-  th_teleport,
   NUMTHCLASS,
   th_all = NUMTHCLASS, /* For P_NextThinker, indicates "any class" */
 } th_class;
