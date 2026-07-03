@@ -73,7 +73,7 @@
 
 #include "hexen/po_man.h"
 
-mobj_t *mobjcache = NULL;
+thinker_t *mobjcache = NULL;
 
 // heretic_note: static NUMSTATES arrays here - probably fine?
 // NUMSTATES > HERETIC_NUMSTATES
@@ -1709,8 +1709,8 @@ mobj_t* P_SpawnMobj(fixed_t x,fixed_t y,fixed_t z,mobjtype_t type)
 
   if (mobjcache != NULL)
   {
-    mobj = mobjcache;
-    mobjcache = mobjcache->snext; // repurposing this for savegame compat lel
+    mobj = (mobj_t *)mobjcache;
+    mobjcache = mobjcache->next;
   }
   else
   {

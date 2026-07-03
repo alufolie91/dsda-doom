@@ -174,8 +174,8 @@ void P_RemoveThinkerDelayed(thinker_t *thinker)
       if (thinker->cachable == true)
       {
         // put cachable thinkers in the mobj cache, so we can avoid allocations
-        ((mobj_t *)thinker)->snext = mobjcache;
-        mobjcache = (mobj_t *)thinker;
+        thinker->next = mobjcache;
+        mobjcache = thinker;
       }
       else
       {
