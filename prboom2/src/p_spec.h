@@ -1669,6 +1669,7 @@ void T_ZDoom_Flicker(zdoom_flicker_t *g);
 int P_ConvertHexenCrush(int crush);
 void P_ResolveFrictionFactor(fixed_t friction_factor, sector_t *sec);
 
+extern mobj_t **sectors_telept;
 int EV_TeleportGroup(short group_tid, mobj_t *thing, short source_tid, short dest_tid,
                      dboolean move_source, dboolean fog);
 int EV_TeleportInSector(int tag, short source_tid, short dest_tid,

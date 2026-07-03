@@ -3713,6 +3713,9 @@ void P_SetupLevel(int episode, int map, int playermask, int skill)
 
   Z_FreeLevel();
 
+  // make sure this is reset!
+  sectors_telept = NULL;
+
   mobjcache = NULL;
 
   P_InitThinkers();
