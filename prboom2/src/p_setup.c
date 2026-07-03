@@ -3513,8 +3513,6 @@ static void P_UpdateUDMFLevelComponents(int lumpnum)
       level_components.blockmap = i;
     else if (!strncasecmp(name, "REJECT", 8))
       level_components.reject = i;
-    else if (!strncasecmp(name, "BEHAVIOR", 8))
-      level_components.behavior = i;
   }
 
   if (level_components.znodes == LUMP_NOT_FOUND)
@@ -3888,7 +3886,7 @@ void P_SetupLevel(int episode, int map, int playermask, int skill)
     PO_Init(level_components.things);       // Initialize the polyobjs
   }
 
-  if (map_format.acs && level_components.behavior != LUMP_NOT_FOUND)
+  if (map_format.acs)
   {
     P_LoadACScripts(level_components.behavior);     // ACS object code
   }
