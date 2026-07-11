@@ -442,13 +442,6 @@ INLINE static int P_DivlineSide(fixed_t x, fixed_t y, const divline_t *node)
 {
   fixed_t left, right;
 
-  // causes heavy desynchs in firefly.wad titledemos
-  if (luggy_compat)
-  {
-    int64_t v = ((int64_t)y - node->y) * node->dx - ((int64_t)x - node->x) * node->dy;
-    return ((v == 0) ? 2 : (v > 0)); // 1 is back, 0 is front
-  }
-
   return
     !node->dx ? x == node->x ? 2 : x <= node->x ? node->dy > 0 : node->dy < 0 :
     !node->dy ? ( compatibility_level < prboom_4_compatibility ? x : y) == node->y ? 2 : y <= node->y ? node->dx < 0 : node->dx > 0 :
