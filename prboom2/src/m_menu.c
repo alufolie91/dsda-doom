@@ -605,7 +605,7 @@ static void M_DrawReadThis1(void)
 static void M_DrawReadThis2(void)
 {
   const char* helplump = (gamemode == commercial) ? "HELP" : "HELP1";
-  int pwadmaps = W_PWADMapExists(); // show help screen for IWAD
+  int pwadmaps = W_PWADMapsExist(); // show help screen for IWAD
 
   inhelpscreens = true;
 
@@ -913,7 +913,7 @@ void M_LoadSelect(int choice)
   //  to g_game.c, this only passes the slot.
 
   // killough 3/16/98, 5/15/98: add slot, cmd
-  G_LoadGame(choice + current_page * g_menu_save_page_size);
+  G_LoadGame(choice + current_page * g_menu_save_page_size, false);
   M_ClearMenus();
 }
 
@@ -1482,7 +1482,7 @@ static void M_QuickSave(void)
   time (&now);
   timeinfo = localtime (&now);
 
-  strftime(description, sizeof(description), "quick %x %X", timeinfo);
+  strftime(description, sizeof(description), "%x %X", timeinfo);
 
   G_SaveGame(QUICKSAVESLOT, description);
   doom_printf("%s", description);
@@ -1521,7 +1521,7 @@ static void M_QuickLoad(void)
 
   if (M_FileExists(name))
   {
-    G_LoadGame(QUICKSAVESLOT);
+    G_LoadGame(QUICKSAVESLOT, false);
     doom_printf("quickload");
   }
   else
@@ -3197,7 +3197,7 @@ static const char* fake_contrast_list[] =
   NULL
 };
 
-static const char *gl_fade_mode_list[] = { "Normal", "Smooth", NULL };
+static const char *gl_fade_mode_list[] = { "Normal", "Smooth", "TrueColor", NULL };
 
 setup_menu_t gen_video_settings[] = {
   { "Video mode", S_CHOICE | S_STR, m_conf, G_X, dsda_config_videomode, 0, videomodes },

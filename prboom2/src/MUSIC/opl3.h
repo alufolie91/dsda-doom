@@ -1,5 +1,8 @@
+
 /* Nuked OPL3
+ *
  * Copyright (C) 2013-2020 Nuke.YKT
+ * Copyright (C) 2026 Tony Gies (Nuked-OPL3-fast modifications)
  *
  * This file is part of Nuked OPL3.
  *
@@ -15,7 +18,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public License
  * along with Nuked OPL3. If not, see <https://www.gnu.org/licenses/>.
-
+ *
  *  Nuked OPL3 emulator.
  *  Thanks:
  *      MAME Development Team(Jarek Burczynski, Tatsuyuki Satoh):
@@ -27,7 +30,23 @@
  *      siliconpr0n.org(John McMaster, digshadow):
  *          YMF262 and VRC VII decaps and die shots.
  *
- * version: 1.8
+ * Upstream version: 1.8 (commit cfedb09)
+ * Fork version:    1.8-fast.2
+ * Fork home:       https://github.com/tgies/Nuked-OPL3-fast
+ *
+ * Nuked-OPL3-fast is a bit-exact performance-optimized fork of Nuked-OPL3.
+ * Audio output is identical to upstream for the same register stream.
+ *
+ * Modifications vs. upstream visible in this header:
+ *
+ *   - Added cached fields to opl3_slot: eg_tl_ksl, eg_ks, pg_inc,
+ *     pg_inc_vib[8], eg_rate_hi[4], eg_rate_lo[4], slot_num.
+ *   - Added out_cnt to opl3_channel for mix-loop active-slot tracking, and
+ *     out_left[4]/out_right[4] mix pointer lists (under
+ *     OPL_QUIRK_CHANNELSAMPLEDELAY).
+ *   - Reordered opl3_slot to put hot per-sample fields first; struct size
+ *     shrank from 96 to 88 bytes.
+ *   - Removed unused legacy fields (eg_inc, eg_rate) from opl3_slot.
  */
 
 #ifndef OPL_OPL3_H
@@ -43,6 +62,10 @@ extern "C" {
 #define OPL_ENABLE_STEREOEXT 0
 #endif
 
+#ifndef OPL_QUIRK_CHANNELSAMPLEDELAY
+#define OPL_QUIRK_CHANNELSAMPLEDELAY (!OPL_ENABLE_STEREOEXT)
+#endif
+
 #define OPL_WRITEBUF_SIZE   1024
 #define OPL_WRITEBUF_DELAY  2
 
@@ -53,33 +76,44 @@ typedef struct _opl3_chip opl3_chip;
 struct _opl3_slot {
     opl3_channel *channel;
     opl3_chip *chip;
+    int16_t *mod;
+    uint8_t *trem;
+    uint32_t pg_reset;
+    uint32_t pg_phase;
+    uint32_t pg_inc;
     int16_t out;
     int16_t fbmod;
-    int16_t *mod;
     int16_t prout;
     uint16_t eg_rout;
     uint16_t eg_out;
-    uint8_t eg_inc;
+    /* Cached (reg_tl << 2) + (eg_ksl >> kslshift[reg_ksl]); maintained by
+     * OPL3_EnvelopeUpdateKSL whenever any of those inputs change. Hoists
+     * a load + lookup + shift out of the per-sample envelope hot path. */
+    uint16_t eg_tl_ksl;
+    uint16_t pg_phase_out;
+    uint8_t key;
     uint8_t eg_gen;
-    uint8_t eg_rate;
-    uint8_t eg_ksl;
-    uint8_t *trem;
     uint8_t reg_vib;
+    uint8_t reg_mult;
+    uint8_t reg_wf;
+    uint8_t slot_num;
+    uint8_t eg_ksl;
+    uint8_t eg_ks;
     uint8_t reg_type;
     uint8_t reg_ksr;
-    uint8_t reg_mult;
     uint8_t reg_ksl;
     uint8_t reg_tl;
     uint8_t reg_ar;
     uint8_t reg_dr;
     uint8_t reg_sl;
     uint8_t reg_rr;
-    uint8_t reg_wf;
-    uint8_t key;
-    uint32_t pg_reset;
-    uint32_t pg_phase;
-    uint16_t pg_phase_out;
-    uint8_t slot_num;
+    uint8_t eg_rates[4];
+    uint8_t eg_rate_hi[4];
+    uint8_t eg_rate_lo[4];
+    /* Phase increment per vibrato position, maintained by
+     * OPL3_PhaseUpdateInc (and rebuilt on vibshift changes); pg_inc_vib[pos]
+     * equals the upstream per-sample vibrato f_num adjustment for that pos. */
+    uint32_t pg_inc_vib[8];
 };
 
 struct _opl3_channel {
@@ -87,6 +121,17 @@ struct _opl3_channel {
     opl3_channel *pair;
     opl3_chip *chip;
     int16_t *out[4];
+#if OPL_QUIRK_CHANNELSAMPLEDELAY
+    /* Mix-pass pointer lists: identical to out[] except entries pointing at
+     * a delayed slot's out are redirected to its prout, which holds the
+     * previous sample's out once all 36 slots are processed. out_left delays
+     * slots 15-35 and out_right delays 33-35, reproducing the
+     * CHANNELSAMPLEDELAY snapshots without staging slot processing around
+     * the mixes. */
+    int16_t *out_left[4];
+    int16_t *out_right[4];
+#endif
+    uint8_t out_cnt;
 
 #if OPL_ENABLE_STEREOEXT
     int32_t leftpan;
@@ -128,7 +173,12 @@ struct _opl3_chip {
     uint8_t tremolo;
     uint8_t tremolopos;
     uint8_t tremoloshift;
+    uint8_t tremolo_dirty;
     uint32_t noise;
+    /* Bit 0 of the noise LFSR state as seen by the hh (slot 13) and sd
+     * (slot 16) rhythm operators, precomputed per sample */
+    uint32_t noise_hh;
+    uint32_t noise_sd;
     int16_t zeromod;
     int32_t mixbuff[4];
     uint8_t rm_hh_bit2;

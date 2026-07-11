@@ -654,15 +654,41 @@ void D_PageTicker(void)
     D_AdvanceDemo();
 }
 
-// Check whether to skip IWAD Demos
-static int dsda_SkipIwadDemos(void)
+static dboolean dsda_IsBlankPWADLump(const char* lumpname)
 {
-  int pwaddemo = W_PWADLumpNameExists("DEMO1");
-  int pwadmaps = W_PWADMapExists();
+  if (!W_PWADLumpNameExists(lumpname))
+    return false;
 
-  if ((pwadmaps && !pwaddemo) || lumpinfo[W_CheckNumForName("DEMO1")].size == 0)
+  return lumpinfo[W_CheckNumForName(lumpname)].size == 0;
+}
+
+// Check whether to skip IWAD Demos
+static dboolean dsda_SimpleDemoLoop(void)
+{
+  int pwaddemos = W_PWADLumpNameExists2("DEMO1");
+  int pwadmaps = W_PWADMapsExist();
+
+  if ((pwadmaps && !pwaddemos) || dsda_IsBlankPWADLump("DEMO1"))
     return true;
-  
+
+  return false;
+}
+
+static dboolean dsda_ForcePWADCredit(void)
+{
+  if (W_PWADLumpNameExists("CREDIT"))
+  {
+    // Simple demo loop and PWAD CREDIT
+    if (dsda_SimpleDemoLoop())
+      return true;
+
+    // Normal demo loop
+    // Check if CREDIT is shown twice in demoloop, else skip dynamic credits
+    // Fixes condition with PWAD CREDIT + REAL DEMO1 + BLANK DEMO2
+    if (W_PWADLumpNameExists2("DEMO1") && dsda_IsBlankPWADLump("DEMO2"))
+      return true;
+  }
+
   return false;
 }
 
@@ -694,7 +720,7 @@ static void D_PageDrawer(void)
     V_ClearBorder();
     V_DrawNamePatchFS(0, 0, 0, pagename, CR_DEFAULT, VPT_STRETCH);
   }
-  else if (dsda_SkipIwadDemos() && W_PWADLumpNameExists("CREDIT"))
+  else if (dsda_ForcePWADCredit())
     M_DrawCredits();
   else
     M_DrawCreditsDynamic();
@@ -840,7 +866,7 @@ void D_DoAdvanceDemo(void)
   if (demosequence == 6 && gamemode == commercial && !W_LumpNameExists("demo4"))
     demosequence = 0;
 
-  if (dsda_SkipIwadDemos())
+  if (dsda_SimpleDemoLoop())
   {
     // Skip blank / IWAD demos in PWADs
     if (demostates[demosequence][gamemode].func == G_DeferedPlayDemo)
@@ -1521,8 +1547,8 @@ static void D_AutoloadPWadDir()
     {
       char *autoload_dir;
       autoload_dir = GetAutoloadDir(dsda_BaseName(wadfiles[i].name), false);
-      LoadWADsAtPath(autoload_dir, source_auto_load);
-      LoadZIPsAtPath(autoload_dir, source_auto_load, &autoload_deh_pwad_queue[i]);
+      LoadWADsAtPath(autoload_dir, source_pwad_auto_load);
+      LoadZIPsAtPath(autoload_dir, source_pwad_auto_load, &autoload_deh_pwad_queue[i]);
       Z_Free(autoload_dir);
     }
 }
@@ -1910,7 +1936,7 @@ static void IdentifyVersion (void)
 
 static void D_DoomMainSetup(void)
 {
-  int p;
+  int p, slot = -1;
   dsda_arg_t *arg;
   dboolean autoload;
 
@@ -2009,7 +2035,7 @@ static void D_DoomMainSetup(void)
   //e6y: some stuff from command-line should be initialised before ProcessDehFile()
   e6y_InitCommandLine();
 
-  D_AddFile(port_wad_file, source_auto_load);
+  D_AddFile(port_wad_file, source_port_wad);
 
   HandlePlayback(); // must come before autoload: may detect iwad in footer
 
@@ -2070,8 +2096,9 @@ static void D_DoomMainSetup(void)
     for (p = -1; (p = W_ListNumFromName("DEHACKED", p)) >= 0; )
       // Split loading DEHACKED lumps into IWAD/autoload and PWADs/others
       if (lumpinfo[p].source == source_iwad
-          || lumpinfo[p].source == source_pre
-          || lumpinfo[p].source == source_auto_load)
+          || lumpinfo[p].source == source_port_wad
+          || lumpinfo[p].source == source_auto_load
+          || lumpinfo[p].source == source_pwad_auto_load)
         ProcessDehFile(NULL, D_dehout(), p); // cph - add dehacked-in-a-wad support
 
     if (bfgedition)
@@ -2107,8 +2134,9 @@ static void D_DoomMainSetup(void)
   if (!dsda_Flag(dsda_arg_nodeh))
     for (p = -1; (p = W_ListNumFromName("DEHACKED", p)) >= 0; )
       if (!(lumpinfo[p].source == source_iwad
-            || lumpinfo[p].source == source_pre
-            || lumpinfo[p].source == source_auto_load))
+            || lumpinfo[p].source == source_port_wad
+            || lumpinfo[p].source == source_auto_load
+            || lumpinfo[p].source == source_pwad_auto_load))
         ProcessDehFile(NULL, D_dehout(), p);
 
   // process .deh files from PWADs autoload directories
@@ -2220,10 +2248,19 @@ static void D_DoomMainSetup(void)
     dsda_SetDemoBaseName(arg->value.v_string);
     dsda_InitDemoRecording();
   }
+  else
+  {
+    arg = dsda_Arg(dsda_arg_loadgame);
+    if (arg->found)
+    {
+      slot = arg->value.v_int;
+      G_LoadGame(slot, true);
+    }
+  }
 
   dsda_ExecutePlaybackOptions();
 
-  if (!userdemo)
+  if (slot == -1 && !userdemo)
   {
     if (autostart || netgame)
     {
