@@ -1402,6 +1402,26 @@ void R_SortVisSprites (void)
     // are roughly in order to begin with, due to BSP rendering.
 
     msort(vissprite_ptrs, vissprite_ptrs + num_vissprite, num_vissprite);
+
+    // remove duplicate sprites to avoid overdraw!
+    // this may happen with stacked ammo supplies and such
+    // seems to improve performance on the Oversaturation rocket box stack in the first room by roughly 100fps(!) for me
+    auto SameVisSprite = [](const vissprite_t* a, const vissprite_t* b)
+    {
+      // we dont really care about a few fields here
+      // but memcmp seems to be slightly faster than
+      // directly comparing a bunch of fields
+      return memcmp(a, b, sizeof(vissprite_t)) == 0;  // should this check for translucent sprites?
+    };
+
+    // apparently ceepeepee has this
+    // this moves every dupe to after its return "end" (end of the array)
+    // while this does not actually remove the dupes from the array
+    // we can just set num vissprites to the amount of unique sprites, since they should all be in order
+    // and R_DrawSprites should just take this (i hope)
+    // not the most elegant solution but this works!
+    auto end = std::unique(vissprite_ptrs, vissprite_ptrs + num_vissprite, SameVisSprite);
+    num_vissprite = end - vissprite_ptrs;
   }
 }
 
