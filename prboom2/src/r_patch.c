@@ -869,7 +869,7 @@ const rcolumn_t *R_GetPatchColumnWrapped(const rpatch_t *patch, int columnIndex)
 //---------------------------------------------------------------------------
 const rcolumn_t *R_GetPatchColumnClamped(const rpatch_t *patch, int columnIndex) {
   if (columnIndex < 0) columnIndex = 0;
-  if (columnIndex >= patch->width) columnIndex = patch->width-1;
+  else if (columnIndex >= patch->width) columnIndex = patch->width-1;
   return &patch->columns[columnIndex];
 }
 

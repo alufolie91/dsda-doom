@@ -341,15 +341,13 @@ angle_t R_PointToAngleEx2(fixed_t x1, fixed_t y1, fixed_t x, fixed_t y)
 //
 //-----------------------------------------------------------------------------
 
-#define EPSILON 1e-2
-
 angle_t R_PointToPseudoAngle (fixed_t x, fixed_t y)
 {
   // Note: float won't work here as it's less precise than the BAM values being passed as parameters
   double vecx = (double)x - viewx;
   double vecy = (double)y - viewy;
 
-  if (fabs(vecx) < EPSILON && fabs(vecy) < EPSILON)
+  if (fabs(vecx) < 1e-2 && fabs(vecy) < 1e-2) // avoid checking for exactly 0
   {
     return 0;
   }
@@ -363,8 +361,6 @@ angle_t R_PointToPseudoAngle (fixed_t x, fixed_t y)
     return (angle_t)xs_CRoundToInt(result * (1 << 30));
   }
 }
-
-#undef EPSILON
 
 //
 // R_InitTextureMapping

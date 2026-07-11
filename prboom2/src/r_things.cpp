@@ -1421,7 +1421,7 @@ void R_SortVisSprites (void)
     // and R_DrawSprites should just take this (i hope)
     // not the most elegant solution but this works!
     auto end = std::unique(vissprite_ptrs, vissprite_ptrs + num_vissprite, SameVisSprite);
-    num_vissprite = end - vissprite_ptrs;
+    num_vissprite = static_cast<int>(visend - vissprite_ptrs);
   }
 }
 
@@ -1441,8 +1441,10 @@ static void R_DrawSprite (vissprite_t* spr)
   const short spr_x1 = spr->x1;
   const short spr_x2 = spr->x2;
 
-  std::fill(clipbot + spr_x1, clipbot + spr_x2 + 1, -2);
-  std::fill(cliptop + spr_x1, cliptop + spr_x2 + 1, -2);
+  for (x = spr_x1; x <= spr_x2; x++)
+  {
+    clipbot[x] = cliptop[x] = -2;
+  }
 
   // Scan drawsegs from end to start for obscuring segs.
   // The first drawseg that has a greater scale is the clip seg.
