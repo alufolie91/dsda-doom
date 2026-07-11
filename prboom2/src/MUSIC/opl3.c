@@ -91,20 +91,6 @@
 #define OPL_SIN(x) ((int32_t)(sin((x) * M_PI / 512.0) * 65536.0))
 #endif
 
-#if defined OPL_ENABLE_STEREOEXT && !defined OPL_SIN
-#ifndef _USE_MATH_DEFINES
-#define _USE_MATH_DEFINES 1
-#endif
-#include <math.h>
-/* input: [0, 256), output: [0, 65536] */
-#define OPL_SIN(x) ((int32_t)(sin((x) * M_PI / 512.0) * 65536.0))
-#endif
-
-/* Quirk: Some FM channels are output one sample later on the left side than the right. */
-#ifndef OPL_QUIRK_CHANNELSAMPLEDELAY
-#define OPL_QUIRK_CHANNELSAMPLEDELAY (!OPL_ENABLE_STEREOEXT)
-#endif
-
 #define RSM_FRAC    10
 
 /* Channel types */
@@ -1279,7 +1265,6 @@ inline void OPL3_Generate4Ch(opl3_chip *chip, int16_t *buf4)
                     | (f23_31 << 10)
                     | (f32_35 << 19);
     }
-#endif
 
     /* Process all 36 slots (channel-grouped pairs) before either mix pass.
      * The mixes read the delayed slots' previous-sample out through prout
@@ -1288,7 +1273,6 @@ inline void OPL3_Generate4Ch(opl3_chip *chip, int16_t *buf4)
     {
         OPL3_ProcessChannelSlots(&chip->channel[ii]);
     }
-#endif
 
     mix[0] = mix[1] = 0;
     for (ii = 0; ii < 18; ii++)
