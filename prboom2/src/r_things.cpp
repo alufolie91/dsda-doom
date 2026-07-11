@@ -840,6 +840,9 @@ static void R_ProjectSprite (mobj_t* thing, int lightlevel)
   vis->scale = FixedDiv(projectiony, tz);
   vis->gzt = gzt;                          // killough 3/27/98
 
+  vis->szt = (int)((centeryfrac - FixedMul(vis->gzt - viewz, vis->scale))>>FRACBITS);
+  vis->sz = (int)((centeryfrac - FixedMul(vis->gz - viewz, vis->scale))>>FRACBITS);
+
   if (heretic)
   {
     if (thing->flags2 & MF2_FEETARECLIPPED
@@ -1414,14 +1417,9 @@ void R_SortVisSprites (void)
       return memcmp(a, b, sizeof(vissprite_t)) == 0;  // should this check for translucent sprites?
     };
 
-    // apparently ceepeepee has this
-    // this moves every dupe to after its return "end" (end of the array)
-    // while this does not actually remove the dupes from the array
-    // we can just set num vissprites to the amount of unique sprites, since they should all be in order
-    // and R_DrawSprites should just take this (i hope)
     // not the most elegant solution but this works!
-    auto end = std::unique(vissprite_ptrs, vissprite_ptrs + num_vissprite, SameVisSprite);
-    num_vissprite = static_cast<int>(visend - vissprite_ptrs);
+    auto newend = std::unique(vissprite_ptrs, vissprite_ptrs + num_vissprite, SameVisSprite);
+    num_vissprite = static_cast<int>(newend - vissprite_ptrs);
   }
 }
 
@@ -1437,6 +1435,8 @@ static void R_DrawSprite (vissprite_t* spr)
   int     r2;
   fixed_t scale;
   fixed_t lowscale;
+
+  int xclip;
 
   const short spr_x1 = spr->x1;
   const short spr_x2 = spr->x2;
@@ -1554,16 +1554,26 @@ static void R_DrawSprite (vissprite_t* spr)
   // all clipping has been performed, so draw the sprite
   // check for unclipped columns
 
-  for (x = spr_x1 ; x<=spr_x2 ; x++)
+  for (xclip = x = spr_x1; x <= spr_x2; x++)
   {
     if (clipbot[x] == -2)
       clipbot[x] = viewheight;
     if (cliptop[x] == -2)
       cliptop[x] = -1;
+
+    // sprite is above or below the clip planes
+    if (spr->szt >= clipbot[x] || spr->sz <= cliptop[x])
+      xclip++;
   }
 
   mfloorclip = clipbot;
   mceilingclip = cliptop;
+
+  if (xclip == x)
+  {
+    return; // skip drawing this sprite
+  }
+
   R_DrawVisSprite (spr);
 }
 

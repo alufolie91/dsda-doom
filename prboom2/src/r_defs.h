@@ -519,6 +519,9 @@ typedef struct vissprite_s
   // zdoom
   const byte* tranmap;
 
+  // Precalculated top and bottom screen coords for the sprite.
+  int sz, szt;
+
   // misc
   int color;
 } vissprite_t;
