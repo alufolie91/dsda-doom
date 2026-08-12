@@ -305,42 +305,39 @@ static void R_InitTextures (void)
       }
     }
 
-    for (j = 1; j*2 <= texture->width; j<<=1)
+    for (j=0 ; j<texture->patchcount ; j++, mpatch++)
+      {
+        int patchindex = LittleShort(mpatch->patch);
+
+        // Check if patch is in PNAMES bounds
+        if (patchindex < 0 || patchindex >= nummappatches)
+          {
+            lprintf(LO_WARN, "\nR_InitTextures: Texture %.8s references patch index %d outside PNAMES table (%d entries)",
+                    texture->name, patchindex, nummappatches);
+            continue;
+          }
+
+        patch->originx = LittleShort(mpatch->originx);
+        patch->originy = LittleShort(mpatch->originy);
+        patch->patch = patchlookup[patchindex];
+        if (patch->patch == -1)
+          {
+            //jff 8/3/98 use logical output routine
+            lprintf(LO_ERROR,"\nR_InitTextures: Missing patch %d in texture %.8s",
+                    patchindex, texture->name); // killough 4/17/98
+            ++errors;
+          }
+
+        ++patch;
+      }
+
+    texture->patchcount = (short)(patch - texture->patches);
+
+    for (j=1; j*2 <= texture->width; j<<=1)
       ;
-
-      for (j=0 ; j<texture->patchcount ; j++, mpatch++)
-        {
-          int patchindex = LittleShort(mpatch->patch);
-
-          // Check if patch is in PNAMES bounds
-          if (patchindex < 0 || patchindex >= nummappatches)
-            {
-              lprintf(LO_WARN, "\nR_InitTextures: Texture %.8s references patch index %d outside PNAMES table (%d entries)",
-                      texture->name, patchindex, nummappatches);
-              continue;
-            }
-
-          patch->originx = LittleShort(mpatch->originx);
-          patch->originy = LittleShort(mpatch->originy);
-          patch->patch = patchlookup[patchindex];
-          if (patch->patch == -1)
-            {
-              //jff 8/3/98 use logical output routine
-              lprintf(LO_ERROR,"\nR_InitTextures: Missing patch %d in texture %.8s",
-                     patchindex, texture->name); // killough 4/17/98
-              ++errors;
-            }
-
-          ++patch;
-        }
-
-      texture->patchcount = (short)(patch - texture->patches);
-
-      for (j=1; j*2 <= texture->width; j<<=1)
-        ;
-      texture->widthmask = j-1;
-      textureheight[i] = texture->height<<FRACBITS;
-    }
+    texture->widthmask = j-1;
+    textureheight[i] = texture->height<<FRACBITS;
+  }
 
   Z_Free(patchlookup);         // killough
 
