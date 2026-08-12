@@ -329,7 +329,8 @@ static void I_GetEvent(void)
             break;
           }
           // Switch windowed<->fullscreen if pressed Alt-Enter
-          else if (Event->key.keysym.sym == SDLK_RETURN)
+          else if (Event->key.keysym.sym == SDLK_RETURN ||
+                   Event->key.keysym.sym == SDLK_KP_ENTER)
           {
             V_ToggleFullscreen();
             break;
@@ -413,6 +414,9 @@ static void I_GetEvent(void)
           {
           case SDL_WINDOWEVENT_FOCUS_GAINED:
           case SDL_WINDOWEVENT_FOCUS_LOST:
+          case SDL_WINDOWEVENT_MINIMIZED:
+          case SDL_WINDOWEVENT_MAXIMIZED:
+          case SDL_WINDOWEVENT_RESTORED:
             UpdateFocus();
             break;
           case SDL_WINDOWEVENT_SIZE_CHANGED:
@@ -423,7 +427,7 @@ static void I_GetEvent(void)
         break;
 
       case SDL_QUIT:
-        S_StartVoidSound(sfx_swtchn);
+        S_StartOptionalSound(sfx_mnucls, sfx_swtchn, true);
         M_QuitDOOM(0);
 
       default:
@@ -1495,7 +1499,8 @@ static dboolean MouseShouldBeGrabbed()
     return (demoplayback && gamestate == GS_LEVEL && !menuactive);
 
   // during playback the mouse should be hidden when not moving
-  if (demoplayback && !menuactive && mouse_hide_timer > 0)
+  if (demoplayback && !menuactive && mouse_hide_timer > 0 &&
+    (dsda_IntConfig(dsda_config_playback_mouse_controls) || !desired_fullscreen))
   {
     if (!dsda_SkipMode())
       mouse_hide_timer--;
@@ -1503,13 +1508,17 @@ static dboolean MouseShouldBeGrabbed()
     return false;
   }
 
+  // when menu is active, release the mouse even in fullscreen
+  if (menuactive)
+    return false;
+
   // always grab the mouse when full screen (dont want to
   // see the mouse pointer)
   if (desired_fullscreen)
     return true;
 
-  // when menu is active or game is paused, release the mouse
-  if (menuactive || dsda_Paused())
+  // when game is paused, release the mouse in windowed mode
+  if (dsda_Paused())
     return false;
 
   // grab mouse when playing levels
